@@ -13,6 +13,8 @@ import {
   Settings,
   HelpCircle,
   Calculator,
+  Save,
+  Loader2,
 } from 'lucide-react';
 import { DashboardSettings } from '@/types/dashboard';
 import {
@@ -29,11 +31,14 @@ interface DashboardHeaderProps {
   settings: DashboardSettings;
   canUndo: boolean;
   canRedo: boolean;
+  isSaving?: boolean;
+  lastSaved?: Date | null;
   onUndo: () => void;
   onRedo: () => void;
   onExportCSV: () => void;
   onExportPDF: () => void;
   onShare: () => void;
+  onSave: () => void;
   onSettingsChange: (settings: Partial<DashboardSettings>) => void;
 }
 
@@ -42,13 +47,20 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   settings,
   canUndo,
   canRedo,
+  isSaving = false,
+  lastSaved,
   onUndo,
   onRedo,
   onExportCSV,
   onExportPDF,
   onShare,
+  onSave,
   onSettingsChange,
 }) => {
+  const formatLastSaved = (date: Date | null | undefined) => {
+    if (!date) return null;
+    return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  };
   return (
     <header className="bg-card border-b border-border px-4 py-3 sticky top-0 z-20 table-header-shadow">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -115,6 +127,29 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             </Tooltip>
           </div>
           
+          {/* Save button */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="default"
+                size="sm"
+                onClick={onSave}
+                disabled={isSaving}
+                className="gap-2"
+              >
+                {isSaving ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
+                <span className="hidden sm:inline">Salvar</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              {lastSaved ? `Último: ${formatLastSaved(lastSaved)}` : 'Salvar alterações'}
+            </TooltipContent>
+          </Tooltip>
+
           {/* Export buttons */}
           <Tooltip>
             <TooltipTrigger asChild>

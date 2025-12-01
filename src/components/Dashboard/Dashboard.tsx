@@ -3,6 +3,7 @@ import { DashboardHeader } from './DashboardHeader';
 import { DashboardTable } from './DashboardTable';
 import { PeriodSettingsPanel } from './PeriodSettings';
 import { useDashboardState } from '@/hooks/useDashboardState';
+import { useDashboardPersistence } from '@/hooks/useDashboardPersistence';
 import { exportToCSV, downloadCSV, downloadPDF } from '@/lib/exportUtils';
 import { toast } from 'sonner';
 import { initialDashboardData } from '@/data/dashboardData';
@@ -36,6 +37,8 @@ export const Dashboard: React.FC = () => {
     addMember,
     deleteMember,
   } = useDashboardState();
+
+  const { saveDashboard, loadDashboard, isSaving, lastSaved } = useDashboardPersistence();
   
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
@@ -43,13 +46,43 @@ export const Dashboard: React.FC = () => {
   const [copied, setCopied] = useState(false);
   const [initialized, setInitialized] = useState(false);
   
-  // Initialize with sample data
+  // Initialize with saved data or sample data
   useEffect(() => {
-    if (!initialized && rows.length === 0) {
-      initializeData(initialDashboardData);
+    const initData = async () => {
+      if (initialized || rows.length > 0) return;
+      
+      const savedData = await loadDashboard();
+      if (savedData) {
+        initializeData({
+          columns: savedData.columns,
+          columnGroups: savedData.columnGroups,
+          rows: savedData.rows,
+        });
+        if (savedData.settings) {
+          updateSettings(savedData.settings);
+        }
+        if (savedData.periodSettings) {
+          updatePeriodSettings(savedData.periodSettings);
+        }
+        toast.success('Dados carregados do banco de dados');
+      } else {
+        initializeData(initialDashboardData);
+      }
       setInitialized(true);
-    }
-  }, [initialized, rows.length, initializeData]);
+    };
+    
+    initData();
+  }, [initialized, rows.length, initializeData, loadDashboard, updateSettings, updatePeriodSettings]);
+
+  const handleSave = useCallback(async () => {
+    await saveDashboard({
+      rows,
+      columns,
+      columnGroups,
+      settings,
+      periodSettings,
+    });
+  }, [saveDashboard, rows, columns, columnGroups, settings, periodSettings]);
   
   // Keyboard shortcuts
   useEffect(() => {
@@ -193,11 +226,14 @@ export const Dashboard: React.FC = () => {
         settings={settings}
         canUndo={canUndo}
         canRedo={canRedo}
+        isSaving={isSaving}
+        lastSaved={lastSaved}
         onUndo={undo}
         onRedo={redo}
         onExportCSV={handleExportCSV}
         onExportPDF={handleExportPDF}
         onShare={handleShare}
+        onSave={handleSave}
         onSettingsChange={updateSettings}
       />
       
