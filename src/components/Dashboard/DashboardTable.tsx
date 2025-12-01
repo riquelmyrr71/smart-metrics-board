@@ -167,23 +167,6 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({
     if (!row.sectionId) return true;
     return !collapsedSections.has(row.sectionId);
   });
-
-  // Helper to get column group styling
-  const getColumnGroupStyle = (column: Column) => {
-    if (column.group === 'recrutamento') {
-      return {
-        header: 'bg-dashboard-recruitment-header text-foreground',
-        cell: 'bg-dashboard-recruitment-bg',
-      };
-    }
-    if (column.group === 'diamantes') {
-      return {
-        header: 'bg-dashboard-diamonds-header text-foreground',
-        cell: 'bg-dashboard-diamonds-bg',
-      };
-    }
-    return { header: '', cell: '' };
-  };
   
   // Group columns for header rendering
   const renderColumnGroups = () => {
@@ -191,26 +174,15 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({
     
     return (
       <tr>
-        {columnGroups.map(group => {
-          const groupStyle = group.id === 'recrutamento' 
-            ? 'bg-dashboard-recruitment-header text-foreground' 
-            : group.id === 'diamantes' 
-              ? 'bg-dashboard-diamonds-header text-foreground'
-              : 'bg-secondary text-secondary-foreground';
-          
-          return (
-            <th
-              key={group.id}
-              colSpan={group.columns.length}
-              className={cn(
-                'px-2 py-2 text-center font-semibold text-xs uppercase tracking-wider border-r border-dashboard-cell-border',
-                groupStyle
-              )}
-            >
-              {group.name}
-            </th>
-          );
-        })}
+        {columnGroups.map(group => (
+          <th
+            key={group.id}
+            colSpan={group.columns.length}
+            className="bg-secondary text-secondary-foreground px-2 py-2 text-center font-semibold text-xs uppercase tracking-wider border-r border-dashboard-cell-border"
+          >
+            {group.name}
+          </th>
+        ))}
       </tr>
     );
   };
@@ -226,35 +198,29 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({
         <thead className="sticky top-0 z-10">
           {renderColumnGroups()}
           <tr>
-            {columns.map((col, colIndex) => {
-              const groupStyle = getColumnGroupStyle(col);
-              const headerClass = groupStyle.header || 'bg-dashboard-header text-dashboard-header-text';
-              
-              return (
-                <th
-                  key={col.id}
-                  className={cn(
-                    'px-2 py-2 font-semibold text-xs border-r border-dashboard-cell-border whitespace-nowrap',
-                    headerClass,
-                    col.align === 'left' ? 'text-left' : col.id === 'team' ? 'text-center' : 'text-right'
+            {columns.map((col, colIndex) => (
+              <th
+                key={col.id}
+                className={cn(
+                  'bg-dashboard-header text-dashboard-header-text px-2 py-2 font-semibold text-xs border-r border-dashboard-cell-border whitespace-nowrap',
+                  col.align === 'left' ? 'text-left' : 'text-right'
+                )}
+                style={{ minWidth: col.width || 80 }}
+              >
+                <div className="flex items-center gap-1">
+                  {col.align === 'left' ? null : <span className="flex-1" />}
+                  <span>{col.name}</span>
+                  {col.tooltip && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="w-3 h-3 opacity-70 cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">{col.tooltip}</TooltipContent>
+                    </Tooltip>
                   )}
-                  style={{ minWidth: col.width || 80 }}
-                >
-                  <div className={cn('flex items-center gap-1', col.id === 'team' && 'justify-center')}>
-                    {col.align === 'left' && col.id !== 'team' ? null : col.id !== 'team' && <span className="flex-1" />}
-                    <span>{col.name}</span>
-                    {col.tooltip && (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Info className="w-3 h-3 opacity-70 cursor-help" />
-                        </TooltipTrigger>
-                        <TooltipContent side="bottom">{col.tooltip}</TooltipContent>
-                      </Tooltip>
-                    )}
-                  </div>
-                </th>
-              );
-            })}
+                </div>
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody>
@@ -360,12 +326,9 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({
               >
                 {columns.map((col, colIndex) => {
                   const cell = row.cells[col.id];
-                  const groupStyle = getColumnGroupStyle(col);
-                  const isTeamColumn = col.id === 'team';
-                  
                   if (!cell) {
                     return (
-                      <td key={col.id} className={cn('px-2 py-1 border-r border-dashboard-cell-border', groupStyle.cell)}>
+                      <td key={col.id} className="px-2 py-1 border-r border-dashboard-cell-border">
                         -
                       </td>
                     );
@@ -377,25 +340,24 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({
                   const cellIsOver100 = isOver100(cell);
                   const trend = col.type === 'percentage' ? getTrend(cell, row, colIndex) : undefined;
                   const progressValue = col.type === 'percentage' ? getProgressValue(cell) : undefined;
+                  const isTeamColumn = col.id === 'team';
                   
                   return (
                     <td
                       key={col.id}
                       className={cn(
                         'border-r border-dashboard-cell-border p-0 relative',
-                        groupStyle.cell,
-                        isTeamColumn && 'text-center'
                       )}
                       onClick={() => {
                         setFocusedCell({ rowIndex: dataRowIndex, colIndex });
                         onSelectCell(cellKey);
                       }}
                     >
-                      <div className={cn('flex items-center', isTeamColumn && 'justify-center')}>
-                        <div className={cn('flex-1', isTeamColumn && 'text-center')}>
+                      <div className="flex items-center">
+                        <div className="flex-1">
                           <EditableCell
                             cell={cell}
-                            column={{...col, align: isTeamColumn ? 'center' : col.align}}
+                            column={col}
                             isEditing={isEditing}
                             isSelected={isSelected}
                             rowType={row.type}
