@@ -33,6 +33,8 @@ export const Dashboard: React.FC = () => {
     canRedo,
     getFormulaEngine,
     initializeData,
+    addMember,
+    deleteMember,
   } = useDashboardState();
   
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
@@ -144,6 +146,16 @@ export const Dashboard: React.FC = () => {
       return next;
     });
   }, []);
+
+  const handleAddMember = useCallback((sectionId: string) => {
+    addMember(sectionId);
+    toast.success('Novo membro adicionado');
+  }, [addMember]);
+
+  const handleDeleteMember = useCallback((rowId: string) => {
+    deleteMember(rowId);
+    toast.success('Membro removido');
+  }, [deleteMember]);
   
   const handlePaste = useCallback((rowId: string, columnId: string, data: string[][]) => {
     // Find starting position
@@ -212,6 +224,8 @@ export const Dashboard: React.FC = () => {
             onSelectCell={(key) => setSelectedCells(new Set([key]))}
             onToggleSection={handleToggleSection}
             onPaste={handlePaste}
+            onAddMember={handleAddMember}
+            onDeleteMember={handleDeleteMember}
           />
         </div>
         
