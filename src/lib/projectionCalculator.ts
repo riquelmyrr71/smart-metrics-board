@@ -32,6 +32,14 @@ export const getTotalDays = (settings: PeriodSettings): number => {
 };
 
 /**
+ * Calculate remaining days in the period
+ */
+export const getRemainingDays = (settings: PeriodSettings): number => {
+  const remaining = differenceInDays(settings.endDate, settings.currentDate);
+  return Math.max(0, remaining);
+};
+
+/**
  * Calculate the progress percentage through the period
  */
 export const getPeriodProgress = (settings: PeriodSettings): number => {
@@ -42,22 +50,23 @@ export const getPeriodProgress = (settings: PeriodSettings): number => {
 
 /**
  * Calculate projection based on current value and time elapsed
- * Formula: projection = (currentValue / daysElapsed) * totalDays
+ * Formula: projection = currentValue + (dailyRate × remainingDays)
  * 
- * This projects what the final value will be if the current rate continues
+ * This projects what the final value will be if the current daily rate continues
+ * dailyRate = currentValue / daysElapsed
  */
 export const calculateProjection = (
   currentValue: number,
   settings: PeriodSettings
 ): number => {
   const daysElapsed = getDaysElapsed(settings);
-  const totalDays = getTotalDays(settings);
+  const remainingDays = getRemainingDays(settings);
   
-  // Daily rate = current / days elapsed
+  // Daily rate = current / days elapsed (average streamers recruited per day)
   const dailyRate = currentValue / daysElapsed;
   
-  // Projection = daily rate * total days
-  const projection = dailyRate * totalDays;
+  // Projection = current + (daily rate × remaining days)
+  const projection = currentValue + (dailyRate * remainingDays);
   
   return Math.round(projection);
 };
