@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { Cell, CellValue, Row, Column, Section, DashboardState, DashboardSettings, HistoryEntry, ColumnGroup } from '@/types/dashboard';
 import { FormulaEngine } from '@/lib/formulaEngine';
 import { PeriodSettings, getDefaultPeriodSettings, calculateProjection, calculateAchievement, calculateProjectedAchievement } from '@/lib/projectionCalculator';
-
+import { createCell } from '@/data/dashboardData';
 const DEFAULT_SETTINGS: DashboardSettings = {
   decimalPlaces: 0,
   capPercentAt100: false,
@@ -435,6 +435,56 @@ export const useDashboardState = (initialState?: Partial<DashboardState>) => {
     const withTotals = recalculateSubtotalsAndTotals(withProjections);
     setRows(withTotals);
   }, [recalculateAllProjections, recalculateSubtotalsAndTotals]);
+
+  // Add a new member to a section
+  const addMember = useCallback((sectionId: string, memberName: string = 'NOVO MEMBRO') => {
+    setRows(prevRows => {
+      // Find section rows to determine order
+      const sectionRows = prevRows.filter(r => r.sectionId === sectionId && r.type === 'data');
+      const subtotalRow = prevRows.find(r => r.sectionId === sectionId && r.type === 'subtotal');
+      
+      // Generate unique ID
+      const newRowId = `row_${Date.now()}`;
+      const newOrder = subtotalRow ? subtotalRow.order - 0.5 : sectionRows.length > 0 ? Math.max(...sectionRows.map(r => r.order)) + 1 : 1;
+      
+      const newRow: Row = {
+        id: newRowId,
+        type: 'data',
+        order: newOrder,
+        sectionId,
+        cells: {
+          streamers: createCell(newRowId, 'streamers', 0, 'number'),
+          team: createCell(newRowId, 'team', memberName, 'text'),
+          rec_atual: createCell(newRowId, 'rec_atual', 0, 'number'),
+          meta_rec: createCell(newRowId, 'meta_rec', 75, 'number'),
+          atg_percent: createCell(newRowId, 'atg_percent', 0, 'percentage'),
+          proj_rec: createCell(newRowId, 'proj_rec', 0, 'number'),
+          atg_proj_rec: createCell(newRowId, 'atg_proj_rec', 0, 'percentage'),
+          diamantes_atuais: createCell(newRowId, 'diamantes_atuais', 0, 'currency'),
+          meta_diamantes: createCell(newRowId, 'meta_diamantes', 100000, 'currency'),
+          atg_dima: createCell(newRowId, 'atg_dima', 0, 'percentage'),
+          proj_dima: createCell(newRowId, 'proj_dima', 0, 'currency'),
+          atg_proj_dima: createCell(newRowId, 'atg_proj_dima', 0, 'percentage'),
+        },
+      };
+      
+      // Insert before subtotal
+      const insertIndex = subtotalRow ? prevRows.indexOf(subtotalRow) : prevRows.length;
+      const newRows = [...prevRows.slice(0, insertIndex), newRow, ...prevRows.slice(insertIndex)];
+      
+      const withProjections = recalculateAllProjections(newRows);
+      return recalculateSubtotalsAndTotals(withProjections);
+    });
+  }, [recalculateAllProjections, recalculateSubtotalsAndTotals]);
+
+  // Delete a member from the dashboard
+  const deleteMember = useCallback((rowId: string) => {
+    setRows(prevRows => {
+      const newRows = prevRows.filter(r => r.id !== rowId);
+      const withProjections = recalculateAllProjections(newRows);
+      return recalculateSubtotalsAndTotals(withProjections);
+    });
+  }, [recalculateAllProjections, recalculateSubtotalsAndTotals]);
   
   return {
     // State
@@ -464,6 +514,8 @@ export const useDashboardState = (initialState?: Partial<DashboardState>) => {
     getCellKey,
     getFormulaEngine,
     initializeData,
+    addMember,
+    deleteMember,
     
     // Computed
     canUndo: historyIndex >= 0,
