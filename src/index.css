@@ -55,6 +55,12 @@
     --cell-negative: 0 70% 50%;
     --cell-warning: 38 92% 50%;
     --cell-over100: 345 80% 45%;
+    
+    /* Column group colors */
+    --col-recruitment: 25 70% 92%;
+    --col-recruitment-header: 25 60% 75%;
+    --col-diamonds: 220 10% 88%;
+    --col-diamonds-header: 220 8% 65%;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -113,6 +119,12 @@
     --cell-negative: 0 60% 45%;
     --cell-warning: 38 80% 45%;
     --cell-over100: 345 75% 55%;
+    
+    /* Column group colors - dark mode */
+    --col-recruitment: 25 40% 18%;
+    --col-recruitment-header: 25 45% 35%;
+    --col-diamonds: 220 10% 20%;
+    --col-diamonds-header: 220 8% 35%;
 
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;

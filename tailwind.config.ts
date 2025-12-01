@@ -72,6 +72,10 @@ export default {
           negative: "hsl(var(--cell-negative))",
           warning: "hsl(var(--cell-warning))",
           over100: "hsl(var(--cell-over100))",
+          "col-recruitment": "hsl(var(--col-recruitment))",
+          "col-recruitment-header": "hsl(var(--col-recruitment-header))",
+          "col-diamonds": "hsl(var(--col-diamonds))",
+          "col-diamonds-header": "hsl(var(--col-diamonds-header))",
         },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
