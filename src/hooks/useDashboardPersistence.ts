@@ -26,7 +26,8 @@ interface SerializedDashboardData {
   periodSettings: SerializedPeriodSettings;
 }
 
-const DASHBOARD_ID = 'main-dashboard';
+// Fixed UUID for the main dashboard
+const DASHBOARD_ID = '00000000-0000-0000-0000-000000000001';
 
 const serializePeriodSettings = (settings: PeriodSettings): SerializedPeriodSettings => ({
   startDate: settings.startDate.toISOString(),
