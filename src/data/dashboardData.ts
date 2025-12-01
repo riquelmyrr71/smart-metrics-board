@@ -32,11 +32,11 @@ const columns: Column[] = [
   { id: 'atg_percent', name: 'ATG %', type: 'percentage', width: 70, align: 'right', group: 'recrutamento', tooltip: 'Atingimento = (Rec Atual / Meta) × 100', editable: false },
   { id: 'proj_rec', name: 'PROJEÇÃO', type: 'number', width: 90, align: 'right', group: 'recrutamento', tooltip: 'Projeção = Rec Atual + (média diária × dias restantes)', editable: false },
   { id: 'atg_proj_rec', name: 'ATG PROJ.%', type: 'percentage', width: 110, align: 'right', group: 'recrutamento', tooltip: 'Atingimento da projeção = (Projeção / Meta) × 100', editable: false },
-  { id: 'diamantes_atuais', name: 'DIAMANTES ATUAIS', type: 'currency', width: 140, align: 'right', group: 'diamantes', tooltip: 'Diamantes atuais' },
-  { id: 'meta_diamantes', name: 'META DE DIAMANTES', type: 'currency', width: 140, align: 'right', group: 'diamantes', tooltip: 'Meta de diamantes' },
-  { id: 'atg_dima', name: 'ATG % DIMA', type: 'percentage', width: 100, align: 'right', group: 'diamantes', tooltip: 'Atingimento de diamantes' },
-  { id: 'proj_dima', name: 'PROJ DIMA', type: 'currency', width: 120, align: 'right', group: 'diamantes', tooltip: 'Projeção de diamantes' },
-  { id: 'atg_proj_dima', name: 'ATG PROJ.% DIMA', type: 'percentage', width: 120, align: 'right', group: 'diamantes', tooltip: 'Atingimento da projeção de diamantes' },
+  { id: 'diamantes_atuais', name: 'DIAMANTES ATUAIS', type: 'currency', width: 140, align: 'right', group: 'diamantes', tooltip: 'Diamantes atuais - editável manualmente', editable: true },
+  { id: 'meta_diamantes', name: 'META DE DIAMANTES', type: 'currency', width: 140, align: 'right', group: 'diamantes', tooltip: 'Meta de diamantes - editável manualmente', editable: true },
+  { id: 'atg_dima', name: 'ATG % DIMA', type: 'percentage', width: 100, align: 'right', group: 'diamantes', tooltip: 'Atingimento = (Diamantes Atuais / Meta) × 100', editable: false },
+  { id: 'proj_dima', name: 'PROJ DIMA', type: 'currency', width: 120, align: 'right', group: 'diamantes', tooltip: 'Projeção = Diamantes Atuais + (média diária × dias restantes)', editable: false },
+  { id: 'atg_proj_dima', name: 'ATG PROJ.% DIMA', type: 'percentage', width: 120, align: 'right', group: 'diamantes', tooltip: 'Atingimento da projeção = (Projeção / Meta) × 100', editable: false },
 ];
 
 const columnGroups: ColumnGroup[] = [
