@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { Cell, CellValue, Row, Column, Section, DashboardState, DashboardSettings, HistoryEntry, ColumnGroup } from '@/types/dashboard';
 import { FormulaEngine } from '@/lib/formulaEngine';
+import { PeriodSettings, getDefaultPeriodSettings, calculateProjection, calculateAchievement, calculateProjectedAchievement } from '@/lib/projectionCalculator';
 
 const DEFAULT_SETTINGS: DashboardSettings = {
   decimalPlaces: 0,
@@ -20,6 +21,7 @@ export const useDashboardState = (initialState?: Partial<DashboardState>) => {
     ...DEFAULT_SETTINGS,
     ...initialState?.settings,
   });
+  const [periodSettings, setPeriodSettings] = useState<PeriodSettings>(getDefaultPeriodSettings());
   
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
@@ -44,6 +46,240 @@ export const useDashboardState = (initialState?: Partial<DashboardState>) => {
       formulaEngineRef.current.updateSettings(settings);
     }
   }, [rows, settings]);
+
+  // Recalculate all projections when period settings change
+  const recalculateAllProjections = useCallback((currentRows: Row[]): Row[] => {
+    return currentRows.map(row => {
+      if (row.type !== 'data') return row;
+      
+      const updatedCells = { ...row.cells };
+      
+      // Get base values
+      const recAtual = updatedCells.rec_atual?.value.raw as number || 0;
+      const metaRec = updatedCells.meta_rec?.value.raw as number || 0;
+      const diamantesAtuais = updatedCells.diamantes_atuais?.value.raw as number || 0;
+      const metaDiamantes = updatedCells.meta_diamantes?.value.raw as number || 0;
+      
+      // Calculate projections based on period
+      const projRec = calculateProjection(recAtual, periodSettings);
+      const projDima = calculateProjection(diamantesAtuais, periodSettings);
+      
+      // Calculate achievements
+      const atgPercent = calculateAchievement(recAtual, metaRec);
+      const atgProjRec = calculateProjectedAchievement(projRec, metaRec);
+      const atgDima = calculateAchievement(diamantesAtuais, metaDiamantes);
+      const atgProjDima = calculateProjectedAchievement(projDima, metaDiamantes);
+      
+      // Update cells
+      if (updatedCells.atg_percent) {
+        updatedCells.atg_percent = {
+          ...updatedCells.atg_percent,
+          value: {
+            ...updatedCells.atg_percent.value,
+            raw: atgPercent / 100,
+            displayValue: `${Math.round(atgPercent)}%`,
+          },
+        };
+      }
+      
+      if (updatedCells.proj_rec) {
+        updatedCells.proj_rec = {
+          ...updatedCells.proj_rec,
+          value: {
+            ...updatedCells.proj_rec.value,
+            raw: projRec,
+            displayValue: new Intl.NumberFormat('pt-BR').format(projRec),
+          },
+        };
+      }
+      
+      if (updatedCells.atg_proj_rec) {
+        updatedCells.atg_proj_rec = {
+          ...updatedCells.atg_proj_rec,
+          value: {
+            ...updatedCells.atg_proj_rec.value,
+            raw: atgProjRec / 100,
+            displayValue: `${Math.round(atgProjRec)}%`,
+          },
+        };
+      }
+      
+      if (updatedCells.atg_dima) {
+        updatedCells.atg_dima = {
+          ...updatedCells.atg_dima,
+          value: {
+            ...updatedCells.atg_dima.value,
+            raw: atgDima / 100,
+            displayValue: `${Math.round(atgDima)}%`,
+          },
+        };
+      }
+      
+      if (updatedCells.proj_dima) {
+        updatedCells.proj_dima = {
+          ...updatedCells.proj_dima,
+          value: {
+            ...updatedCells.proj_dima.value,
+            raw: projDima,
+            displayValue: new Intl.NumberFormat('pt-BR').format(projDima),
+          },
+        };
+      }
+      
+      if (updatedCells.atg_proj_dima) {
+        updatedCells.atg_proj_dima = {
+          ...updatedCells.atg_proj_dima,
+          value: {
+            ...updatedCells.atg_proj_dima.value,
+            raw: atgProjDima / 100,
+            displayValue: `${Math.round(atgProjDima)}%`,
+          },
+        };
+      }
+      
+      return { ...row, cells: updatedCells };
+    });
+  }, [periodSettings]);
+
+  // Recalculate subtotals and totals
+  const recalculateSubtotalsAndTotals = useCallback((currentRows: Row[]): Row[] => {
+    const sections = new Map<string, Row[]>();
+    const dataRows: Row[] = [];
+    
+    // Group data rows by section
+    currentRows.forEach(row => {
+      if (row.type === 'data') {
+        dataRows.push(row);
+        if (row.sectionId) {
+          const sectionRows = sections.get(row.sectionId) || [];
+          sectionRows.push(row);
+          sections.set(row.sectionId, sectionRows);
+        }
+      }
+    });
+    
+    return currentRows.map(row => {
+      if (row.type === 'subtotal' && row.sectionId) {
+        const sectionRows = sections.get(row.sectionId) || [];
+        return recalculateSummaryRow(row, sectionRows, columns);
+      }
+      
+      if (row.type === 'total') {
+        // For total, sum all subtotals or all data rows
+        const subtotalRows = currentRows.filter(r => r.type === 'subtotal');
+        if (subtotalRows.length > 0) {
+          return recalculateSummaryRow(row, subtotalRows, columns);
+        }
+        return recalculateSummaryRow(row, dataRows, columns);
+      }
+      
+      return row;
+    });
+  }, [columns]);
+
+  const recalculateSummaryRow = (summaryRow: Row, sourceRows: Row[], cols: Column[]): Row => {
+    const updatedCells = { ...summaryRow.cells };
+    
+    cols.forEach(col => {
+      if (!updatedCells[col.id]) return;
+      
+      if (col.type === 'number' || col.type === 'currency') {
+        const sum = sourceRows.reduce((acc, row) => {
+          const cell = row.cells[col.id];
+          if (cell) {
+            const value = typeof cell.value.raw === 'number' ? cell.value.raw : 0;
+            return acc + value;
+          }
+          return acc;
+        }, 0);
+        
+        updatedCells[col.id] = {
+          ...updatedCells[col.id],
+          value: {
+            ...updatedCells[col.id].value,
+            raw: sum,
+            displayValue: new Intl.NumberFormat('pt-BR').format(sum),
+          },
+        };
+      } else if (col.type === 'percentage') {
+        // For percentages in summary rows, recalculate based on totals
+        // ATG % = Total Atual / Total Meta
+        if (col.id === 'atg_percent') {
+          const totalAtual = sourceRows.reduce((acc, row) => acc + (typeof row.cells.rec_atual?.value.raw === 'number' ? row.cells.rec_atual.value.raw : 0), 0);
+          const totalMeta = sourceRows.reduce((acc, row) => acc + (typeof row.cells.meta_rec?.value.raw === 'number' ? row.cells.meta_rec.value.raw : 0), 0);
+          const atg = totalMeta > 0 ? (totalAtual / totalMeta) * 100 : 0;
+          
+          updatedCells[col.id] = {
+            ...updatedCells[col.id],
+            value: {
+              ...updatedCells[col.id].value,
+              raw: atg / 100,
+              displayValue: `${Math.round(atg)}%`,
+            },
+          };
+        } else if (col.id === 'atg_proj_rec') {
+          const totalProj = sourceRows.reduce((acc, row) => acc + (typeof row.cells.proj_rec?.value.raw === 'number' ? row.cells.proj_rec.value.raw : 0), 0);
+          const totalMeta = sourceRows.reduce((acc, row) => acc + (typeof row.cells.meta_rec?.value.raw === 'number' ? row.cells.meta_rec.value.raw : 0), 0);
+          const atg = totalMeta > 0 ? (totalProj / totalMeta) * 100 : 0;
+          
+          updatedCells[col.id] = {
+            ...updatedCells[col.id],
+            value: {
+              ...updatedCells[col.id].value,
+              raw: atg / 100,
+              displayValue: `${Math.round(atg)}%`,
+            },
+          };
+        } else if (col.id === 'atg_dima') {
+          const totalAtual = sourceRows.reduce((acc, row) => acc + (typeof row.cells.diamantes_atuais?.value.raw === 'number' ? row.cells.diamantes_atuais.value.raw : 0), 0);
+          const totalMeta = sourceRows.reduce((acc, row) => acc + (typeof row.cells.meta_diamantes?.value.raw === 'number' ? row.cells.meta_diamantes.value.raw : 0), 0);
+          const atg = totalMeta > 0 ? (totalAtual / totalMeta) * 100 : 0;
+          
+          updatedCells[col.id] = {
+            ...updatedCells[col.id],
+            value: {
+              ...updatedCells[col.id].value,
+              raw: atg / 100,
+              displayValue: `${Math.round(atg)}%`,
+            },
+          };
+        } else if (col.id === 'atg_proj_dima') {
+          const totalProj = sourceRows.reduce((acc, row) => acc + (typeof row.cells.proj_dima?.value.raw === 'number' ? row.cells.proj_dima.value.raw : 0), 0);
+          const totalMeta = sourceRows.reduce((acc, row) => acc + (typeof row.cells.meta_diamantes?.value.raw === 'number' ? row.cells.meta_diamantes.value.raw : 0), 0);
+          const atg = totalMeta > 0 ? (totalProj / totalMeta) * 100 : 0;
+          
+          updatedCells[col.id] = {
+            ...updatedCells[col.id],
+            value: {
+              ...updatedCells[col.id].value,
+              raw: atg / 100,
+              displayValue: `${Math.round(atg)}%`,
+            },
+          };
+        }
+      }
+    });
+    
+    return { ...summaryRow, cells: updatedCells };
+  };
+  
+  // Update period settings and recalculate
+  const updatePeriodSettings = useCallback((newSettings: Partial<PeriodSettings>) => {
+    setPeriodSettings(prev => {
+      const updated = { ...prev, ...newSettings };
+      return updated;
+    });
+  }, []);
+
+  // Effect to recalculate when period settings change
+  useEffect(() => {
+    if (rows.length > 0) {
+      setRows(prevRows => {
+        const withProjections = recalculateAllProjections(prevRows);
+        return recalculateSubtotalsAndTotals(withProjections);
+      });
+    }
+  }, [periodSettings]);
   
   const getCellKey = useCallback((rowId: string, columnId: string) => {
     return `${rowId}-${columnId}`;
@@ -111,134 +347,69 @@ export const useDashboardState = (initialState?: Partial<DashboardState>) => {
         };
       });
       
-      // Recalculate dependent cells
-      return recalculateDependentCells(newRows);
+      // Recalculate projections and then subtotals/totals
+      const withProjections = recalculateAllProjections(newRows);
+      return recalculateSubtotalsAndTotals(withProjections);
     });
-  }, [historyIndex, settings.capPercentAt100]);
-  
-  const recalculateDependentCells = useCallback((currentRows: Row[]): Row[] => {
-    // Simple dependency recalculation - in production, would use a DAG
-    return currentRows.map(row => {
-      if (row.type === 'subtotal' || row.type === 'total') {
-        return recalculateTotalRow(row, currentRows);
-      }
-      return row;
-    });
-  }, []);
-  
-  const recalculateTotalRow = useCallback((totalRow: Row, allRows: Row[]): Row => {
-    const updatedCells = { ...totalRow.cells };
-    
-    // Get rows to sum based on section
-    const rowsToSum = allRows.filter(row => {
-      if (totalRow.type === 'total') {
-        return row.type === 'data' || row.type === 'subtotal';
-      }
-      return row.type === 'data' && row.sectionId === totalRow.sectionId;
-    });
-    
-    columns.forEach(col => {
-      if (col.type === 'number' || col.type === 'currency') {
-        const sum = rowsToSum.reduce((acc, row) => {
-          const cell = row.cells[col.id];
-          if (cell && formulaEngineRef.current) {
-            return acc + formulaEngineRef.current.getCellNumericValue(cell);
-          }
-          return acc;
-        }, 0);
-        
-        if (updatedCells[col.id]) {
-          updatedCells[col.id] = {
-            ...updatedCells[col.id],
-            value: {
-              ...updatedCells[col.id].value,
-              raw: sum,
-              displayValue: formulaEngineRef.current?.formatValue(
-                { raw: sum, type: col.type },
-                settings.capPercentAt100
-              ) || String(sum),
-            },
-          };
-        }
-      } else if (col.type === 'percentage' && totalRow.type === 'subtotal') {
-        // Calculate average for percentages
-        const values = rowsToSum
-          .map(row => row.cells[col.id])
-          .filter(cell => cell && cell.value.raw !== null);
-        
-        if (values.length > 0 && formulaEngineRef.current) {
-          const sum = values.reduce((acc, cell) => {
-            return acc + formulaEngineRef.current!.getCellNumericValue(cell!);
-          }, 0);
-          const avg = sum / values.length;
-          
-          if (updatedCells[col.id]) {
-            updatedCells[col.id] = {
-              ...updatedCells[col.id],
-              value: {
-                ...updatedCells[col.id].value,
-                raw: avg,
-                displayValue: formulaEngineRef.current.formatValue(
-                  { raw: avg, type: 'percentage' },
-                  settings.capPercentAt100
-                ),
-              },
-            };
-          }
-        }
-      }
-    });
-    
-    return { ...totalRow, cells: updatedCells };
-  }, [columns, settings.capPercentAt100]);
+  }, [historyIndex, settings.capPercentAt100, recalculateAllProjections, recalculateSubtotalsAndTotals]);
   
   const undo = useCallback(() => {
     if (historyIndex < 0) return;
     
     const entry = history[historyIndex];
     
-    setRows(prevRows => prevRows.map(row => {
-      const cell = Object.values(row.cells).find(c => c.id === entry.cellId);
-      if (!cell) return row;
-      
-      return {
-        ...row,
-        cells: {
-          ...row.cells,
-          [cell.columnId]: {
-            ...cell,
-            value: entry.previousValue,
+    setRows(prevRows => {
+      const newRows = prevRows.map(row => {
+        const cell = Object.values(row.cells).find(c => c.id === entry.cellId);
+        if (!cell) return row;
+        
+        return {
+          ...row,
+          cells: {
+            ...row.cells,
+            [cell.columnId]: {
+              ...cell,
+              value: entry.previousValue,
+            },
           },
-        },
-      };
-    }));
+        };
+      });
+      
+      const withProjections = recalculateAllProjections(newRows);
+      return recalculateSubtotalsAndTotals(withProjections);
+    });
     
     setHistoryIndex(prev => prev - 1);
-  }, [history, historyIndex]);
+  }, [history, historyIndex, recalculateAllProjections, recalculateSubtotalsAndTotals]);
   
   const redo = useCallback(() => {
     if (historyIndex >= history.length - 1) return;
     
     const entry = history[historyIndex + 1];
     
-    setRows(prevRows => prevRows.map(row => {
-      const cell = Object.values(row.cells).find(c => c.id === entry.cellId);
-      if (!cell) return row;
-      
-      return {
-        ...row,
-        cells: {
-          ...row.cells,
-          [cell.columnId]: {
-            ...cell,
-            value: entry.newValue,
+    setRows(prevRows => {
+      const newRows = prevRows.map(row => {
+        const cell = Object.values(row.cells).find(c => c.id === entry.cellId);
+        if (!cell) return row;
+        
+        return {
+          ...row,
+          cells: {
+            ...row.cells,
+            [cell.columnId]: {
+              ...cell,
+              value: entry.newValue,
+            },
           },
-        },
-      };
-    }));
+        };
+      });
+      
+      const withProjections = recalculateAllProjections(newRows);
+      return recalculateSubtotalsAndTotals(withProjections);
+    });
     
     setHistoryIndex(prev => prev + 1);
-  }, [history, historyIndex]);
+  }, [history, historyIndex, recalculateAllProjections, recalculateSubtotalsAndTotals]);
   
   const toggleSection = useCallback((sectionId: string) => {
     setSections(prev => prev.map(section =>
@@ -253,6 +424,17 @@ export const useDashboardState = (initialState?: Partial<DashboardState>) => {
   }, []);
   
   const getFormulaEngine = useCallback(() => formulaEngineRef.current, []);
+
+  // Trigger initial calculation after data loads
+  const initializeData = useCallback((data: { columns: Column[], columnGroups: ColumnGroup[], rows: Row[] }) => {
+    setColumns(data.columns);
+    setColumnGroups(data.columnGroups);
+    
+    // Calculate projections for initial data
+    const withProjections = recalculateAllProjections(data.rows);
+    const withTotals = recalculateSubtotalsAndTotals(withProjections);
+    setRows(withTotals);
+  }, [recalculateAllProjections, recalculateSubtotalsAndTotals]);
   
   return {
     // State
@@ -265,6 +447,7 @@ export const useDashboardState = (initialState?: Partial<DashboardState>) => {
     sections,
     setSections,
     settings,
+    periodSettings,
     history,
     editingCell,
     setEditingCell,
@@ -277,8 +460,10 @@ export const useDashboardState = (initialState?: Partial<DashboardState>) => {
     redo,
     toggleSection,
     updateSettings,
+    updatePeriodSettings,
     getCellKey,
     getFormulaEngine,
+    initializeData,
     
     // Computed
     canUndo: historyIndex >= 0,

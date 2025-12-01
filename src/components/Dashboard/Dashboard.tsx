@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { DashboardHeader } from './DashboardHeader';
 import { DashboardTable } from './DashboardTable';
+import { PeriodSettingsPanel } from './PeriodSettings';
 import { useDashboardState } from '@/hooks/useDashboardState';
 import { exportToCSV, downloadCSV, downloadPDF } from '@/lib/exportUtils';
 import { toast } from 'sonner';
@@ -15,13 +16,10 @@ import { Copy, Check } from 'lucide-react';
 export const Dashboard: React.FC = () => {
   const {
     columns,
-    setColumns,
     columnGroups,
-    setColumnGroups,
     rows,
-    setRows,
-    sections,
     settings,
+    periodSettings,
     editingCell,
     setEditingCell,
     selectedCells,
@@ -30,24 +28,26 @@ export const Dashboard: React.FC = () => {
     undo,
     redo,
     updateSettings,
+    updatePeriodSettings,
     canUndo,
     canRedo,
     getFormulaEngine,
+    initializeData,
   } = useDashboardState();
   
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [sharePermission, setSharePermission] = useState<'view' | 'edit'>('view');
   const [copied, setCopied] = useState(false);
+  const [initialized, setInitialized] = useState(false);
   
   // Initialize with sample data
   useEffect(() => {
-    if (rows.length === 0) {
-      setColumns(initialDashboardData.columns);
-      setColumnGroups(initialDashboardData.columnGroups);
-      setRows(initialDashboardData.rows);
+    if (!initialized && rows.length === 0) {
+      initializeData(initialDashboardData);
+      setInitialized(true);
     }
-  }, [rows.length, setColumns, setColumnGroups, setRows]);
+  }, [initialized, rows.length, initializeData]);
   
   // Keyboard shortcuts
   useEffect(() => {
@@ -85,10 +85,8 @@ export const Dashboard: React.FC = () => {
           toast.error('Valor inválido para porcentagem');
           return;
         }
-        // Store as decimal if small value, otherwise as percentage
-        if (parsedValue > 2 || parsedValue < -2) {
-          parsedValue = parsedValue / 100; // Convert to decimal for storage
-        }
+        // Store as decimal
+        parsedValue = parsedValue / 100;
       } else if (column.type === 'number' || column.type === 'currency') {
         const cleanValue = value.replace(/[^\d.,-]/g, '').replace(',', '.');
         parsedValue = parseFloat(cleanValue);
@@ -104,6 +102,8 @@ export const Dashboard: React.FC = () => {
       formula,
       type: column.type,
     });
+    
+    toast.success('Célula atualizada - projeções recalculadas');
   }, [columns, updateCell]);
   
   const handleExportCSV = useCallback(() => {
@@ -190,6 +190,12 @@ export const Dashboard: React.FC = () => {
       />
       
       <main className="flex-1 overflow-hidden p-2 sm:p-4">
+        {/* Period Settings */}
+        <PeriodSettingsPanel
+          settings={periodSettings}
+          onSettingsChange={updatePeriodSettings}
+        />
+        
         <div className="bg-card rounded-lg border border-border overflow-hidden shadow-sm">
           <DashboardTable
             columns={columns}
@@ -233,6 +239,16 @@ export const Dashboard: React.FC = () => {
             </div>
             <span>Célula com fórmula</span>
           </div>
+        </div>
+        
+        {/* Formula explanation */}
+        <div className="mt-4 p-3 bg-muted/50 rounded-lg text-xs text-muted-foreground">
+          <p className="font-semibold mb-1">Fórmulas de cálculo:</p>
+          <ul className="space-y-1 list-disc list-inside">
+            <li><strong>Projeção</strong> = (Valor Atual ÷ Dias Decorridos) × Total de Dias do Período</li>
+            <li><strong>ATG %</strong> = (Valor Atual ÷ Meta) × 100</li>
+            <li><strong>ATG PROJ.%</strong> = (Projeção ÷ Meta) × 100</li>
+          </ul>
         </div>
       </main>
       
