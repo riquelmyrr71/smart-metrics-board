@@ -270,17 +270,17 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({
                 <tr key={row.id} className="bg-secondary group">
                   <td
                     colSpan={columns.length}
-                    className="px-2 py-3 font-bold text-secondary-foreground cursor-pointer hover:bg-secondary/80 transition-colors"
+                    className="px-2 py-1.5 font-bold text-secondary-foreground cursor-pointer hover:bg-secondary/80 transition-colors"
                     onClick={() => onToggleSection(sectionId)}
                   >
                     <div className="flex items-center justify-center gap-2">
                       <div className="flex items-center gap-2">
                         {isCollapsed ? (
-                          <ChevronRight className="w-4 h-4" />
+                          <ChevronRight className="w-3.5 h-3.5" />
                         ) : (
-                          <ChevronDown className="w-4 h-4" />
+                          <ChevronDown className="w-3.5 h-3.5" />
                         )}
-                        <span className="text-base tracking-wide">{firstCell?.value.raw || 'Seção'}</span>
+                        <span className="text-sm tracking-wide">{firstCell?.value.raw || 'Seção'}</span>
                       </div>
                       <Button
                         variant="ghost"
