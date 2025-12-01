@@ -168,21 +168,46 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({
     return !collapsedSections.has(row.sectionId);
   });
   
+  // Get column background color based on group
+  const getColumnBgClass = (columnId: string, isHeader: boolean = false) => {
+    const col = columns.find(c => c.id === columnId);
+    if (!col) return '';
+    
+    if (col.group === 'recrutamento') {
+      return isHeader ? 'bg-dashboard-col-recruitment-header' : 'bg-dashboard-col-recruitment';
+    }
+    if (col.group === 'diamantes') {
+      return isHeader ? 'bg-dashboard-col-diamonds-header' : 'bg-dashboard-col-diamonds';
+    }
+    return '';
+  };
+  
   // Group columns for header rendering
   const renderColumnGroups = () => {
     if (columnGroups.length === 0) return null;
     
     return (
       <tr>
-        {columnGroups.map(group => (
-          <th
-            key={group.id}
-            colSpan={group.columns.length}
-            className="bg-secondary text-secondary-foreground px-2 py-2 text-center font-semibold text-xs uppercase tracking-wider border-r border-dashboard-cell-border"
-          >
-            {group.name}
-          </th>
-        ))}
+        {columnGroups.map(group => {
+          const bgClass = group.id === 'recrutamento' 
+            ? 'bg-dashboard-col-recruitment-header' 
+            : group.id === 'diamantes' 
+              ? 'bg-dashboard-col-diamonds-header' 
+              : 'bg-secondary';
+          
+          return (
+            <th
+              key={group.id}
+              colSpan={group.columns.length}
+              className={cn(
+                'text-foreground px-2 py-2 text-center font-semibold text-xs uppercase tracking-wider border-r border-dashboard-cell-border',
+                bgClass
+              )}
+            >
+              {group.name}
+            </th>
+          );
+        })}
       </tr>
     );
   };
@@ -198,11 +223,20 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({
         <thead className="sticky top-0 z-10">
           {renderColumnGroups()}
           <tr>
-            {columns.map((col, colIndex) => (
+            {columns.map((col, colIndex) => {
+              const headerBgClass = col.group === 'recrutamento' 
+                ? 'bg-dashboard-col-recruitment-header' 
+                : col.group === 'diamantes' 
+                  ? 'bg-dashboard-col-diamonds-header' 
+                  : 'bg-dashboard-header text-dashboard-header-text';
+              
+              return (
               <th
                 key={col.id}
                 className={cn(
-                  'bg-dashboard-header text-dashboard-header-text px-2 py-2 font-semibold text-xs border-r border-dashboard-cell-border whitespace-nowrap',
+                  'px-2 py-2 font-semibold text-xs border-r border-dashboard-cell-border whitespace-nowrap',
+                  headerBgClass,
+                  col.group !== 'info' && 'text-foreground',
                   col.align === 'left' ? 'text-left' : 'text-right'
                 )}
                 style={{ minWidth: col.width || 80 }}
@@ -220,7 +254,8 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({
                   )}
                 </div>
               </th>
-            ))}
+            );
+            })}
           </tr>
         </thead>
         <tbody>
@@ -235,20 +270,22 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({
                 <tr key={row.id} className="bg-secondary group">
                   <td
                     colSpan={columns.length}
-                    className="px-2 py-2 font-bold text-secondary-foreground cursor-pointer hover:bg-secondary/80 transition-colors"
+                    className="px-2 py-3 font-bold text-secondary-foreground cursor-pointer hover:bg-secondary/80 transition-colors"
                     onClick={() => onToggleSection(sectionId)}
                   >
-                    <div className="flex items-center gap-2">
-                      {isCollapsed ? (
-                        <ChevronRight className="w-4 h-4" />
-                      ) : (
-                        <ChevronDown className="w-4 h-4" />
-                      )}
-                      <span className="flex-1">{firstCell?.value.raw || 'Seção'}</span>
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="flex items-center gap-2">
+                        {isCollapsed ? (
+                          <ChevronRight className="w-4 h-4" />
+                        ) : (
+                          <ChevronDown className="w-4 h-4" />
+                        )}
+                        <span className="text-base tracking-wide">{firstCell?.value.raw || 'Seção'}</span>
+                      </div>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="opacity-0 group-hover:opacity-50 hover:!opacity-100 h-6 w-6 p-0 transition-opacity"
+                        className="opacity-0 group-hover:opacity-50 hover:!opacity-100 h-6 w-6 p-0 transition-opacity absolute right-2"
                         onClick={(e) => {
                           e.stopPropagation();
                           onAddMember(sectionId);
@@ -266,16 +303,22 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({
             // Subtotal row
             if (row.type === 'subtotal') {
               return (
-                <tr key={row.id} className="bg-dashboard-subtotal text-dashboard-header-text font-semibold">
+                <tr key={row.id} className="font-semibold">
                   {columns.map((col, colIndex) => {
                     const cell = row.cells[col.id];
                     const displayValue = cell?.value.displayValue || String(cell?.value.raw || '-');
+                    const subtotalBgClass = col.group === 'recrutamento' 
+                      ? 'bg-dashboard-col-recruitment-header' 
+                      : col.group === 'diamantes' 
+                        ? 'bg-dashboard-col-diamonds-header' 
+                        : 'bg-dashboard-subtotal text-dashboard-header-text';
                     
                     return (
                       <td
                         key={col.id}
                         className={cn(
                           'px-2 py-1.5 border-r border-dashboard-cell-border/50',
+                          subtotalBgClass,
                           col.align === 'left' ? 'text-left' : 'text-right',
                           (col.type === 'number' || col.type === 'percentage' || col.type === 'currency') && 'font-mono-numbers'
                         )}
@@ -326,9 +369,11 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({
               >
                 {columns.map((col, colIndex) => {
                   const cell = row.cells[col.id];
+                  const cellBgClass = getColumnBgClass(col.id);
+                  
                   if (!cell) {
                     return (
-                      <td key={col.id} className="px-2 py-1 border-r border-dashboard-cell-border">
+                      <td key={col.id} className={cn("px-2 py-1 border-r border-dashboard-cell-border", cellBgClass)}>
                         -
                       </td>
                     );
@@ -347,6 +392,7 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({
                       key={col.id}
                       className={cn(
                         'border-r border-dashboard-cell-border p-0 relative',
+                        cellBgClass,
                       )}
                       onClick={() => {
                         setFocusedCell({ rowIndex: dataRowIndex, colIndex });
