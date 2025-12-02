@@ -3,7 +3,7 @@ import { Column, Row, ColumnGroup, DashboardSettings, Cell } from '@/types/dashb
 import { EditableCell } from './EditableCell';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Info, ChevronDown, ChevronRight, Plus, Trash2 } from 'lucide-react';
+import { Info, ChevronDown, ChevronRight, Plus, Trash2, ChevronUp } from 'lucide-react';
 import { FormulaEngine } from '@/lib/formulaEngine';
 import { Button } from '@/components/ui/button';
 
@@ -16,6 +16,7 @@ interface DashboardTableProps {
   selectedCells: Set<string>;
   formulaEngine: FormulaEngine | null;
   collapsedSections: Set<string>;
+  showIncrementControls: boolean;
   onCellEdit: (rowId: string, columnId: string, value: string, isFormula?: boolean) => void;
   onStartEdit: (cellKey: string) => void;
   onEndEdit: () => void;
@@ -24,6 +25,7 @@ interface DashboardTableProps {
   onPaste: (rowId: string, columnId: string, data: string[][]) => void;
   onAddMember: (sectionId: string) => void;
   onDeleteMember: (rowId: string) => void;
+  onIncrement: (rowId: string, columnId: string, delta: number) => void;
 }
 
 export const DashboardTable: React.FC<DashboardTableProps> = ({
@@ -35,6 +37,7 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({
   selectedCells,
   formulaEngine,
   collapsedSections,
+  showIncrementControls,
   onCellEdit,
   onStartEdit,
   onEndEdit,
@@ -43,6 +46,7 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({
   onPaste,
   onAddMember,
   onDeleteMember,
+  onIncrement,
 }) => {
   const tableRef = useRef<HTMLTableElement>(null);
   const [focusedCell, setFocusedCell] = useState<{ rowIndex: number; colIndex: number } | null>(null);
@@ -386,6 +390,7 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({
                   const trend = col.type === 'percentage' ? getTrend(cell, row, colIndex) : undefined;
                   const progressValue = col.type === 'percentage' ? getProgressValue(cell) : undefined;
                   const isTeamColumn = col.id === 'team';
+                  const isRecAtualColumn = col.id === 'rec_atual';
                   
                   return (
                     <td
@@ -400,6 +405,35 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({
                       }}
                     >
                       <div className="flex items-center">
+                        {/* Increment controls for REC ATUAL */}
+                        {isRecAtualColumn && showIncrementControls && (
+                          <div className="flex flex-col ml-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-4 w-4 p-0 hover:bg-primary/20"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onIncrement(row.id, col.id, 1);
+                              }}
+                              title="Aumentar"
+                            >
+                              <ChevronUp className="w-3 h-3" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-4 w-4 p-0 hover:bg-primary/20"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onIncrement(row.id, col.id, -1);
+                              }}
+                              title="Diminuir"
+                            >
+                              <ChevronDown className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        )}
                         <div className="flex-1">
                           <EditableCell
                             cell={cell}

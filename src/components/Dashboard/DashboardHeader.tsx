@@ -15,6 +15,8 @@ import {
   Calculator,
   Save,
   Loader2,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { DashboardSettings } from '@/types/dashboard';
 import {
@@ -33,6 +35,7 @@ interface DashboardHeaderProps {
   canRedo: boolean;
   isSaving?: boolean;
   lastSaved?: Date | null;
+  showIncrementControls: boolean;
   onUndo: () => void;
   onRedo: () => void;
   onExportCSV: () => void;
@@ -40,6 +43,7 @@ interface DashboardHeaderProps {
   onShare: () => void;
   onSave: () => void;
   onSettingsChange: (settings: Partial<DashboardSettings>) => void;
+  onToggleIncrementControls: () => void;
 }
 
 export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
@@ -49,6 +53,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   canRedo,
   isSaving = false,
   lastSaved,
+  showIncrementControls,
   onUndo,
   onRedo,
   onExportCSV,
@@ -56,6 +61,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   onShare,
   onSave,
   onSettingsChange,
+  onToggleIncrementControls,
 }) => {
   const formatLastSaved = (date: Date | null | undefined) => {
     if (!date) return null;
@@ -92,6 +98,28 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         </div>
         
         <div className="flex items-center gap-2 flex-wrap">
+          {/* Toggle increment controls */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={showIncrementControls ? "default" : "outline"}
+                size="sm"
+                onClick={onToggleIncrementControls}
+                className="gap-2"
+              >
+                {showIncrementControls ? (
+                  <Eye className="w-4 h-4" />
+                ) : (
+                  <EyeOff className="w-4 h-4" />
+                )}
+                <span className="hidden sm:inline">+/-</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              {showIncrementControls ? 'Ocultar controles de incremento' : 'Mostrar controles de incremento'}
+            </TooltipContent>
+          </Tooltip>
+
           {/* Undo/Redo */}
           <div className="flex items-center gap-1 border-r border-border pr-2 mr-2">
             <Tooltip>
