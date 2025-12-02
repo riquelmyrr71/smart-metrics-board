@@ -158,21 +158,21 @@ export const useDashboardState = (initialState?: Partial<DashboardState>) => {
       }
     });
     
-    return currentRows.map(row => {
+    // First pass: update subtotals
+    const withSubtotals = currentRows.map(row => {
       if (row.type === 'subtotal' && row.sectionId) {
         const sectionRows = sections.get(row.sectionId) || [];
         return recalculateSummaryRow(row, sectionRows, columns);
       }
-      
+      return row;
+    });
+    
+    // Second pass: update totals using updated subtotals
+    return withSubtotals.map(row => {
       if (row.type === 'total') {
-        // For total, sum all subtotals or all data rows
-        const subtotalRows = currentRows.filter(r => r.type === 'subtotal');
-        if (subtotalRows.length > 0) {
-          return recalculateSummaryRow(row, subtotalRows, columns);
-        }
+        // For total, sum all data rows directly for accuracy
         return recalculateSummaryRow(row, dataRows, columns);
       }
-      
       return row;
     });
   }, [columns]);
