@@ -45,6 +45,7 @@ export const Dashboard: React.FC = () => {
   const [sharePermission, setSharePermission] = useState<'view' | 'edit'>('view');
   const [copied, setCopied] = useState(false);
   const [initialized, setInitialized] = useState(false);
+  const [showIncrementControls, setShowIncrementControls] = useState(false);
   
   // Initialize with saved data or sample data
   useEffect(() => {
@@ -218,6 +219,24 @@ export const Dashboard: React.FC = () => {
     
     toast.success(`${data.length} linha(s) coladas`);
   }, [rows, columns, handleCellEdit]);
+
+  const handleIncrement = useCallback((rowId: string, columnId: string, delta: number) => {
+    const row = rows.find(r => r.id === rowId);
+    if (!row) return;
+    
+    const cell = row.cells[columnId];
+    if (!cell) return;
+    
+    const currentValue = typeof cell.value.raw === 'number' ? cell.value.raw : parseFloat(String(cell.value.raw)) || 0;
+    const newValue = Math.max(0, currentValue + delta);
+    
+    updateCell(rowId, columnId, {
+      raw: newValue,
+      type: 'number',
+    });
+    
+    toast.success('Valor atualizado');
+  }, [rows, updateCell]);
   
   return (
     <div className="flex flex-col h-full min-h-screen bg-background">
@@ -228,6 +247,7 @@ export const Dashboard: React.FC = () => {
         canRedo={canRedo}
         isSaving={isSaving}
         lastSaved={lastSaved}
+        showIncrementControls={showIncrementControls}
         onUndo={undo}
         onRedo={redo}
         onExportCSV={handleExportCSV}
@@ -235,6 +255,7 @@ export const Dashboard: React.FC = () => {
         onShare={handleShare}
         onSave={handleSave}
         onSettingsChange={updateSettings}
+        onToggleIncrementControls={() => setShowIncrementControls(prev => !prev)}
       />
       
       <main className="flex-1 overflow-hidden p-2 sm:p-4">
@@ -254,6 +275,7 @@ export const Dashboard: React.FC = () => {
             selectedCells={selectedCells}
             formulaEngine={getFormulaEngine()}
             collapsedSections={collapsedSections}
+            showIncrementControls={showIncrementControls}
             onCellEdit={handleCellEdit}
             onStartEdit={setEditingCell}
             onEndEdit={() => setEditingCell(null)}
@@ -262,6 +284,7 @@ export const Dashboard: React.FC = () => {
             onPaste={handlePaste}
             onAddMember={handleAddMember}
             onDeleteMember={handleDeleteMember}
+            onIncrement={handleIncrement}
           />
         </div>
         
