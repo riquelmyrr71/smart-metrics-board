@@ -25,7 +25,7 @@ const createCell = (
 export { createCell };
 
 const columns: Column[] = [
-  { id: 'streamers', name: 'TOTAL DE STREAMERS', type: 'number', width: 50, align: 'center', group: 'info', tooltip: 'Total de streamers - atualizado automaticamente ou manualmente', editable: true },
+  { id: 'streamers', name: 'TT STREAMERS', type: 'number', width: 70, align: 'center', group: 'info', tooltip: 'Total de streamers - atualizado automaticamente ou manualmente', editable: true },
   { id: 'team', name: 'ASSOCIADOS', type: 'text', width: 200, align: 'left', group: 'info', tooltip: 'Nome do associado', editable: true },
   { id: 'rec_atual', name: 'REC ATUAL', type: 'number', width: 90, align: 'center', group: 'recrutamento', tooltip: 'Recrutamento atual - editável manualmente', editable: true },
   { id: 'meta_rec', name: 'META', type: 'number', width: 70, align: 'center', group: 'recrutamento', tooltip: 'Meta de recrutamento - editável manualmente', editable: true },
