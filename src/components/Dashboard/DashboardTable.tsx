@@ -291,7 +291,7 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({
                   col.group !== 'info' && 'text-foreground',
                   col.align === 'left' ? 'text-left' : col.align === 'center' ? 'text-center' : 'text-right'
                 )}
-                style={{ minWidth: col.width || 80 }}
+                style={{ width: col.width || 80, minWidth: col.width || 80, maxWidth: col.width ? col.width + 30 : undefined }}
               >
                 <div className="flex items-center gap-1">
                   {col.align === 'left' ? null : <span className="flex-1" />}
