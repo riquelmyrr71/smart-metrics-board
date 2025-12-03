@@ -204,7 +204,7 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({
               key={group.id}
               colSpan={group.columns.length}
               className={cn(
-                'text-foreground px-2 py-2 text-center font-semibold text-xs uppercase tracking-wider border-r border-dashboard-cell-border',
+                'text-foreground px-2 py-2 text-center font-semibold text-sm uppercase tracking-wider border-r border-dashboard-cell-border',
                 bgClass
               )}
             >
@@ -220,7 +220,7 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({
     <div className="overflow-x-auto scrollbar-thin">
       <table
         ref={tableRef}
-        className="w-full border-collapse text-sm"
+        className="w-full border-collapse text-base"
         role="grid"
         aria-label="Painel de Performance"
       >
@@ -238,7 +238,7 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({
               <th
                 key={col.id}
                 className={cn(
-                  'px-2 py-2 font-semibold text-xs border-r border-dashboard-cell-border whitespace-nowrap',
+                  'px-2 py-2 font-semibold text-sm border-r border-dashboard-cell-border whitespace-nowrap',
                   headerBgClass,
                   col.group !== 'info' && 'text-foreground',
                   col.align === 'left' ? 'text-left' : 'text-right'
@@ -284,7 +284,7 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({
                         ) : (
                           <ChevronDown className="w-3.5 h-3.5" />
                         )}
-                        <span className="text-sm tracking-wide">{firstCell?.value.raw || 'Seção'}</span>
+                        <span className="text-base tracking-wide">{firstCell?.value.raw || 'Seção'}</span>
                       </div>
                       <Button
                         variant="ghost"
