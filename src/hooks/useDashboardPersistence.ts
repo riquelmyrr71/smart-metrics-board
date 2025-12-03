@@ -129,9 +129,29 @@ export const useDashboardPersistence = () => {
     }
   }, []);
 
+  const resetDashboard = useCallback(async (): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('dashboard_data')
+        .delete()
+        .eq('id', DASHBOARD_ID);
+
+      if (error) throw error;
+
+      setLastSaved(null);
+      toast.success('Dashboard resetado com sucesso!');
+      return true;
+    } catch (error) {
+      console.error('Error resetting dashboard:', error);
+      toast.error('Erro ao resetar dashboard');
+      return false;
+    }
+  }, []);
+
   return {
     saveDashboard,
     loadDashboard,
+    resetDashboard,
     isSaving,
     isLoading,
     lastSaved,
