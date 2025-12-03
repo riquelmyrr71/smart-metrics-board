@@ -123,7 +123,7 @@ export const EditableCell: React.FC<EditableCellProps> = ({
   const cellContent = (
     <div
       className={cn(
-        'relative h-full min-h-[32px] flex items-center px-2 py-1 transition-all',
+        'relative h-full min-h-[28px] flex items-center px-1 py-0.5 transition-all',
         'editable-cell',
         column.align === 'left' ? 'justify-start text-left' : 'justify-end text-right',
         column.type === 'number' || column.type === 'percentage' || column.type === 'currency'
