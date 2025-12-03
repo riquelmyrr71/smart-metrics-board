@@ -204,7 +204,7 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({
               key={group.id}
               colSpan={group.columns.length}
               className={cn(
-                'text-foreground px-1 py-1.5 text-center font-semibold text-sm uppercase tracking-wider border-r border-dashboard-cell-border',
+                'text-foreground px-0.5 py-1 text-center font-semibold text-sm uppercase tracking-wider border-r border-dashboard-cell-border',
                 bgClass
               )}
             >
@@ -238,7 +238,7 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({
               <th
                 key={col.id}
                 className={cn(
-                  'px-1 py-1.5 font-semibold text-sm border-r border-dashboard-cell-border whitespace-nowrap',
+                  'px-0.5 py-1 font-semibold text-sm border-r border-dashboard-cell-border whitespace-nowrap',
                   headerBgClass,
                   col.group !== 'info' && 'text-foreground',
                   col.align === 'left' ? 'text-left' : 'text-right'
@@ -274,7 +274,7 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({
                 <tr key={row.id} className="bg-secondary group">
                   <td
                     colSpan={columns.length}
-                    className="px-1 py-1 font-bold text-secondary-foreground cursor-pointer hover:bg-secondary/80 transition-colors"
+                    className="px-0.5 py-0.5 font-bold text-secondary-foreground cursor-pointer hover:bg-secondary/80 transition-colors"
                     onClick={() => onToggleSection(sectionId)}
                   >
                     <div className="flex items-center justify-center gap-2">
@@ -321,7 +321,7 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({
                       <td
                         key={col.id}
                         className={cn(
-                          'px-1 py-1 border-r border-dashboard-cell-border/50',
+                          'px-0.5 py-0.5 border-r border-dashboard-cell-border/50',
                           subtotalBgClass,
                           col.align === 'left' ? 'text-left' : 'text-right',
                           (col.type === 'number' || col.type === 'percentage' || col.type === 'currency') && 'font-mono-numbers'
@@ -347,7 +347,7 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({
                       <td
                         key={col.id}
                         className={cn(
-                          'px-1 py-1 border-r border-dashboard-cell-border/50',
+                          'px-0.5 py-0.5 border-r border-dashboard-cell-border/50',
                           col.align === 'left' ? 'text-left' : 'text-right',
                           (col.type === 'number' || col.type === 'percentage' || col.type === 'currency') && 'font-mono-numbers'
                         )}
@@ -377,7 +377,7 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({
                   
                   if (!cell) {
                     return (
-                      <td key={col.id} className={cn("px-1 py-0.5 border-r border-dashboard-cell-border", cellBgClass)}>
+                      <td key={col.id} className={cn("px-0.5 py-0 border-r border-dashboard-cell-border", cellBgClass)}>
                         -
                       </td>
                     );
