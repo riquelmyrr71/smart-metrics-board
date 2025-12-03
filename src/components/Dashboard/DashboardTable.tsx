@@ -335,9 +335,9 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({
                         <span className="text-base tracking-wide">{firstCell?.value.raw || 'Seção'}</span>
                       </div>
                       <Button
-                        variant="ghost"
+                        variant="secondary"
                         size="sm"
-                        className="opacity-0 group-hover:opacity-50 hover:!opacity-100 h-6 w-6 p-0 transition-opacity absolute right-2"
+                        className="h-6 px-2 gap-1 ml-4"
                         onClick={(e) => {
                           e.stopPropagation();
                           onAddMember(sectionId);
@@ -345,6 +345,7 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({
                         title="Adicionar membro"
                       >
                         <Plus className="w-3.5 h-3.5" />
+                        <span className="text-xs">Associado</span>
                       </Button>
                     </div>
                   </td>
