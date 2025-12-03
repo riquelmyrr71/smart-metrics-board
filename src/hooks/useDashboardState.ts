@@ -485,6 +485,90 @@ export const useDashboardState = (initialState?: Partial<DashboardState>) => {
       return recalculateSubtotalsAndTotals(withProjections);
     });
   }, [recalculateAllProjections, recalculateSubtotalsAndTotals]);
+
+  // Add a new executive section
+  const addExecutive = useCallback((executiveName: string = 'NOVO EXECUTIVO') => {
+    setRows(prevRows => {
+      const sectionId = `section_${Date.now()}`;
+      const headerRowId = `header_${Date.now()}`;
+      const dataRowId = `data_${Date.now()}`;
+      const subtotalRowId = `subtotal_${Date.now()}`;
+      
+      // Find the total row index to insert before it
+      const totalRowIndex = prevRows.findIndex(r => r.type === 'total');
+      const insertIndex = totalRowIndex !== -1 ? totalRowIndex : prevRows.length;
+      
+      // Calculate order based on existing sections
+      const existingSectionHeaders = prevRows.filter(r => r.type === 'section-header');
+      const baseOrder = existingSectionHeaders.length * 100 + 100;
+      
+      // Create section header row
+      const headerRow: Row = {
+        id: headerRowId,
+        type: 'section-header',
+        order: baseOrder,
+        sectionId,
+        cells: {
+          team: createCell(headerRowId, 'team', executiveName, 'text'),
+        },
+      };
+      
+      // Create initial data row
+      const dataRow: Row = {
+        id: dataRowId,
+        type: 'data',
+        order: baseOrder + 1,
+        sectionId,
+        cells: {
+          streamers: createCell(dataRowId, 'streamers', 0, 'number'),
+          team: createCell(dataRowId, 'team', 'NOVO MEMBRO', 'text'),
+          rec_atual: createCell(dataRowId, 'rec_atual', 0, 'number'),
+          meta_rec: createCell(dataRowId, 'meta_rec', 75, 'number'),
+          atg_percent: createCell(dataRowId, 'atg_percent', 0, 'percentage'),
+          proj_rec: createCell(dataRowId, 'proj_rec', 0, 'number'),
+          atg_proj_rec: createCell(dataRowId, 'atg_proj_rec', 0, 'percentage'),
+          diamantes_atuais: createCell(dataRowId, 'diamantes_atuais', 0, 'currency'),
+          meta_diamantes: createCell(dataRowId, 'meta_diamantes', 100000, 'currency'),
+          atg_dima: createCell(dataRowId, 'atg_dima', 0, 'percentage'),
+          proj_dima: createCell(dataRowId, 'proj_dima', 0, 'currency'),
+          atg_proj_dima: createCell(dataRowId, 'atg_proj_dima', 0, 'percentage'),
+        },
+      };
+      
+      // Create subtotal row
+      const subtotalRow: Row = {
+        id: subtotalRowId,
+        type: 'subtotal',
+        order: baseOrder + 2,
+        sectionId,
+        cells: {
+          streamers: createCell(subtotalRowId, 'streamers', 0, 'number'),
+          team: createCell(subtotalRowId, 'team', 'SUBTOTAL', 'text'),
+          rec_atual: createCell(subtotalRowId, 'rec_atual', 0, 'number'),
+          meta_rec: createCell(subtotalRowId, 'meta_rec', 75, 'number'),
+          atg_percent: createCell(subtotalRowId, 'atg_percent', 0, 'percentage'),
+          proj_rec: createCell(subtotalRowId, 'proj_rec', 0, 'number'),
+          atg_proj_rec: createCell(subtotalRowId, 'atg_proj_rec', 0, 'percentage'),
+          diamantes_atuais: createCell(subtotalRowId, 'diamantes_atuais', 0, 'currency'),
+          meta_diamantes: createCell(subtotalRowId, 'meta_diamantes', 100000, 'currency'),
+          atg_dima: createCell(subtotalRowId, 'atg_dima', 0, 'percentage'),
+          proj_dima: createCell(subtotalRowId, 'proj_dima', 0, 'currency'),
+          atg_proj_dima: createCell(subtotalRowId, 'atg_proj_dima', 0, 'percentage'),
+        },
+      };
+      
+      const newRows = [
+        ...prevRows.slice(0, insertIndex),
+        headerRow,
+        dataRow,
+        subtotalRow,
+        ...prevRows.slice(insertIndex),
+      ];
+      
+      const withProjections = recalculateAllProjections(newRows);
+      return recalculateSubtotalsAndTotals(withProjections);
+    });
+  }, [recalculateAllProjections, recalculateSubtotalsAndTotals]);
   
   return {
     // State
@@ -516,6 +600,7 @@ export const useDashboardState = (initialState?: Partial<DashboardState>) => {
     initializeData,
     addMember,
     deleteMember,
+    addExecutive,
     
     // Computed
     canUndo: historyIndex >= 0,
