@@ -74,52 +74,148 @@ export const generatePDFContent = (
   settings: DashboardSettings,
   title: string = 'Dashboard Report'
 ): string => {
-  // Generate HTML content for PDF
+  // Exact colors from the design system (light mode)
+  const colors = {
+    primary: '#8B1538',
+    secondary: '#661230',
+    background: '#f5f5f5',
+    card: '#ffffff',
+    rowEven: '#ffffff',
+    rowOdd: '#f7f7f7',
+    rowSubtotal: '#993d52',
+    rowTotal: '#8B1538',
+    cellBorder: '#e0e0e0',
+    // Column group colors
+    colRecruitment: '#fbe9dd',
+    colRecruitmentHeader: '#dfb499',
+    colDiamonds: '#dcdee3',
+    colDiamondsHeader: '#9ea2a9',
+    // Status colors
+    positive: '#22c55e',
+    negative: '#ef4444',
+    warning: '#f59e0b',
+    over100: '#be185d',
+  };
+
   const styles = `
     <style>
-      @page { size: landscape; margin: 10mm; }
-      body { font-family: 'Inter', Arial, sans-serif; font-size: 9px; color: #1a1a1a; }
-      h1 { font-size: 16px; color: #8B1538; margin-bottom: 10px; }
-      table { width: 100%; border-collapse: collapse; }
-      th, td { padding: 4px 6px; border: 1px solid #ddd; text-align: right; }
-      th { background: #8B1538; color: white; font-weight: 600; }
-      .section-header { background: #5c0f26; color: white; font-weight: 600; text-align: left; }
-      .subtotal { background: #a64d6a; color: white; font-weight: 600; }
-      .total { background: #8B1538; color: white; font-weight: 700; }
-      .text-left { text-align: left; }
-      .positive { color: #16a34a; }
-      .negative { color: #dc2626; }
-      .over100 { color: #be185d; font-weight: 700; }
-      .row-even { background: #fff; }
-      .row-odd { background: #f7f7f7; }
-      .group-header { background: #5c0f26; color: white; font-weight: 600; text-align: center; }
+      @page { 
+        size: A4 landscape; 
+        margin: 8mm; 
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body { 
+        font-family: 'Segoe UI', Arial, sans-serif; 
+        font-size: 8px; 
+        color: #1a1a1a; 
+        background: ${colors.background};
+        padding: 10px;
+      }
+      .container {
+        background: ${colors.card};
+        border-radius: 6px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      }
+      table { 
+        width: 100%; 
+        border-collapse: collapse; 
+        table-layout: fixed;
+      }
+      th, td { 
+        padding: 3px 4px; 
+        border: 1px solid ${colors.cellBorder}; 
+        text-align: right; 
+        font-size: 7px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      th { 
+        font-weight: 600; 
+        font-size: 7px;
+      }
+      .group-header-recruitment {
+        background: ${colors.colRecruitmentHeader};
+        color: #1a1a1a;
+      }
+      .group-header-diamonds {
+        background: ${colors.colDiamondsHeader};
+        color: #1a1a1a;
+      }
+      .group-header-info {
+        background: ${colors.primary};
+        color: white;
+      }
+      .col-header-recruitment {
+        background: ${colors.colRecruitmentHeader};
+        color: #1a1a1a;
+      }
+      .col-header-diamonds {
+        background: ${colors.colDiamondsHeader};
+        color: #1a1a1a;
+      }
+      .col-header-info {
+        background: ${colors.primary};
+        color: white;
+      }
+      .col-recruitment {
+        background: ${colors.colRecruitment};
+      }
+      .col-diamonds {
+        background: ${colors.colDiamonds};
+      }
+      .section-header { 
+        background: ${colors.secondary}; 
+        color: white; 
+        font-weight: 600; 
+        text-align: center !important;
+        font-size: 8px;
+      }
+      .subtotal { 
+        background: ${colors.colRecruitmentHeader}; 
+        font-weight: 600; 
+      }
+      .subtotal-diamonds {
+        background: ${colors.colDiamondsHeader};
+        font-weight: 600;
+      }
+      .total { 
+        background: ${colors.rowTotal}; 
+        color: white; 
+        font-weight: 700; 
+      }
+      .text-left { text-align: left !important; }
+      .text-center { text-align: center !important; }
+      .positive { color: ${colors.positive}; font-weight: 600; }
+      .negative { color: ${colors.negative}; font-weight: 600; }
+      .over100 { color: ${colors.over100}; font-weight: 700; }
+      .row-even { background: ${colors.rowEven}; }
+      .row-odd { background: ${colors.rowOdd}; }
+      .font-mono { font-family: 'Consolas', monospace; }
     </style>
   `;
   
-  let tableContent = '<table>';
+  // Get column group info
+  const getColumnGroup = (colId: string) => {
+    const col = columns.find(c => c.id === colId);
+    return col?.group || 'info';
+  };
+  
+  let tableContent = '<div class="container"><table>';
   
   // Column group headers
   tableContent += '<tr>';
-  let currentGroup = '';
-  let colspan = 0;
-  
-  columns.forEach((col, index) => {
-    const group = columnGroups.find(g => g.columns.includes(col.id));
-    const groupName = group?.name || '';
+  columnGroups.forEach(group => {
+    let headerClass = 'group-header-info';
+    if (group.id === 'recrutamento') headerClass = 'group-header-recruitment';
+    else if (group.id === 'diamantes') headerClass = 'group-header-diamonds';
     
-    if (groupName !== currentGroup) {
-      if (colspan > 0) {
-        tableContent += `<th class="group-header" colspan="${colspan}">${currentGroup}</th>`;
-      }
-      currentGroup = groupName;
-      colspan = 1;
-    } else {
-      colspan++;
-    }
-    
-    if (index === columns.length - 1) {
-      tableContent += `<th class="group-header" colspan="${colspan}">${currentGroup}</th>`;
-    }
+    tableContent += `<th class="${headerClass} text-center" colspan="${group.columns.length}">${group.name}</th>`;
   });
   tableContent += '</tr>';
   
@@ -127,61 +223,85 @@ export const generatePDFContent = (
   tableContent += '<tr>';
   columns.forEach(col => {
     const align = col.align === 'left' ? 'text-left' : '';
-    tableContent += `<th class="${align}">${col.name}</th>`;
+    let headerClass = 'col-header-info';
+    if (col.group === 'recrutamento') headerClass = 'col-header-recruitment';
+    else if (col.group === 'diamantes') headerClass = 'col-header-diamonds';
+    
+    tableContent += `<th class="${headerClass} ${align}">${col.name}</th>`;
   });
   tableContent += '</tr>';
   
   // Data rows
-  rows.forEach((row, rowIndex) => {
-    let rowClass = '';
-    
-    switch (row.type) {
-      case 'section-header':
-        rowClass = 'section-header';
-        break;
-      case 'subtotal':
-        rowClass = 'subtotal';
-        break;
-      case 'total':
-        rowClass = 'total';
-        break;
-      default:
-        rowClass = rowIndex % 2 === 0 ? 'row-even' : 'row-odd';
-    }
-    
-    tableContent += `<tr class="${rowClass}">`;
-    
+  let dataRowIndex = 0;
+  rows.forEach((row) => {
     if (row.type === 'section-header') {
       const firstCell = Object.values(row.cells)[0];
-      tableContent += `<td colspan="${columns.length}" class="section-header">${firstCell?.value.raw || ''}</td>`;
-    } else {
+      tableContent += `<tr><td colspan="${columns.length}" class="section-header">${firstCell?.value.raw || ''}</td></tr>`;
+      return;
+    }
+    
+    if (row.type === 'subtotal') {
+      tableContent += '<tr>';
       columns.forEach(col => {
         const cell = row.cells[col.id];
         const value = cell?.value.displayValue || String(cell?.value.raw || '-');
         const align = col.align === 'left' ? 'text-left' : '';
-        
-        let valueClass = '';
-        if (cell?.value.type === 'percentage') {
-          const numValue = typeof cell.value.raw === 'number' ? cell.value.raw : parseFloat(String(cell.value.raw));
-          const percentValue = Math.abs(numValue) <= 2 ? numValue * 100 : numValue;
-          
-          if (percentValue > 100) {
-            valueClass = 'over100';
-          } else if (percentValue >= 80) {
-            valueClass = 'positive';
-          } else if (percentValue < 50) {
-            valueClass = 'negative';
-          }
-        }
-        
-        tableContent += `<td class="${align} ${valueClass}">${value}</td>`;
+        const colClass = col.group === 'diamantes' ? 'subtotal-diamonds' : 'subtotal';
+        const monoClass = (col.type === 'number' || col.type === 'percentage' || col.type === 'currency') ? 'font-mono' : '';
+        tableContent += `<td class="${colClass} ${align} ${monoClass}">${value}</td>`;
       });
+      tableContent += '</tr>';
+      return;
     }
     
+    if (row.type === 'total') {
+      tableContent += '<tr>';
+      columns.forEach(col => {
+        const cell = row.cells[col.id];
+        const value = cell?.value.displayValue || String(cell?.value.raw || '-');
+        const align = col.align === 'left' ? 'text-left' : '';
+        const monoClass = (col.type === 'number' || col.type === 'percentage' || col.type === 'currency') ? 'font-mono' : '';
+        tableContent += `<td class="total ${align} ${monoClass}">${value}</td>`;
+      });
+      tableContent += '</tr>';
+      return;
+    }
+    
+    // Data row
+    const rowClass = dataRowIndex % 2 === 0 ? 'row-even' : 'row-odd';
+    dataRowIndex++;
+    
+    tableContent += `<tr class="${rowClass}">`;
+    columns.forEach(col => {
+      const cell = row.cells[col.id];
+      const value = cell?.value.displayValue || String(cell?.value.raw || '-');
+      const align = col.align === 'left' ? 'text-left' : '';
+      
+      let colBgClass = '';
+      if (col.group === 'recrutamento') colBgClass = 'col-recruitment';
+      else if (col.group === 'diamantes') colBgClass = 'col-diamonds';
+      
+      let valueClass = '';
+      if (cell?.value.type === 'percentage') {
+        const numValue = typeof cell.value.raw === 'number' ? cell.value.raw : parseFloat(String(cell.value.raw));
+        const percentValue = Math.abs(numValue) <= 2 ? numValue * 100 : numValue;
+        
+        if (percentValue > 100) {
+          valueClass = 'over100';
+        } else if (percentValue >= 80) {
+          valueClass = 'positive';
+        } else if (percentValue < 50) {
+          valueClass = 'negative';
+        }
+      }
+      
+      const monoClass = (col.type === 'number' || col.type === 'percentage' || col.type === 'currency') ? 'font-mono' : '';
+      tableContent += `<td class="${colBgClass} ${align} ${valueClass} ${monoClass}">${value}</td>`;
+    });
     tableContent += '</tr>';
   });
   
-  tableContent += '</table>';
+  tableContent += '</table></div>';
   
   return `
     <!DOCTYPE html>
@@ -192,8 +312,6 @@ export const generatePDFContent = (
       ${styles}
     </head>
     <body>
-      <h1>${title}</h1>
-      <p>Gerado em: ${new Date().toLocaleString('pt-BR')}</p>
       ${tableContent}
     </body>
     </html>
