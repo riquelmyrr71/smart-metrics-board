@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, UserPlus } from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
   const {
@@ -36,6 +36,7 @@ export const Dashboard: React.FC = () => {
     initializeData,
     addMember,
     deleteMember,
+    addExecutive,
   } = useDashboardState();
 
   const { saveDashboard, loadDashboard, resetDashboard, isSaving, lastSaved } = useDashboardPersistence();
@@ -200,6 +201,14 @@ export const Dashboard: React.FC = () => {
     deleteMember(rowId);
     toast.success('Membro removido');
   }, [deleteMember]);
+
+  const handleAddExecutive = useCallback(() => {
+    const name = prompt('Nome do novo executivo:');
+    if (name && name.trim()) {
+      addExecutive(name.trim().toUpperCase());
+      toast.success('Executivo adicionado');
+    }
+  }, [addExecutive]);
   
   const handlePaste = useCallback((rowId: string, columnId: string, data: string[][]) => {
     // Find starting position
@@ -275,6 +284,13 @@ export const Dashboard: React.FC = () => {
           settings={periodSettings}
           onSettingsChange={updatePeriodSettings}
         />
+        
+        <div className="flex justify-end mb-2">
+          <Button onClick={handleAddExecutive} variant="outline" size="sm" className="gap-2">
+            <UserPlus className="w-4 h-4" />
+            Adicionar Executivo
+          </Button>
+        </div>
         
         <div className="bg-card rounded-lg border border-border overflow-hidden shadow-sm">
           <DashboardTable
