@@ -166,6 +166,54 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({
     return numValue;
   };
   
+  // Calculate achievement progress for REC ATUAL and DIAMANTES ATUAIS columns
+  const getAchievementProgress = (row: Row, columnId: string): number | undefined => {
+    // For REC ATUAL, compare with META
+    if (columnId === 'rec_atual') {
+      const recAtualCell = row.cells['rec_atual'];
+      const metaCell = row.cells['meta'];
+      if (!recAtualCell || !metaCell) return undefined;
+      
+      const recAtual = typeof recAtualCell.value.raw === 'number' 
+        ? recAtualCell.value.raw 
+        : parseFloat(String(recAtualCell.value.raw)) || 0;
+      const meta = typeof metaCell.value.raw === 'number' 
+        ? metaCell.value.raw 
+        : parseFloat(String(metaCell.value.raw)) || 0;
+      
+      if (meta <= 0) return 0;
+      return Math.min((recAtual / meta) * 100, 100);
+    }
+    
+    // For DIAMANTES ATUAIS, compare with META DE DIAMANTES
+    if (columnId === 'diamantes_atuais') {
+      const diamantesCell = row.cells['diamantes_atuais'];
+      const metaDiamantesCell = row.cells['meta_diamantes'];
+      if (!diamantesCell || !metaDiamantesCell) return undefined;
+      
+      const diamantes = typeof diamantesCell.value.raw === 'number' 
+        ? diamantesCell.value.raw 
+        : parseFloat(String(diamantesCell.value.raw)) || 0;
+      const metaDiamantes = typeof metaDiamantesCell.value.raw === 'number' 
+        ? metaDiamantesCell.value.raw 
+        : parseFloat(String(metaDiamantesCell.value.raw)) || 0;
+      
+      if (metaDiamantes <= 0) return 0;
+      return Math.min((diamantes / metaDiamantes) * 100, 100);
+    }
+    
+    return undefined;
+  };
+  
+  // Get progress bar color based on percentage
+  const getProgressBarColor = (percentage: number): string => {
+    if (percentage < 30) return 'bg-red-500/30';
+    if (percentage < 50) return 'bg-yellow-500/30';
+    if (percentage === 50) return 'bg-orange-500/30';
+    if (percentage <= 80) return 'bg-sky-400/30';
+    return 'bg-green-500/30';
+  };
+  
   const visibleRows = rows.filter(row => {
     if (row.type === 'section-header') return true;
     if (!row.sectionId) return true;
@@ -391,6 +439,9 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({
                   const progressValue = col.type === 'percentage' ? getProgressValue(cell) : undefined;
                   const isTeamColumn = col.id === 'team';
                   const isRecAtualColumn = col.id === 'rec_atual';
+                  const isDiamantesAtualColumn = col.id === 'diamantes_atuais';
+                  const achievementProgress = getAchievementProgress(row, col.id);
+                  const showAchievementBar = (isRecAtualColumn || isDiamantesAtualColumn) && achievementProgress !== undefined;
                   
                   return (
                     <td
@@ -404,10 +455,20 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({
                         onSelectCell(cellKey);
                       }}
                     >
-                      <div className="flex items-center">
-                        {/* Increment controls for REC ATUAL */}
-                        {isRecAtualColumn && showIncrementControls && (
-                          <div className="flex flex-col ml-1">
+                      <div className="flex items-center relative">
+                        {/* Achievement progress bar background */}
+                        {showAchievementBar && achievementProgress > 0 && (
+                          <div 
+                            className={cn(
+                              'absolute inset-0 h-full transition-all',
+                              getProgressBarColor(achievementProgress)
+                            )}
+                            style={{ width: `${achievementProgress}%` }}
+                          />
+                        )}
+                        {/* Increment controls for REC ATUAL and DIAMANTES ATUAIS */}
+                        {(isRecAtualColumn || isDiamantesAtualColumn) && showIncrementControls && (
+                          <div className="flex flex-col ml-1 z-10">
                             <Button
                               variant="ghost"
                               size="sm"
@@ -434,7 +495,7 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({
                             </Button>
                           </div>
                         )}
-                        <div className="flex-1">
+                        <div className="flex-1 relative z-10">
                           <EditableCell
                             cell={cell}
                             column={col}
