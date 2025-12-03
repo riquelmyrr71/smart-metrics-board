@@ -710,7 +710,7 @@ const totalRow: Row = {
     proj_rec: createCell('total', 'proj_rec', 977, 'number'),
     atg_proj_rec: createCell('total', 'atg_proj_rec', 0.58, 'percentage'),
     diamantes_atuais: createCell('total', 'diamantes_atuais', 19720955, 'currency'),
-    meta_diamantes: createCell('total', 'meta_diamantes', 27095752, 'currency'),
+    meta_diamantes: createCell('total', 'meta_diamantes', 35079999, 'currency'),
     atg_dima: createCell('total', 'atg_dima', 0.73, 'percentage'),
     proj_dima: createCell('total', 'proj_dima', 19720955, 'currency'),
     atg_proj_dima: createCell('total', 'atg_proj_dima', 0.73, 'percentage'),
