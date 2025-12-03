@@ -17,6 +17,7 @@ import {
   Loader2,
   Eye,
   EyeOff,
+  RotateCcw,
 } from 'lucide-react';
 import { DashboardSettings } from '@/types/dashboard';
 import {
@@ -42,6 +43,7 @@ interface DashboardHeaderProps {
   onExportPDF: () => void;
   onShare: () => void;
   onSave: () => void;
+  onReset: () => void;
   onSettingsChange: (settings: Partial<DashboardSettings>) => void;
   onToggleIncrementControls: () => void;
 }
@@ -60,6 +62,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   onExportPDF,
   onShare,
   onSave,
+  onReset,
   onSettingsChange,
   onToggleIncrementControls,
 }) => {
@@ -328,6 +331,25 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
                     checked={settings.showFormulas}
                     onCheckedChange={(v) => onSettingsChange({ showFormulas: v })}
                   />
+                </div>
+
+                {/* Reset Dashboard */}
+                <div className="pt-4 border-t border-border">
+                  <div className="space-y-2">
+                    <Label className="text-destructive">Resetar Dashboard</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Apaga todos os dados salvos e recarrega com a estrutura inicial (inclui novos executivos)
+                    </p>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={onReset}
+                      className="gap-2 w-full"
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                      Resetar para dados iniciais
+                    </Button>
+                  </div>
                 </div>
                 
                 {/* Documentation */}

@@ -38,7 +38,7 @@ export const Dashboard: React.FC = () => {
     deleteMember,
   } = useDashboardState();
 
-  const { saveDashboard, loadDashboard, isSaving, lastSaved } = useDashboardPersistence();
+  const { saveDashboard, loadDashboard, resetDashboard, isSaving, lastSaved } = useDashboardPersistence();
   
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
@@ -84,6 +84,16 @@ export const Dashboard: React.FC = () => {
       periodSettings,
     });
   }, [saveDashboard, rows, columns, columnGroups, settings, periodSettings]);
+
+  const handleReset = useCallback(async () => {
+    if (!confirm('Tem certeza? Isso apagará todos os dados salvos e recarregará a estrutura inicial.')) {
+      return;
+    }
+    const success = await resetDashboard();
+    if (success) {
+      initializeData(initialDashboardData);
+    }
+  }, [resetDashboard, initializeData]);
   
   // Keyboard shortcuts
   useEffect(() => {
@@ -254,6 +264,7 @@ export const Dashboard: React.FC = () => {
         onExportPDF={handleExportPDF}
         onShare={handleShare}
         onSave={handleSave}
+        onReset={handleReset}
         onSettingsChange={updateSettings}
         onToggleIncrementControls={() => setShowIncrementControls(prev => !prev)}
       />
