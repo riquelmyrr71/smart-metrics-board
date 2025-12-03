@@ -643,6 +643,59 @@ const section6Rows: Row[] = [
   },
 ];
 
+// Section 7: EXECUTIVO DE PARCERIAS - LEONARDO LIMA
+const section7Rows: Row[] = [
+  {
+    id: 'section7-header',
+    type: 'section-header',
+    order: 60,
+    sectionId: 'section7',
+    cells: {
+      team: createCell('section7-header', 'team', 'EXECUTIVO DE PARCERIAS - LEONARDO LIMA'),
+    },
+  },
+  {
+    id: 'row21',
+    type: 'data',
+    order: 61,
+    sectionId: 'section7',
+    cells: {
+      streamers: createCell('row21', 'streamers', 0, 'number'),
+      team: createCell('row21', 'team', 'ASSOCIADO 1', 'text'),
+      rec_atual: createCell('row21', 'rec_atual', 0, 'number'),
+      meta_rec: createCell('row21', 'meta_rec', 75, 'number'),
+      atg_percent: createCell('row21', 'atg_percent', 0, 'percentage'),
+      proj_rec: createCell('row21', 'proj_rec', 0, 'number'),
+      atg_proj_rec: createCell('row21', 'atg_proj_rec', 0, 'percentage'),
+      diamantes_atuais: createCell('row21', 'diamantes_atuais', 0, 'currency'),
+      meta_diamantes: createCell('row21', 'meta_diamantes', 100000, 'currency'),
+      atg_dima: createCell('row21', 'atg_dima', 0, 'percentage'),
+      proj_dima: createCell('row21', 'proj_dima', 0, 'currency'),
+      atg_proj_dima: createCell('row21', 'atg_proj_dima', 0, 'percentage'),
+    },
+  },
+  {
+    id: 'subtotal7',
+    type: 'subtotal',
+    order: 69,
+    sectionId: 'section7',
+    cells: {
+      streamers: createCell('subtotal7', 'streamers', 0, 'number'),
+      team: createCell('subtotal7', 'team', 'SUBTOTAL LEONARDO LIMA', 'text'),
+      rec_atual: createCell('subtotal7', 'rec_atual', 0, 'number'),
+      meta_rec: createCell('subtotal7', 'meta_rec', 75, 'number'),
+      atg_percent: createCell('subtotal7', 'atg_percent', 0, 'percentage'),
+      proj_rec: createCell('subtotal7', 'proj_rec', 0, 'number'),
+      atg_proj_rec: createCell('subtotal7', 'atg_proj_rec', 0, 'percentage'),
+      diamantes_atuais: createCell('subtotal7', 'diamantes_atuais', 0, 'currency'),
+      meta_diamantes: createCell('subtotal7', 'meta_diamantes', 100000, 'currency'),
+      atg_dima: createCell('subtotal7', 'atg_dima', 0, 'percentage'),
+      proj_dima: createCell('subtotal7', 'proj_dima', 0, 'currency'),
+      atg_proj_dima: createCell('subtotal7', 'atg_proj_dima', 0, 'percentage'),
+    },
+  },
+];
+
 // Total row
 const totalRow: Row = {
   id: 'total',
@@ -667,5 +720,5 @@ const totalRow: Row = {
 export const initialDashboardData = {
   columns,
   columnGroups,
-  rows: [...section1Rows, ...section2Rows, ...section3Rows, ...section4Rows, ...section5Rows, ...section6Rows, totalRow],
+  rows: [...section1Rows, ...section2Rows, ...section3Rows, ...section4Rows, ...section5Rows, ...section6Rows, ...section7Rows, totalRow],
 };
