@@ -125,7 +125,7 @@ export const EditableCell: React.FC<EditableCellProps> = ({
       className={cn(
         'relative h-full min-h-[24px] flex items-center px-0.5 py-0 transition-all',
         'editable-cell',
-        column.align === 'left' ? 'justify-start text-left' : 'justify-end text-right',
+        column.align === 'left' ? 'justify-start text-left' : column.align === 'center' ? 'justify-center text-center' : 'justify-end text-right',
         column.type === 'number' || column.type === 'percentage' || column.type === 'currency'
           ? 'font-mono-numbers'
           : '',
@@ -164,7 +164,7 @@ export const EditableCell: React.FC<EditableCellProps> = ({
           className={cn(
             'w-full h-full bg-card border-none outline-none',
             'text-sm font-mono-numbers',
-            column.align === 'left' ? 'text-left' : 'text-right'
+            column.align === 'left' ? 'text-left' : column.align === 'center' ? 'text-center' : 'text-right'
           )}
           aria-label={`Editando ${column.name}`}
         />
