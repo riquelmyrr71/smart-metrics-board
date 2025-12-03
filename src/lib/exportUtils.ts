@@ -129,11 +129,12 @@ export const generatePDFContent = (
       th, td { 
         padding: 3px 4px; 
         border: 1px solid ${colors.cellBorder}; 
-        text-align: right; 
+        text-align: center; 
         font-size: 7px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        position: relative;
       }
       th { 
         font-weight: 600; 
@@ -197,6 +198,26 @@ export const generatePDFContent = (
       .row-even { background: ${colors.rowEven}; }
       .row-odd { background: ${colors.rowOdd}; }
       .font-mono { font-family: 'Consolas', monospace; }
+      .progress-cell {
+        position: relative;
+      }
+      .progress-bar {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        opacity: 0.3;
+        z-index: 0;
+      }
+      .progress-bar.red { background: #ef4444; }
+      .progress-bar.yellow { background: #eab308; }
+      .progress-bar.orange { background: #f97316; }
+      .progress-bar.sky { background: #38bdf8; }
+      .progress-bar.green { background: #22c55e; }
+      .cell-value {
+        position: relative;
+        z-index: 1;
+      }
     </style>
   `;
   
@@ -296,7 +317,50 @@ export const generatePDFContent = (
       }
       
       const monoClass = (col.type === 'number' || col.type === 'percentage' || col.type === 'currency') ? 'font-mono' : '';
-      tableContent += `<td class="${colBgClass} ${align} ${valueClass} ${monoClass}">${value}</td>`;
+      
+      // Calculate progress bar for rec_atual and diamantes_atuais columns
+      let progressBar = '';
+      if (col.id === 'rec_atual') {
+        const recAtualCell = row.cells['rec_atual'];
+        const metaCell = row.cells['meta_rec'];
+        if (recAtualCell && metaCell) {
+          const recAtual = typeof recAtualCell.value.raw === 'number' 
+            ? recAtualCell.value.raw 
+            : parseFloat(String(recAtualCell.value.raw)) || 0;
+          const meta = typeof metaCell.value.raw === 'number' 
+            ? metaCell.value.raw 
+            : parseFloat(String(metaCell.value.raw)) || 0;
+          
+          if (meta > 0) {
+            const percentage = Math.min((recAtual / meta) * 100, 100);
+            const colorClass = percentage < 30 ? 'red' : percentage < 50 ? 'yellow' : percentage === 50 ? 'orange' : percentage <= 80 ? 'sky' : 'green';
+            progressBar = `<div class="progress-bar ${colorClass}" style="width: ${percentage}%"></div>`;
+          }
+        }
+      } else if (col.id === 'diamantes_atuais') {
+        const diamantesCell = row.cells['diamantes_atuais'];
+        const metaDiamantesCell = row.cells['meta_diamantes'];
+        if (diamantesCell && metaDiamantesCell) {
+          const diamantes = typeof diamantesCell.value.raw === 'number' 
+            ? diamantesCell.value.raw 
+            : parseFloat(String(diamantesCell.value.raw)) || 0;
+          const metaDiamantes = typeof metaDiamantesCell.value.raw === 'number' 
+            ? metaDiamantesCell.value.raw 
+            : parseFloat(String(metaDiamantesCell.value.raw)) || 0;
+          
+          if (metaDiamantes > 0) {
+            const percentage = Math.min((diamantes / metaDiamantes) * 100, 100);
+            const colorClass = percentage < 30 ? 'red' : percentage < 50 ? 'yellow' : percentage === 50 ? 'orange' : percentage <= 80 ? 'sky' : 'green';
+            progressBar = `<div class="progress-bar ${colorClass}" style="width: ${percentage}%"></div>`;
+          }
+        }
+      }
+      
+      if (progressBar) {
+        tableContent += `<td class="${colBgClass} ${align} ${valueClass} ${monoClass} progress-cell">${progressBar}<span class="cell-value">${value}</span></td>`;
+      } else {
+        tableContent += `<td class="${colBgClass} ${align} ${valueClass} ${monoClass}">${value}</td>`;
+      }
     });
     tableContent += '</tr>';
   });
