@@ -720,5 +720,5 @@ const totalRow: Row = {
 export const initialDashboardData = {
   columns,
   columnGroups,
-  rows: [...section1Rows, ...section2Rows, ...section3Rows, ...section4Rows, ...section5Rows, ...section6Rows, ...section7Rows, totalRow],
+  rows: [...section1Rows, ...section2Rows, ...section3Rows, ...section4Rows, ...section5Rows, ...section7Rows, ...section6Rows, totalRow],
 };
