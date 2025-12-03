@@ -289,7 +289,7 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({
                   'px-0.5 py-1 font-semibold text-sm border-r border-dashboard-cell-border whitespace-nowrap',
                   headerBgClass,
                   col.group !== 'info' && 'text-foreground',
-                  col.align === 'left' ? 'text-left' : 'text-right'
+                  col.align === 'left' ? 'text-left' : col.align === 'center' ? 'text-center' : 'text-right'
                 )}
                 style={{ minWidth: col.width || 80 }}
               >
@@ -371,7 +371,7 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({
                         className={cn(
                           'px-0.5 py-0.5 border-r border-dashboard-cell-border/50',
                           subtotalBgClass,
-                          col.align === 'left' ? 'text-left' : 'text-right',
+                          col.align === 'left' ? 'text-left' : col.align === 'center' ? 'text-center' : 'text-right',
                           (col.type === 'number' || col.type === 'percentage' || col.type === 'currency') && 'font-mono-numbers'
                         )}
                       >
@@ -396,7 +396,7 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({
                         key={col.id}
                         className={cn(
                           'px-0.5 py-0.5 border-r border-dashboard-cell-border/50',
-                          col.align === 'left' ? 'text-left' : 'text-right',
+                          col.align === 'left' ? 'text-left' : col.align === 'center' ? 'text-center' : 'text-right',
                           (col.type === 'number' || col.type === 'percentage' || col.type === 'currency') && 'font-mono-numbers'
                         )}
                       >
