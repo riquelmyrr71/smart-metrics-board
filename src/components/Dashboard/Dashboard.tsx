@@ -246,16 +246,22 @@ export const Dashboard: React.FC = () => {
     const cell = row.cells[columnId];
     if (!cell) return;
     
+    const column = columns.find(c => c.id === columnId);
+    if (!column) return;
+    
     const currentValue = typeof cell.value.raw === 'number' ? cell.value.raw : parseFloat(String(cell.value.raw)) || 0;
-    const newValue = Math.max(0, currentValue + delta);
+    
+    // For diamantes (currency), increment by larger values
+    const incrementAmount = columnId === 'diamantes_atuais' ? delta * 1000 : delta;
+    const newValue = Math.max(0, currentValue + incrementAmount);
     
     updateCell(rowId, columnId, {
       raw: newValue,
-      type: 'number',
+      type: column.type,
     });
     
     toast.success('Valor atualizado');
-  }, [rows, updateCell]);
+  }, [rows, columns, updateCell]);
   
   return (
     <div className="flex flex-col h-full min-h-screen bg-background">
