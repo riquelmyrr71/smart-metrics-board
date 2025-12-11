@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { format, startOfMonth, endOfMonth, isWithinInterval, subDays, isToday, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { WeeklyAnalysis } from '@/components/Charts/WeeklyAnalysis';
+import logoImage from '@/assets/logo-curli.png';
 
 interface DailyEntry {
   id: string;
@@ -369,15 +370,15 @@ const ChartsDashboard: React.FC = () => {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-lg border-b border-border px-4 py-3">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4">
             <Link to="/">
               <Button variant="ghost" size="sm" className="gap-2 hover:bg-destructive/10 hover:text-destructive">
                 <ArrowLeft className="w-4 h-4" />
                 Voltar
               </Button>
             </Link>
-            <div className="flex items-center gap-2">
-              <Diamond className="w-6 h-6 text-destructive" />
+            <div className="flex items-center gap-3">
+              <img src={logoImage} alt="Curli Logo" className="w-10 h-10 object-contain" />
               <h1 className="text-xl font-bold text-foreground">
                 Dashboard de Métricas
               </h1>
@@ -1110,6 +1111,7 @@ const ChartsDashboard: React.FC = () => {
         >
           {/* Header */}
           <div className="text-center mb-8 pb-6" style={{ borderBottom: '2px solid #1a1a1a' }}>
+            <img src={logoImage} alt="Curli Logo" className="w-16 h-16 mx-auto mb-3 object-contain" />
             <h1 className="text-2xl font-bold mb-2" style={{ color: '#1a1a1a' }}>Relatório Diário</h1>
             <p className="text-lg font-medium" style={{ color: '#b91c1c' }}>
               {format(subDays(new Date(), 1), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
