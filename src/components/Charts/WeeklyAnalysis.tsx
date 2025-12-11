@@ -5,6 +5,7 @@ import { Download, Calendar, Diamond, Users, Loader2, TrendingUp } from 'lucide-
 import { format, startOfWeek, endOfWeek, getDay, subWeeks, isWeekend, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Line } from 'recharts';
+import logoImage from '@/assets/logo-curli.png';
 
 interface DailyEntry {
   id: string;
@@ -258,6 +259,7 @@ export const WeeklyAnalysis: React.FC<WeeklyAnalysisProps> = ({ entries }) => {
       container.innerHTML = `
         <div style="font-family: system-ui, -apple-system, sans-serif;">
           <div style="text-align: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #b91c1c;">
+            <img src="${logoImage}" alt="Curli Logo" style="width: 64px; height: 64px; margin: 0 auto 12px auto; display: block; object-fit: contain;" />
             <h1 style="margin: 0; color: #1a1a1a; font-size: 24px;">${title}</h1>
             <p style="margin: 8px 0 0 0; color: #737373; font-size: 14px;">Gerado em ${format(new Date(), "dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR })}</p>
           </div>
