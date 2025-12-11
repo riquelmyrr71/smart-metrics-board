@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Switch } from '@/components/ui/switch';
@@ -18,6 +19,7 @@ import {
   Eye,
   EyeOff,
   RotateCcw,
+  BarChart3,
 } from 'lucide-react';
 import { DashboardSettings } from '@/types/dashboard';
 import {
@@ -101,6 +103,19 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         </div>
         
         <div className="flex items-center gap-2 flex-wrap">
+          {/* Charts Dashboard Link */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link to="/graficos">
+                <Button variant="outline" size="sm" className="gap-2">
+                  <BarChart3 className="w-4 h-4" />
+                  <span className="hidden sm:inline">Gráficos</span>
+                </Button>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent>Dashboard de Gráficos</TooltipContent>
+          </Tooltip>
+
           {/* Toggle increment controls */}
           <Tooltip>
             <TooltipTrigger asChild>
