@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Plus, Trash2, Diamond, Users, TrendingUp, Save, Loader2, FileText, Calendar, Target } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Diamond, Users, TrendingUp, Save, Loader2, FileText, Calendar, Target, Settings } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, BarChart, Bar, ComposedChart, PieChart, Pie, Cell } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -18,18 +18,25 @@ interface DailyEntry {
   creators: number;
 }
 
+interface MonthlyGoals {
+  diamondsGoal: number;
+  creatorsGoal: number;
+}
+
 const CHART_DATA_ID = 'chart-daily-data';
 
 const COLORS = ['#dc2626', '#991b1b', '#7f1d1d', '#450a0a', '#1f2937', '#374151'];
 
 const ChartsDashboard: React.FC = () => {
   const [entries, setEntries] = useState<DailyEntry[]>([]);
+  const [monthlyGoals, setMonthlyGoals] = useState<MonthlyGoals>({ diamondsGoal: 0, creatorsGoal: 0 });
   const [newDiamonds, setNewDiamonds] = useState<string>('');
   const [newCreators, setNewCreators] = useState<string>('');
   const [selectedDate, setSelectedDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
+  const [showGoalsSettings, setShowGoalsSettings] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
 
   // Load data from database
@@ -45,9 +52,12 @@ const ChartsDashboard: React.FC = () => {
       if (error) throw error;
 
       if (data?.data) {
-        const parsed = data.data as { entries?: DailyEntry[] };
+        const parsed = data.data as { entries?: DailyEntry[]; monthlyGoals?: MonthlyGoals };
         if (parsed.entries) {
           setEntries(parsed.entries);
+        }
+        if (parsed.monthlyGoals) {
+          setMonthlyGoals(parsed.monthlyGoals);
         }
       }
     } catch (error) {
@@ -68,7 +78,7 @@ const ChartsDashboard: React.FC = () => {
       setIsSaving(true);
       const payload = {
         id: CHART_DATA_ID,
-        data: { entries } as unknown as import('@/integrations/supabase/types').Json,
+        data: { entries, monthlyGoals } as unknown as import('@/integrations/supabase/types').Json,
         updated_at: new Date().toISOString(),
       };
       
@@ -84,7 +94,7 @@ const ChartsDashboard: React.FC = () => {
     } finally {
       setIsSaving(false);
     }
-  }, [entries]);
+  }, [entries, monthlyGoals]);
 
   // Export to PDF
   const handleExportPDF = useCallback(async () => {
@@ -212,6 +222,14 @@ const ChartsDashboard: React.FC = () => {
   const avgDiamondsPerDay = entries.length > 0 ? totalDiamonds / entries.length : 0;
   const avgCreatorsPerDay = entries.length > 0 ? totalCreators / entries.length : 0;
 
+  // Monthly goal progress
+  const diamondsProgress = monthlyGoals.diamondsGoal > 0 
+    ? Math.min(100, (monthDiamonds / monthlyGoals.diamondsGoal) * 100) 
+    : 0;
+  const creatorsProgress = monthlyGoals.creatorsGoal > 0 
+    ? Math.min(100, (monthCreators / monthlyGoals.creatorsGoal) * 100) 
+    : 0;
+
   // Pie chart data
   const pieData = [
     { name: 'Diamantes Mês', value: monthDiamonds },
@@ -328,6 +346,119 @@ const ChartsDashboard: React.FC = () => {
           </CardContent>
         </Card>
 
+        {/* Monthly Goals Settings */}
+        <Card className="border-border bg-card">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Target className="w-5 h-5 text-destructive" />
+                Metas Mensais
+              </CardTitle>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setShowGoalsSettings(!showGoalsSettings)}
+                className="gap-2"
+              >
+                <Settings className="w-4 h-4" />
+                {showGoalsSettings ? 'Ocultar' : 'Configurar'}
+              </Button>
+            </div>
+            <CardDescription>Acompanhe o progresso em relação às metas do mês</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {showGoalsSettings && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-4 border-b border-border">
+                <div className="space-y-2">
+                  <Label htmlFor="diamondsGoal" className="flex items-center gap-2">
+                    <Diamond className="w-4 h-4 text-destructive" />
+                    Meta de Diamantes
+                  </Label>
+                  <Input
+                    id="diamondsGoal"
+                    type="number"
+                    placeholder="Ex: 500000"
+                    value={monthlyGoals.diamondsGoal || ''}
+                    onChange={(e) => setMonthlyGoals(prev => ({ ...prev, diamondsGoal: parseFloat(e.target.value) || 0 }))}
+                    className="bg-background border-border focus:border-destructive"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="creatorsGoal" className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-foreground" />
+                    Meta de Criadores
+                  </Label>
+                  <Input
+                    id="creatorsGoal"
+                    type="number"
+                    placeholder="Ex: 50"
+                    value={monthlyGoals.creatorsGoal || ''}
+                    onChange={(e) => setMonthlyGoals(prev => ({ ...prev, creatorsGoal: parseInt(e.target.value) || 0 }))}
+                    className="bg-background border-border focus:border-destructive"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Progress Indicators */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Diamonds Progress */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Diamond className="w-5 h-5 text-destructive" />
+                    <span className="font-medium">Diamantes</span>
+                  </div>
+                  <span className="text-sm text-muted-foreground">
+                    {monthDiamonds.toLocaleString('pt-BR')} / {monthlyGoals.diamondsGoal.toLocaleString('pt-BR')}
+                  </span>
+                </div>
+                <div className="relative h-4 bg-muted rounded-full overflow-hidden">
+                  <div 
+                    className="absolute inset-y-0 left-0 bg-destructive rounded-full transition-all duration-500"
+                    style={{ width: `${diamondsProgress}%` }}
+                  />
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className={`font-bold ${diamondsProgress >= 100 ? 'text-success' : diamondsProgress >= 50 ? 'text-warning' : 'text-destructive'}`}>
+                    {diamondsProgress.toFixed(1)}%
+                  </span>
+                  <span className="text-muted-foreground">
+                    Faltam: {Math.max(0, monthlyGoals.diamondsGoal - monthDiamonds).toLocaleString('pt-BR')}
+                  </span>
+                </div>
+              </div>
+
+              {/* Creators Progress */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-5 h-5 text-foreground" />
+                    <span className="font-medium">Criadores</span>
+                  </div>
+                  <span className="text-sm text-muted-foreground">
+                    {monthCreators.toLocaleString('pt-BR')} / {monthlyGoals.creatorsGoal.toLocaleString('pt-BR')}
+                  </span>
+                </div>
+                <div className="relative h-4 bg-muted rounded-full overflow-hidden">
+                  <div 
+                    className="absolute inset-y-0 left-0 bg-foreground/70 rounded-full transition-all duration-500"
+                    style={{ width: `${creatorsProgress}%` }}
+                  />
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className={`font-bold ${creatorsProgress >= 100 ? 'text-success' : creatorsProgress >= 50 ? 'text-warning' : 'text-destructive'}`}>
+                    {creatorsProgress.toFixed(1)}%
+                  </span>
+                  <span className="text-muted-foreground">
+                    Faltam: {Math.max(0, monthlyGoals.creatorsGoal - monthCreators).toLocaleString('pt-BR')}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Report Section - This will be exported as PDF */}
         <div ref={reportRef} className="space-y-6 bg-background p-4 rounded-lg">
           {/* Report Header */}
@@ -337,6 +468,26 @@ const ChartsDashboard: React.FC = () => {
               Gerado em {format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
             </p>
           </div>
+
+          {/* Monthly Progress for PDF */}
+          {(monthlyGoals.diamondsGoal > 0 || monthlyGoals.creatorsGoal > 0) && (
+            <div className="grid grid-cols-2 gap-4 p-4 bg-muted/20 rounded-lg border border-border">
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground mb-1">Meta Diamantes</p>
+                <p className="text-2xl font-bold text-destructive">{diamondsProgress.toFixed(1)}%</p>
+                <p className="text-xs text-muted-foreground">
+                  {monthDiamonds.toLocaleString('pt-BR')} / {monthlyGoals.diamondsGoal.toLocaleString('pt-BR')}
+                </p>
+              </div>
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground mb-1">Meta Criadores</p>
+                <p className="text-2xl font-bold text-foreground">{creatorsProgress.toFixed(1)}%</p>
+                <p className="text-xs text-muted-foreground">
+                  {monthCreators.toLocaleString('pt-BR')} / {monthlyGoals.creatorsGoal.toLocaleString('pt-BR')}
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Summary Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
