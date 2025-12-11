@@ -171,7 +171,7 @@ const ChartsDashboard: React.FC = () => {
         scale: 2,
         useCORS: true,
         logging: false,
-        backgroundColor: '#0f0f0f',
+        backgroundColor: '#fafafa',
       });
       
       const imgData = canvas.toDataURL('image/png');
@@ -1101,69 +1101,72 @@ const ChartsDashboard: React.FC = () => {
       <div className="fixed left-[-9999px] top-0">
         <div 
           ref={dailyReportRef} 
-          className="bg-background p-8 w-[600px]"
-          style={{ backgroundColor: '#0f0f0f' }}
+          className="p-8 w-[600px]"
+          style={{ backgroundColor: '#fafafa' }}
         >
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-foreground mb-2">Relatório Diário</h1>
-            <p className="text-lg text-destructive font-medium">
+          {/* Header */}
+          <div className="text-center mb-8 pb-6" style={{ borderBottom: '2px solid #1a1a1a' }}>
+            <h1 className="text-2xl font-bold mb-2" style={{ color: '#1a1a1a' }}>Relatório Diário</h1>
+            <p className="text-lg font-medium" style={{ color: '#b91c1c' }}>
               {format(subDays(new Date(), 1), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
             </p>
-            <p className="text-sm text-muted-foreground mt-1">CURLI AGÊNCIA</p>
+            <p className="text-sm mt-1" style={{ color: '#525252' }}>CURLI AGÊNCIA</p>
           </div>
 
           {/* Yesterday's Main Metrics */}
           <div className="grid grid-cols-2 gap-6 mb-8">
-            <div className="border border-destructive/30 rounded-xl p-6 bg-destructive/10">
+            {/* Diamonds Card - Pastel Red */}
+            <div className="rounded-xl p-6" style={{ backgroundColor: '#fecaca', border: '1px solid #f87171' }}>
               <div className="flex items-center gap-2 mb-2">
-                <Diamond className="w-5 h-5 text-destructive" />
-                <span className="text-sm text-muted-foreground">Diamantes</span>
+                <Diamond className="w-5 h-5" style={{ color: '#b91c1c' }} />
+                <span className="text-sm" style={{ color: '#525252' }}>Diamantes</span>
               </div>
-              <p className="text-3xl font-bold text-destructive mb-4">
+              <p className="text-3xl font-bold mb-4" style={{ color: '#991b1b' }}>
                 {yesterdayDiamonds.toLocaleString('pt-BR')}
               </p>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Dia anterior:</span>
-                  <span className="text-foreground">{dayBeforeYesterdayDiamonds.toLocaleString('pt-BR')}</span>
+                  <span style={{ color: '#525252' }}>Dia anterior:</span>
+                  <span style={{ color: '#1a1a1a' }}>{dayBeforeYesterdayDiamonds.toLocaleString('pt-BR')}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Diferença:</span>
-                  <span className={yesterdayDiamondsDiff >= 0 ? 'text-green-500' : 'text-red-500'}>
+                  <span style={{ color: '#525252' }}>Diferença:</span>
+                  <span style={{ color: yesterdayDiamondsDiff >= 0 ? '#166534' : '#b91c1c' }}>
                     {yesterdayDiamondsDiff >= 0 ? '+' : ''}{yesterdayDiamondsDiff.toLocaleString('pt-BR')}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Variação:</span>
-                  <span className={yesterdayDiamondsPercentChange >= 0 ? 'text-green-500' : 'text-red-500'}>
+                  <span style={{ color: '#525252' }}>Variação:</span>
+                  <span style={{ color: yesterdayDiamondsPercentChange >= 0 ? '#166534' : '#b91c1c' }}>
                     {yesterdayDiamondsPercentChange >= 0 ? '+' : ''}{yesterdayDiamondsPercentChange.toFixed(1)}%
                   </span>
                 </div>
               </div>
             </div>
 
-            <div className="border border-border rounded-xl p-6 bg-muted/20">
+            {/* Creators Card - Pastel Gray */}
+            <div className="rounded-xl p-6" style={{ backgroundColor: '#e5e5e5', border: '1px solid #a3a3a3' }}>
               <div className="flex items-center gap-2 mb-2">
-                <Users className="w-5 h-5 text-foreground" />
-                <span className="text-sm text-muted-foreground">Criadores</span>
+                <Users className="w-5 h-5" style={{ color: '#1a1a1a' }} />
+                <span className="text-sm" style={{ color: '#525252' }}>Criadores</span>
               </div>
-              <p className="text-3xl font-bold text-foreground mb-4">
+              <p className="text-3xl font-bold mb-4" style={{ color: '#1a1a1a' }}>
                 {yesterdayCreators.toLocaleString('pt-BR')}
               </p>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Dia anterior:</span>
-                  <span className="text-foreground">{dayBeforeYesterdayCreators.toLocaleString('pt-BR')}</span>
+                  <span style={{ color: '#525252' }}>Dia anterior:</span>
+                  <span style={{ color: '#1a1a1a' }}>{dayBeforeYesterdayCreators.toLocaleString('pt-BR')}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Diferença:</span>
-                  <span className={yesterdayCreatorsDiff >= 0 ? 'text-green-500' : 'text-red-500'}>
+                  <span style={{ color: '#525252' }}>Diferença:</span>
+                  <span style={{ color: yesterdayCreatorsDiff >= 0 ? '#166534' : '#b91c1c' }}>
                     {yesterdayCreatorsDiff >= 0 ? '+' : ''}{yesterdayCreatorsDiff.toLocaleString('pt-BR')}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Variação:</span>
-                  <span className={yesterdayCreatorsPercentChange >= 0 ? 'text-green-500' : 'text-red-500'}>
+                  <span style={{ color: '#525252' }}>Variação:</span>
+                  <span style={{ color: yesterdayCreatorsPercentChange >= 0 ? '#166534' : '#b91c1c' }}>
                     {yesterdayCreatorsPercentChange >= 0 ? '+' : ''}{yesterdayCreatorsPercentChange.toFixed(1)}%
                   </span>
                 </div>
@@ -1172,37 +1175,37 @@ const ChartsDashboard: React.FC = () => {
           </div>
 
           {/* Goal Progress Section */}
-          <div className="border border-border rounded-xl p-6 mb-8">
-            <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-              <Target className="w-5 h-5 text-destructive" />
+          <div className="rounded-xl p-6 mb-8" style={{ backgroundColor: '#ffffff', border: '1px solid #d4d4d4' }}>
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: '#1a1a1a' }}>
+              <Target className="w-5 h-5" style={{ color: '#b91c1c' }} />
               Progresso das Metas Mensais
             </h2>
             <div className="space-y-4">
               <div>
                 <div className="flex justify-between text-sm mb-2">
-                  <span className="text-muted-foreground">Diamantes</span>
-                  <span className="text-foreground">
+                  <span style={{ color: '#525252' }}>Diamantes</span>
+                  <span style={{ color: '#1a1a1a' }}>
                     {yesterdayDiamondsGoalPercent.toFixed(2)}% da meta diária
                   </span>
                 </div>
-                <div className="h-3 bg-muted rounded-full overflow-hidden">
+                <div className="h-3 rounded-full overflow-hidden" style={{ backgroundColor: '#fecaca' }}>
                   <div 
-                    className="h-full bg-destructive rounded-full"
-                    style={{ width: `${Math.min(100, yesterdayDiamondsGoalPercent)}%` }}
+                    className="h-full rounded-full"
+                    style={{ width: `${Math.min(100, yesterdayDiamondsGoalPercent)}%`, backgroundColor: '#b91c1c' }}
                   />
                 </div>
               </div>
               <div>
                 <div className="flex justify-between text-sm mb-2">
-                  <span className="text-muted-foreground">Criadores</span>
-                  <span className="text-foreground">
+                  <span style={{ color: '#525252' }}>Criadores</span>
+                  <span style={{ color: '#1a1a1a' }}>
                     {yesterdayCreatorsGoalPercent.toFixed(2)}% da meta diária
                   </span>
                 </div>
-                <div className="h-3 bg-muted rounded-full overflow-hidden">
+                <div className="h-3 rounded-full overflow-hidden" style={{ backgroundColor: '#e5e5e5' }}>
                   <div 
-                    className="h-full bg-foreground/70 rounded-full"
-                    style={{ width: `${Math.min(100, yesterdayCreatorsGoalPercent)}%` }}
+                    className="h-full rounded-full"
+                    style={{ width: `${Math.min(100, yesterdayCreatorsGoalPercent)}%`, backgroundColor: '#1a1a1a' }}
                   />
                 </div>
               </div>
@@ -1210,40 +1213,40 @@ const ChartsDashboard: React.FC = () => {
           </div>
 
           {/* Averages Section */}
-          <div className="border border-border rounded-xl p-6">
-            <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-destructive" />
+          <div className="rounded-xl p-6" style={{ backgroundColor: '#ffffff', border: '1px solid #d4d4d4' }}>
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: '#1a1a1a' }}>
+              <TrendingUp className="w-5 h-5" style={{ color: '#b91c1c' }} />
               Médias
             </h2>
             <div className="grid grid-cols-2 gap-4">
-              <div className="text-center p-4 bg-muted/20 rounded-lg">
-                <p className="text-sm text-muted-foreground mb-1">Média Diária de Diamantes</p>
-                <p className="text-xl font-bold text-destructive">
+              <div className="text-center p-4 rounded-lg" style={{ backgroundColor: '#fef2f2' }}>
+                <p className="text-sm mb-1" style={{ color: '#525252' }}>Média Diária de Diamantes</p>
+                <p className="text-xl font-bold" style={{ color: '#991b1b' }}>
                   {Math.round(avgDiamondsPerDay).toLocaleString('pt-BR')}
                 </p>
               </div>
-              <div className="text-center p-4 bg-muted/20 rounded-lg">
-                <p className="text-sm text-muted-foreground mb-1">Média Diária de Criadores</p>
-                <p className="text-xl font-bold text-foreground">
+              <div className="text-center p-4 rounded-lg" style={{ backgroundColor: '#f5f5f5' }}>
+                <p className="text-sm mb-1" style={{ color: '#525252' }}>Média Diária de Criadores</p>
+                <p className="text-xl font-bold" style={{ color: '#1a1a1a' }}>
                   {avgCreatorsPerDay.toFixed(1)}
                 </p>
               </div>
-              <div className="text-center p-4 bg-muted/20 rounded-lg">
-                <p className="text-sm text-muted-foreground mb-1">Total Mês (Diamantes)</p>
-                <p className="text-xl font-bold text-destructive">
+              <div className="text-center p-4 rounded-lg" style={{ backgroundColor: '#fef2f2' }}>
+                <p className="text-sm mb-1" style={{ color: '#525252' }}>Total Mês (Diamantes)</p>
+                <p className="text-xl font-bold" style={{ color: '#991b1b' }}>
                   {monthDiamonds.toLocaleString('pt-BR')}
                 </p>
               </div>
-              <div className="text-center p-4 bg-muted/20 rounded-lg">
-                <p className="text-sm text-muted-foreground mb-1">Total Mês (Criadores)</p>
-                <p className="text-xl font-bold text-foreground">
+              <div className="text-center p-4 rounded-lg" style={{ backgroundColor: '#f5f5f5' }}>
+                <p className="text-sm mb-1" style={{ color: '#525252' }}>Total Mês (Criadores)</p>
+                <p className="text-xl font-bold" style={{ color: '#1a1a1a' }}>
                   {monthCreators.toLocaleString('pt-BR')}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="text-center mt-8 text-xs text-muted-foreground">
+          <div className="text-center mt-8 text-xs" style={{ color: '#737373' }}>
             Gerado em {format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
           </div>
         </div>
