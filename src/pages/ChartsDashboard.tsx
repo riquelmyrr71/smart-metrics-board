@@ -36,8 +36,10 @@ const ChartsDashboard: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
+  const [isExportingDaily, setIsExportingDaily] = useState(false);
   const [showGoalsSettings, setShowGoalsSettings] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
+  const dailyReportRef = useRef<HTMLDivElement>(null);
 
   // Load data from database
   const loadData = useCallback(async () => {
@@ -148,6 +150,59 @@ const ChartsDashboard: React.FC = () => {
     }
   }, []);
 
+  // Export Daily Report PDF (yesterday's data)
+  const handleExportDailyPDF = useCallback(async () => {
+    if (!dailyReportRef.current) return;
+    
+    try {
+      setIsExportingDaily(true);
+      toast.info('Gerando relatório diário PDF...');
+      
+      const [html2canvasModule, jsPDFModule] = await Promise.all([
+        import('html2canvas'),
+        import('jspdf')
+      ]);
+      
+      const html2canvas = html2canvasModule.default;
+      const jsPDF = jsPDFModule.default;
+      
+      const element = dailyReportRef.current;
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#0f0f0f',
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      });
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+      const imgX = (pdfWidth - imgWidth * ratio) / 2;
+      const imgY = 10;
+      
+      pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+      
+      const yesterdayDate = format(subDays(new Date(), 1), 'yyyy-MM-dd');
+      pdf.save(`relatorio-diario-${yesterdayDate}.pdf`);
+      
+      toast.success('Relatório diário exportado!');
+    } catch (error) {
+      console.error('Erro ao exportar PDF diário:', error);
+      toast.error('Erro ao exportar relatório diário');
+    } finally {
+      setIsExportingDaily(false);
+    }
+  }, []);
+
   // Add new entry
   const handleAddEntry = useCallback(() => {
     const diamonds = parseFloat(newDiamonds) || 0;
@@ -242,6 +297,30 @@ const ChartsDashboard: React.FC = () => {
   const yesterdayDiamonds = yesterdayEntry?.diamonds || 0;
   const yesterdayCreators = yesterdayEntry?.creators || 0;
 
+  // Day before yesterday's data (for yesterday's comparison)
+  const dayBeforeYesterdayStr = format(subDays(new Date(), 2), 'yyyy-MM-dd');
+  const dayBeforeYesterdayEntry = entries.find(e => e.date === dayBeforeYesterdayStr);
+  const dayBeforeYesterdayDiamonds = dayBeforeYesterdayEntry?.diamonds || 0;
+  const dayBeforeYesterdayCreators = dayBeforeYesterdayEntry?.creators || 0;
+
+  // Yesterday's comparison calculations
+  const yesterdayDiamondsDiff = yesterdayDiamonds - dayBeforeYesterdayDiamonds;
+  const yesterdayCreatorsDiff = yesterdayCreators - dayBeforeYesterdayCreators;
+  const yesterdayDiamondsPercentChange = dayBeforeYesterdayDiamonds > 0 
+    ? ((yesterdayDiamonds - dayBeforeYesterdayDiamonds) / dayBeforeYesterdayDiamonds) * 100 
+    : yesterdayDiamonds > 0 ? 100 : 0;
+  const yesterdayCreatorsPercentChange = dayBeforeYesterdayCreators > 0 
+    ? ((yesterdayCreators - dayBeforeYesterdayCreators) / dayBeforeYesterdayCreators) * 100 
+    : yesterdayCreators > 0 ? 100 : 0;
+
+  // Yesterday's goal percentage
+  const yesterdayDiamondsGoalPercent = monthlyGoals.diamondsGoal > 0 
+    ? (yesterdayDiamonds / monthlyGoals.diamondsGoal) * 100 
+    : 0;
+  const yesterdayCreatorsGoalPercent = monthlyGoals.creatorsGoal > 0 
+    ? (yesterdayCreators / monthlyGoals.creatorsGoal) * 100 
+    : 0;
+
   // Comparison calculations
   const diamondsDiff = todayDiamonds - yesterdayDiamonds;
   const creatorsDiff = todayCreators - yesterdayCreators;
@@ -304,6 +383,16 @@ const ChartsDashboard: React.FC = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleExportDailyPDF} 
+              disabled={isExportingDaily || !yesterdayEntry}
+              className="gap-2 border-border hover:bg-muted/50"
+            >
+              {isExportingDaily ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+              Relatório Diário
+            </Button>
             <Button 
               variant="outline" 
               size="sm" 
@@ -1007,6 +1096,158 @@ const ChartsDashboard: React.FC = () => {
           </CardContent>
         </Card>
       </main>
+
+      {/* Hidden Daily Report for PDF Export */}
+      <div className="fixed left-[-9999px] top-0">
+        <div 
+          ref={dailyReportRef} 
+          className="bg-background p-8 w-[600px]"
+          style={{ backgroundColor: '#0f0f0f' }}
+        >
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold text-foreground mb-2">Relatório Diário</h1>
+            <p className="text-lg text-destructive font-medium">
+              {format(subDays(new Date(), 1), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+            </p>
+            <p className="text-sm text-muted-foreground mt-1">CURLI AGÊNCIA</p>
+          </div>
+
+          {/* Yesterday's Main Metrics */}
+          <div className="grid grid-cols-2 gap-6 mb-8">
+            <div className="border border-destructive/30 rounded-xl p-6 bg-destructive/10">
+              <div className="flex items-center gap-2 mb-2">
+                <Diamond className="w-5 h-5 text-destructive" />
+                <span className="text-sm text-muted-foreground">Diamantes</span>
+              </div>
+              <p className="text-3xl font-bold text-destructive mb-4">
+                {yesterdayDiamonds.toLocaleString('pt-BR')}
+              </p>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Dia anterior:</span>
+                  <span className="text-foreground">{dayBeforeYesterdayDiamonds.toLocaleString('pt-BR')}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Diferença:</span>
+                  <span className={yesterdayDiamondsDiff >= 0 ? 'text-green-500' : 'text-red-500'}>
+                    {yesterdayDiamondsDiff >= 0 ? '+' : ''}{yesterdayDiamondsDiff.toLocaleString('pt-BR')}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Variação:</span>
+                  <span className={yesterdayDiamondsPercentChange >= 0 ? 'text-green-500' : 'text-red-500'}>
+                    {yesterdayDiamondsPercentChange >= 0 ? '+' : ''}{yesterdayDiamondsPercentChange.toFixed(1)}%
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="border border-border rounded-xl p-6 bg-muted/20">
+              <div className="flex items-center gap-2 mb-2">
+                <Users className="w-5 h-5 text-foreground" />
+                <span className="text-sm text-muted-foreground">Criadores</span>
+              </div>
+              <p className="text-3xl font-bold text-foreground mb-4">
+                {yesterdayCreators.toLocaleString('pt-BR')}
+              </p>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Dia anterior:</span>
+                  <span className="text-foreground">{dayBeforeYesterdayCreators.toLocaleString('pt-BR')}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Diferença:</span>
+                  <span className={yesterdayCreatorsDiff >= 0 ? 'text-green-500' : 'text-red-500'}>
+                    {yesterdayCreatorsDiff >= 0 ? '+' : ''}{yesterdayCreatorsDiff.toLocaleString('pt-BR')}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Variação:</span>
+                  <span className={yesterdayCreatorsPercentChange >= 0 ? 'text-green-500' : 'text-red-500'}>
+                    {yesterdayCreatorsPercentChange >= 0 ? '+' : ''}{yesterdayCreatorsPercentChange.toFixed(1)}%
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Goal Progress Section */}
+          <div className="border border-border rounded-xl p-6 mb-8">
+            <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+              <Target className="w-5 h-5 text-destructive" />
+              Progresso das Metas Mensais
+            </h2>
+            <div className="space-y-4">
+              <div>
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-muted-foreground">Diamantes</span>
+                  <span className="text-foreground">
+                    {yesterdayDiamondsGoalPercent.toFixed(2)}% da meta diária
+                  </span>
+                </div>
+                <div className="h-3 bg-muted rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-destructive rounded-full"
+                    style={{ width: `${Math.min(100, yesterdayDiamondsGoalPercent)}%` }}
+                  />
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-muted-foreground">Criadores</span>
+                  <span className="text-foreground">
+                    {yesterdayCreatorsGoalPercent.toFixed(2)}% da meta diária
+                  </span>
+                </div>
+                <div className="h-3 bg-muted rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-foreground/70 rounded-full"
+                    style={{ width: `${Math.min(100, yesterdayCreatorsGoalPercent)}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Averages Section */}
+          <div className="border border-border rounded-xl p-6">
+            <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-destructive" />
+              Médias
+            </h2>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center p-4 bg-muted/20 rounded-lg">
+                <p className="text-sm text-muted-foreground mb-1">Média Diária de Diamantes</p>
+                <p className="text-xl font-bold text-destructive">
+                  {Math.round(avgDiamondsPerDay).toLocaleString('pt-BR')}
+                </p>
+              </div>
+              <div className="text-center p-4 bg-muted/20 rounded-lg">
+                <p className="text-sm text-muted-foreground mb-1">Média Diária de Criadores</p>
+                <p className="text-xl font-bold text-foreground">
+                  {avgCreatorsPerDay.toFixed(1)}
+                </p>
+              </div>
+              <div className="text-center p-4 bg-muted/20 rounded-lg">
+                <p className="text-sm text-muted-foreground mb-1">Total Mês (Diamantes)</p>
+                <p className="text-xl font-bold text-destructive">
+                  {monthDiamonds.toLocaleString('pt-BR')}
+                </p>
+              </div>
+              <div className="text-center p-4 bg-muted/20 rounded-lg">
+                <p className="text-sm text-muted-foreground mb-1">Total Mês (Criadores)</p>
+                <p className="text-xl font-bold text-foreground">
+                  {monthCreators.toLocaleString('pt-BR')}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-center mt-8 text-xs text-muted-foreground">
+            Gerado em {format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
