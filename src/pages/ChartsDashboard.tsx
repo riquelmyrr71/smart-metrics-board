@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Plus, Trash2, Diamond, Users, TrendingUp, Save, Loader2, FileText, Calendar, Target, Sparkles } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Diamond, Users, TrendingUp, Save, Loader2, FileText, Calendar, Target } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, BarChart, Bar, ComposedChart, PieChart, Pie, Cell } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -20,7 +20,7 @@ interface DailyEntry {
 
 const CHART_DATA_ID = 'chart-daily-data';
 
-const COLORS = ['#a855f7', '#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#06b6d4'];
+const COLORS = ['#dc2626', '#991b1b', '#7f1d1d', '#450a0a', '#1f2937', '#374151'];
 
 const ChartsDashboard: React.FC = () => {
   const [entries, setEntries] = useState<DailyEntry[]>([]);
@@ -108,7 +108,7 @@ const ChartsDashboard: React.FC = () => {
         scale: 2,
         useCORS: true,
         logging: false,
-        backgroundColor: '#1a1a2e',
+        backgroundColor: '#0f0f0f',
       });
       
       const imgData = canvas.toDataURL('image/png');
@@ -230,20 +230,20 @@ const ChartsDashboard: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-purple-950/10">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border px-4 py-3">
+      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-lg border-b border-border px-4 py-3">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link to="/">
-              <Button variant="ghost" size="sm" className="gap-2">
+              <Button variant="ghost" size="sm" className="gap-2 hover:bg-destructive/10 hover:text-destructive">
                 <ArrowLeft className="w-4 h-4" />
                 Voltar
               </Button>
             </Link>
             <div className="flex items-center gap-2">
-              <Sparkles className="w-6 h-6 text-purple-500" />
-              <h1 className="text-xl font-bold bg-gradient-to-r from-purple-500 to-blue-500 bg-clip-text text-transparent">
+              <Diamond className="w-6 h-6 text-destructive" />
+              <h1 className="text-xl font-bold text-foreground">
                 Dashboard de Métricas
               </h1>
             </div>
@@ -254,12 +254,12 @@ const ChartsDashboard: React.FC = () => {
               size="sm" 
               onClick={handleExportPDF} 
               disabled={isExporting || entries.length === 0}
-              className="gap-2"
+              className="gap-2 border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
             >
               {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
               Exportar PDF
             </Button>
-            <Button onClick={saveData} disabled={isSaving} size="sm" className="gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700">
+            <Button onClick={saveData} disabled={isSaving} size="sm" className="gap-2 bg-destructive hover:bg-destructive/90 text-destructive-foreground">
               {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               Salvar
             </Button>
@@ -269,10 +269,10 @@ const ChartsDashboard: React.FC = () => {
 
       <main className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
         {/* Add Entry Form */}
-        <Card className="border-purple-500/20 bg-gradient-to-br from-card to-purple-950/5">
+        <Card className="border-destructive/20 bg-card">
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Plus className="w-5 h-5 text-purple-500" />
+              <Plus className="w-5 h-5 text-destructive" />
               Adicionar Entrada Diária
             </CardTitle>
             <CardDescription>Registre os diamantes e criadores do dia</CardDescription>
@@ -289,12 +289,12 @@ const ChartsDashboard: React.FC = () => {
                   type="date"
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
-                  className="bg-background"
+                  className="bg-background border-border focus:border-destructive"
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="diamonds" className="flex items-center gap-2">
-                  <Diamond className="w-4 h-4 text-purple-500" />
+                  <Diamond className="w-4 h-4 text-destructive" />
                   Diamantes
                 </Label>
                 <Input
@@ -303,12 +303,12 @@ const ChartsDashboard: React.FC = () => {
                   placeholder="Ex: 50000"
                   value={newDiamonds}
                   onChange={(e) => setNewDiamonds(e.target.value)}
-                  className="bg-background"
+                  className="bg-background border-border focus:border-destructive"
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="creators" className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-blue-500" />
+                  <Users className="w-4 h-4 text-foreground" />
                   Criadores
                 </Label>
                 <Input
@@ -317,10 +317,10 @@ const ChartsDashboard: React.FC = () => {
                   placeholder="Ex: 10"
                   value={newCreators}
                   onChange={(e) => setNewCreators(e.target.value)}
-                  className="bg-background"
+                  className="bg-background border-border focus:border-destructive"
                 />
               </div>
-              <Button onClick={handleAddEntry} className="gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700">
+              <Button onClick={handleAddEntry} className="gap-2 bg-destructive hover:bg-destructive/90 text-destructive-foreground">
                 <Plus className="w-4 h-4" />
                 Adicionar
               </Button>
@@ -340,61 +340,61 @@ const ChartsDashboard: React.FC = () => {
 
           {/* Summary Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-            <Card className="bg-gradient-to-br from-purple-500/20 to-purple-600/10 border-purple-500/30">
+            <Card className="bg-destructive/10 border-destructive/30">
               <CardContent className="p-4 text-center">
-                <Diamond className="w-6 h-6 text-purple-500 mx-auto mb-2" />
+                <Diamond className="w-6 h-6 text-destructive mx-auto mb-2" />
                 <p className="text-xs text-muted-foreground mb-1">Total Diamantes</p>
-                <p className="text-xl font-bold text-purple-400">
+                <p className="text-xl font-bold text-destructive">
                   {totalDiamonds.toLocaleString('pt-BR')}
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-blue-500/20 to-blue-600/10 border-blue-500/30">
+            <Card className="bg-muted/30 border-border">
               <CardContent className="p-4 text-center">
-                <Users className="w-6 h-6 text-blue-500 mx-auto mb-2" />
+                <Users className="w-6 h-6 text-foreground mx-auto mb-2" />
                 <p className="text-xs text-muted-foreground mb-1">Total Criadores</p>
-                <p className="text-xl font-bold text-blue-400">
+                <p className="text-xl font-bold text-foreground">
                   {totalCreators.toLocaleString('pt-BR')}
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-green-500/20 to-green-600/10 border-green-500/30">
+            <Card className="bg-destructive/5 border-destructive/20">
               <CardContent className="p-4 text-center">
-                <Calendar className="w-6 h-6 text-green-500 mx-auto mb-2" />
+                <Calendar className="w-6 h-6 text-destructive/80 mx-auto mb-2" />
                 <p className="text-xs text-muted-foreground mb-1">Mês Atual (Diam.)</p>
-                <p className="text-xl font-bold text-green-400">
+                <p className="text-xl font-bold text-destructive/90">
                   {monthDiamonds.toLocaleString('pt-BR')}
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-amber-500/20 to-amber-600/10 border-amber-500/30">
+            <Card className="bg-muted/20 border-border">
               <CardContent className="p-4 text-center">
-                <TrendingUp className="w-6 h-6 text-amber-500 mx-auto mb-2" />
+                <TrendingUp className="w-6 h-6 text-muted-foreground mx-auto mb-2" />
                 <p className="text-xs text-muted-foreground mb-1">Mês Atual (Cri.)</p>
-                <p className="text-xl font-bold text-amber-400">
+                <p className="text-xl font-bold text-foreground/90">
                   {monthCreators.toLocaleString('pt-BR')}
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-cyan-500/20 to-cyan-600/10 border-cyan-500/30">
+            <Card className="bg-destructive/5 border-destructive/20">
               <CardContent className="p-4 text-center">
-                <Target className="w-6 h-6 text-cyan-500 mx-auto mb-2" />
+                <Target className="w-6 h-6 text-destructive/70 mx-auto mb-2" />
                 <p className="text-xs text-muted-foreground mb-1">Média/Dia (Diam.)</p>
-                <p className="text-xl font-bold text-cyan-400">
+                <p className="text-xl font-bold text-destructive/80">
                   {Math.round(avgDiamondsPerDay).toLocaleString('pt-BR')}
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-rose-500/20 to-rose-600/10 border-rose-500/30">
+            <Card className="bg-muted/20 border-border">
               <CardContent className="p-4 text-center">
-                <Target className="w-6 h-6 text-rose-500 mx-auto mb-2" />
+                <Target className="w-6 h-6 text-muted-foreground mx-auto mb-2" />
                 <p className="text-xs text-muted-foreground mb-1">Média/Dia (Cri.)</p>
-                <p className="text-xl font-bold text-rose-400">
+                <p className="text-xl font-bold text-foreground/80">
                   {avgCreatorsPerDay.toFixed(1)}
                 </p>
               </CardContent>
@@ -404,10 +404,10 @@ const ChartsDashboard: React.FC = () => {
           {/* Charts Row 1 */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Diamonds Area Chart */}
-            <Card className="border-purple-500/20">
+            <Card className="border-destructive/20">
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2 text-base">
-                  <Diamond className="w-5 h-5 text-purple-500" />
+                  <Diamond className="w-5 h-5 text-destructive" />
                   Evolução de Diamantes
                 </CardTitle>
               </CardHeader>
@@ -418,8 +418,8 @@ const ChartsDashboard: React.FC = () => {
                       <AreaChart data={chartData}>
                         <defs>
                           <linearGradient id="diamondsGradient" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#a855f7" stopOpacity={0.4} />
-                            <stop offset="95%" stopColor="#a855f7" stopOpacity={0} />
+                            <stop offset="5%" stopColor="#dc2626" stopOpacity={0.4} />
+                            <stop offset="95%" stopColor="#dc2626" stopOpacity={0} />
                           </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -433,7 +433,7 @@ const ChartsDashboard: React.FC = () => {
                         <Area 
                           type="monotone" 
                           dataKey="diamonds" 
-                          stroke="#a855f7" 
+                          stroke="#dc2626" 
                           strokeWidth={2}
                           fill="url(#diamondsGradient)" 
                         />
@@ -449,10 +449,10 @@ const ChartsDashboard: React.FC = () => {
             </Card>
 
             {/* Creators Bar Chart */}
-            <Card className="border-blue-500/20">
+            <Card className="border-border">
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2 text-base">
-                  <Users className="w-5 h-5 text-blue-500" />
+                  <Users className="w-5 h-5 text-foreground" />
                   Criadores por Dia
                 </CardTitle>
               </CardHeader>
@@ -469,7 +469,7 @@ const ChartsDashboard: React.FC = () => {
                           labelFormatter={(_, payload) => payload[0]?.payload?.fullDate || ''}
                           contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
                         />
-                        <Bar dataKey="creators" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="creators" fill="#374151" radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   ) : (
@@ -483,10 +483,10 @@ const ChartsDashboard: React.FC = () => {
           </div>
 
           {/* Combined Evolution Chart */}
-          <Card className="border-green-500/20">
+          <Card className="border-destructive/20">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-base">
-                <TrendingUp className="w-5 h-5 text-green-500" />
+                <TrendingUp className="w-5 h-5 text-destructive" />
                 Evolução Geral - Diamantes × Criadores
               </CardTitle>
             </CardHeader>
@@ -497,14 +497,14 @@ const ChartsDashboard: React.FC = () => {
                     <ComposedChart data={chartData}>
                       <defs>
                         <linearGradient id="combinedGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#a855f7" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="#a855f7" stopOpacity={0} />
+                          <stop offset="5%" stopColor="#dc2626" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="#dc2626" stopOpacity={0} />
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="dateLabel" fontSize={11} stroke="hsl(var(--muted-foreground))" />
-                      <YAxis yAxisId="diamonds" orientation="left" fontSize={11} stroke="#a855f7" tickFormatter={(v) => (v/1000).toFixed(0) + 'k'} />
-                      <YAxis yAxisId="creators" orientation="right" fontSize={11} stroke="#3b82f6" />
+                      <YAxis yAxisId="diamonds" orientation="left" fontSize={11} stroke="#dc2626" tickFormatter={(v) => (v/1000).toFixed(0) + 'k'} />
+                      <YAxis yAxisId="creators" orientation="right" fontSize={11} stroke="#374151" />
                       <Tooltip 
                         formatter={(value: number, name: string) => [
                           value.toLocaleString('pt-BR'), 
@@ -521,14 +521,14 @@ const ChartsDashboard: React.FC = () => {
                         yAxisId="diamonds"
                         type="monotone" 
                         dataKey="diamonds" 
-                        stroke="#a855f7" 
+                        stroke="#dc2626" 
                         strokeWidth={2}
                         fill="url(#combinedGradient)" 
                       />
                       <Bar 
                         yAxisId="creators"
                         dataKey="creators" 
-                        fill="#3b82f6" 
+                        fill="#374151" 
                         radius={[4, 4, 0, 0]}
                         opacity={0.8}
                       />
@@ -571,10 +571,10 @@ const ChartsDashboard: React.FC = () => {
                         <td className="py-3 px-4 font-medium">
                           {format(new Date(entry.date + 'T12:00:00'), "dd/MM/yyyy (EEEE)", { locale: ptBR })}
                         </td>
-                        <td className="py-3 px-4 text-right font-bold text-purple-500">
+                        <td className="py-3 px-4 text-right font-bold text-destructive">
                           {entry.diamonds.toLocaleString('pt-BR')}
                         </td>
-                        <td className="py-3 px-4 text-right font-bold text-blue-500">
+                        <td className="py-3 px-4 text-right font-bold text-foreground">
                           {entry.creators.toLocaleString('pt-BR')}
                         </td>
                         <td className="py-3 px-4 text-center">
@@ -593,10 +593,10 @@ const ChartsDashboard: React.FC = () => {
                   <tfoot>
                     <tr className="bg-muted/50 border-t-2 border-border">
                       <td className="py-3 px-4 font-bold">TOTAL</td>
-                      <td className="py-3 px-4 text-right font-bold text-purple-500">
+                      <td className="py-3 px-4 text-right font-bold text-destructive">
                         {totalDiamonds.toLocaleString('pt-BR')}
                       </td>
-                      <td className="py-3 px-4 text-right font-bold text-blue-500">
+                      <td className="py-3 px-4 text-right font-bold text-foreground">
                         {totalCreators.toLocaleString('pt-BR')}
                       </td>
                       <td></td>
