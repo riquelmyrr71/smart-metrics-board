@@ -4,11 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Plus, Trash2, Diamond, Users, TrendingUp, Save, Loader2, FileText, Calendar, Target, Settings } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Diamond, Users, TrendingUp, Save, Loader2, FileText, Calendar, Target, Settings, ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, BarChart, Bar, ComposedChart, PieChart, Pie, Cell } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { format, startOfMonth, endOfMonth, isWithinInterval, subDays } from 'date-fns';
+import { format, startOfMonth, endOfMonth, isWithinInterval, subDays, isToday, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 interface DailyEntry {
@@ -229,6 +229,43 @@ const ChartsDashboard: React.FC = () => {
   const creatorsProgress = monthlyGoals.creatorsGoal > 0 
     ? Math.min(100, (monthCreators / monthlyGoals.creatorsGoal) * 100) 
     : 0;
+
+  // Today's data
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
+  const todayEntry = entries.find(e => e.date === todayStr);
+  const todayDiamonds = todayEntry?.diamonds || 0;
+  const todayCreators = todayEntry?.creators || 0;
+
+  // Yesterday's data
+  const yesterdayStr = format(subDays(new Date(), 1), 'yyyy-MM-dd');
+  const yesterdayEntry = entries.find(e => e.date === yesterdayStr);
+  const yesterdayDiamonds = yesterdayEntry?.diamonds || 0;
+  const yesterdayCreators = yesterdayEntry?.creators || 0;
+
+  // Comparison calculations
+  const diamondsDiff = todayDiamonds - yesterdayDiamonds;
+  const creatorsDiff = todayCreators - yesterdayCreators;
+  const diamondsPercentChange = yesterdayDiamonds > 0 
+    ? ((todayDiamonds - yesterdayDiamonds) / yesterdayDiamonds) * 100 
+    : todayDiamonds > 0 ? 100 : 0;
+  const creatorsPercentChange = yesterdayCreators > 0 
+    ? ((todayCreators - yesterdayCreators) / yesterdayCreators) * 100 
+    : todayCreators > 0 ? 100 : 0;
+
+  // Last 7 days comparison data for today view
+  const recentDaysData = Array.from({ length: 7 }, (_, i) => {
+    const date = subDays(new Date(), 6 - i);
+    const dateStr = format(date, 'yyyy-MM-dd');
+    const entry = entries.find(e => e.date === dateStr);
+    return {
+      date: dateStr,
+      dateLabel: format(date, 'dd/MM', { locale: ptBR }),
+      dayName: format(date, 'EEE', { locale: ptBR }),
+      diamonds: entry?.diamonds || 0,
+      creators: entry?.creators || 0,
+      isToday: isToday(date),
+    };
+  });
 
   // Pie chart data
   const pieData = [
@@ -454,6 +491,211 @@ const ChartsDashboard: React.FC = () => {
                     Faltam: {Math.max(0, monthlyGoals.creatorsGoal - monthCreators).toLocaleString('pt-BR')}
                   </span>
                 </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* TODAY'S METRICS - Separate Section */}
+        <Card className="border-destructive/30 bg-gradient-to-br from-destructive/5 to-background">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2 text-xl">
+              <Calendar className="w-6 h-6 text-destructive" />
+              Métricas de Hoje
+              <span className="text-sm font-normal text-muted-foreground ml-2">
+                {format(new Date(), "dd 'de' MMMM", { locale: ptBR })}
+              </span>
+            </CardTitle>
+            <CardDescription>Visualização separada dos dados de hoje com comparações</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Today's Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Today's Diamonds */}
+              <div className="relative overflow-hidden rounded-xl border border-destructive/30 bg-gradient-to-br from-destructive/10 to-destructive/5 p-6">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Diamantes Hoje</p>
+                    <p className="text-4xl font-bold text-destructive">
+                      {todayDiamonds.toLocaleString('pt-BR')}
+                    </p>
+                  </div>
+                  <Diamond className="w-10 h-10 text-destructive/30" />
+                </div>
+                <div className="mt-4 flex items-center gap-2">
+                  {diamondsDiff > 0 ? (
+                    <span className="flex items-center gap-1 text-sm font-medium text-green-500">
+                      <ArrowUpRight className="w-4 h-4" />
+                      +{diamondsDiff.toLocaleString('pt-BR')}
+                    </span>
+                  ) : diamondsDiff < 0 ? (
+                    <span className="flex items-center gap-1 text-sm font-medium text-red-500">
+                      <ArrowDownRight className="w-4 h-4" />
+                      {diamondsDiff.toLocaleString('pt-BR')}
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1 text-sm font-medium text-muted-foreground">
+                      <Minus className="w-4 h-4" />
+                      Igual
+                    </span>
+                  )}
+                  <span className="text-xs text-muted-foreground">vs ontem</span>
+                  {diamondsPercentChange !== 0 && (
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                      diamondsPercentChange > 0 ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'
+                    }`}>
+                      {diamondsPercentChange > 0 ? '+' : ''}{diamondsPercentChange.toFixed(1)}%
+                    </span>
+                  )}
+                </div>
+                <div className="mt-2 text-xs text-muted-foreground">
+                  Ontem: {yesterdayDiamonds.toLocaleString('pt-BR')}
+                </div>
+              </div>
+
+              {/* Today's Creators */}
+              <div className="relative overflow-hidden rounded-xl border border-border bg-gradient-to-br from-muted/30 to-muted/10 p-6">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Criadores Hoje</p>
+                    <p className="text-4xl font-bold text-foreground">
+                      {todayCreators.toLocaleString('pt-BR')}
+                    </p>
+                  </div>
+                  <Users className="w-10 h-10 text-muted-foreground/30" />
+                </div>
+                <div className="mt-4 flex items-center gap-2">
+                  {creatorsDiff > 0 ? (
+                    <span className="flex items-center gap-1 text-sm font-medium text-green-500">
+                      <ArrowUpRight className="w-4 h-4" />
+                      +{creatorsDiff.toLocaleString('pt-BR')}
+                    </span>
+                  ) : creatorsDiff < 0 ? (
+                    <span className="flex items-center gap-1 text-sm font-medium text-red-500">
+                      <ArrowDownRight className="w-4 h-4" />
+                      {creatorsDiff.toLocaleString('pt-BR')}
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1 text-sm font-medium text-muted-foreground">
+                      <Minus className="w-4 h-4" />
+                      Igual
+                    </span>
+                  )}
+                  <span className="text-xs text-muted-foreground">vs ontem</span>
+                  {creatorsPercentChange !== 0 && (
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                      creatorsPercentChange > 0 ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'
+                    }`}>
+                      {creatorsPercentChange > 0 ? '+' : ''}{creatorsPercentChange.toFixed(1)}%
+                    </span>
+                  )}
+                </div>
+                <div className="mt-2 text-xs text-muted-foreground">
+                  Ontem: {yesterdayCreators.toLocaleString('pt-BR')}
+                </div>
+              </div>
+            </div>
+
+            {/* 7-Day Comparison Chart */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-medium text-muted-foreground">Comparação dos Últimos 7 Dias</h3>
+              
+              {/* Mini Bar Chart for Recent Days */}
+              <div className="grid grid-cols-7 gap-2">
+                {recentDaysData.map((day) => (
+                  <div 
+                    key={day.date} 
+                    className={`text-center p-3 rounded-lg transition-all ${
+                      day.isToday 
+                        ? 'bg-destructive/20 border-2 border-destructive/50 ring-2 ring-destructive/20' 
+                        : 'bg-muted/30 border border-border hover:bg-muted/50'
+                    }`}
+                  >
+                    <p className={`text-xs font-medium mb-1 ${day.isToday ? 'text-destructive' : 'text-muted-foreground'}`}>
+                      {day.dayName}
+                    </p>
+                    <p className={`text-xs mb-2 ${day.isToday ? 'text-destructive/70' : 'text-muted-foreground/70'}`}>
+                      {day.dateLabel}
+                    </p>
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-center gap-1">
+                        <Diamond className="w-3 h-3 text-destructive" />
+                        <span className={`text-xs font-bold ${day.isToday ? 'text-destructive' : 'text-foreground'}`}>
+                          {day.diamonds >= 1000 ? (day.diamonds / 1000).toFixed(1) + 'k' : day.diamonds}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-center gap-1">
+                        <Users className="w-3 h-3 text-muted-foreground" />
+                        <span className="text-xs font-bold text-foreground">
+                          {day.creators}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* 7-Day Line Chart */}
+              <div className="h-[200px] mt-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={recentDaysData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="dateLabel" fontSize={11} stroke="hsl(var(--muted-foreground))" />
+                    <YAxis yAxisId="diamonds" orientation="left" fontSize={11} stroke="#dc2626" tickFormatter={(v) => (v/1000).toFixed(0) + 'k'} />
+                    <YAxis yAxisId="creators" orientation="right" fontSize={11} stroke="#374151" />
+                    <Tooltip 
+                      formatter={(value: number, name: string) => [
+                        value.toLocaleString('pt-BR'), 
+                        name === 'diamonds' ? 'Diamantes' : 'Criadores'
+                      ]}
+                      contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
+                    />
+                    <Line 
+                      yAxisId="diamonds"
+                      type="monotone" 
+                      dataKey="diamonds" 
+                      stroke="#dc2626" 
+                      strokeWidth={2}
+                      dot={{ fill: '#dc2626', strokeWidth: 2, r: 4 }}
+                      activeDot={{ r: 6 }}
+                    />
+                    <Bar 
+                      yAxisId="creators"
+                      dataKey="creators" 
+                      fill="#374151" 
+                      radius={[4, 4, 0, 0]}
+                      opacity={0.6}
+                    />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Quick Stats Row */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-4 border-t border-border">
+              <div className="text-center p-3 rounded-lg bg-muted/20">
+                <p className="text-xs text-muted-foreground mb-1">Média 7 dias (Diam.)</p>
+                <p className="text-lg font-bold text-destructive">
+                  {Math.round(recentDaysData.reduce((s, d) => s + d.diamonds, 0) / 7).toLocaleString('pt-BR')}
+                </p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-muted/20">
+                <p className="text-xs text-muted-foreground mb-1">Média 7 dias (Cri.)</p>
+                <p className="text-lg font-bold text-foreground">
+                  {(recentDaysData.reduce((s, d) => s + d.creators, 0) / 7).toFixed(1)}
+                </p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-muted/20">
+                <p className="text-xs text-muted-foreground mb-1">Melhor Dia (Diam.)</p>
+                <p className="text-lg font-bold text-destructive">
+                  {Math.max(...recentDaysData.map(d => d.diamonds)).toLocaleString('pt-BR')}
+                </p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-muted/20">
+                <p className="text-xs text-muted-foreground mb-1">Total 7 dias (Diam.)</p>
+                <p className="text-lg font-bold text-destructive">
+                  {recentDaysData.reduce((s, d) => s + d.diamonds, 0).toLocaleString('pt-BR')}
+                </p>
               </div>
             </div>
           </CardContent>
