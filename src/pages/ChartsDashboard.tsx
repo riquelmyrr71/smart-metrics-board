@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format, startOfMonth, endOfMonth, isWithinInterval, subDays, isToday, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { WeeklyAnalysis } from '@/components/Charts/WeeklyAnalysis';
 
 interface DailyEntry {
   id: string;
@@ -789,6 +790,9 @@ const ChartsDashboard: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Weekly Analysis Section */}
+        <WeeklyAnalysis entries={entries} />
 
         {/* Report Section - This will be exported as PDF */}
         <div ref={reportRef} className="space-y-6 bg-background p-4 rounded-lg">
