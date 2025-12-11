@@ -23,7 +23,7 @@ interface MonthlyGoals {
   creatorsGoal: number;
 }
 
-const CHART_DATA_ID = 'chart-daily-data';
+const CHART_DATA_ID = '00000000-0000-0000-0000-000000000002';
 
 const COLORS = ['#dc2626', '#991b1b', '#7f1d1d', '#450a0a', '#1f2937', '#374151'];
 
