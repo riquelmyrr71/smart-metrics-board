@@ -20,6 +20,7 @@ import {
   EyeOff,
   RotateCcw,
   BarChart3,
+  StickyNote,
 } from 'lucide-react';
 import { DashboardSettings } from '@/types/dashboard';
 import {
@@ -114,6 +115,19 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               </Link>
             </TooltipTrigger>
             <TooltipContent>Dashboard de Gráficos</TooltipContent>
+          </Tooltip>
+
+          {/* Notes Page Link */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link to="/anotacoes">
+                <Button variant="outline" size="sm" className="gap-2">
+                  <StickyNote className="w-4 h-4" />
+                  <span className="hidden sm:inline">Anotações</span>
+                </Button>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent>Página de Anotações</TooltipContent>
           </Tooltip>
 
           {/* Toggle increment controls */}
