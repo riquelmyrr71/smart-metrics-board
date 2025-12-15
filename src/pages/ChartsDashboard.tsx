@@ -1879,30 +1879,33 @@ const ChartsDashboard: React.FC = () => {
             </p>
           </div>
 
-          {/* Current Status */}
-          <div className="grid grid-cols-3 gap-4 mb-6">
+          {/* Current Status with Projection */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
             <div className="rounded-xl p-6 text-center" style={{ backgroundColor: '#e5e5e5', border: '1px solid #a3a3a3' }}>
               <Users className="w-8 h-8 mx-auto mb-2" style={{ color: '#1a1a1a' }} />
               <p className="text-xs mb-1" style={{ color: '#525252' }}>Atual</p>
               <p className="text-3xl font-bold" style={{ color: '#1a1a1a' }}>{monthCreators}</p>
+              <p className="text-xs mt-1" style={{ color: '#525252' }}>{creatorsProgress.toFixed(1)}% da meta</p>
             </div>
-            <div className="rounded-xl p-6 text-center" style={{ backgroundColor: '#f5f5f5', border: '1px solid #d4d4d4' }}>
-              <Target className="w-8 h-8 mx-auto mb-2" style={{ color: '#525252' }} />
-              <p className="text-xs mb-1" style={{ color: '#525252' }}>Meta</p>
-              <p className="text-3xl font-bold" style={{ color: '#1a1a1a' }}>{monthlyGoals.creatorsGoal}</p>
-            </div>
-            <div className="rounded-xl p-6 text-center" style={{ backgroundColor: creatorsProgress >= 100 ? '#dcfce7' : '#fef2f2', border: `1px solid ${creatorsProgress >= 100 ? '#22c55e' : '#f87171'}` }}>
-              <TrendingUp className="w-8 h-8 mx-auto mb-2" style={{ color: creatorsProgress >= 100 ? '#166534' : '#b91c1c' }} />
-              <p className="text-xs mb-1" style={{ color: '#525252' }}>Progresso</p>
-              <p className="text-3xl font-bold" style={{ color: creatorsProgress >= 100 ? '#166534' : '#b91c1c' }}>{creatorsProgress.toFixed(1)}%</p>
+            <div className="rounded-xl p-6 text-center" style={{ backgroundColor: '#fef3c7', border: '2px solid #f59e0b' }}>
+              <TrendingUp className="w-8 h-8 mx-auto mb-2" style={{ color: '#d97706' }} />
+              <p className="text-xs mb-1" style={{ color: '#525252' }}>Projeção Fim do Mês</p>
+              <p className="text-3xl font-bold" style={{ color: '#b45309' }}>
+                {Math.round(monthCreators + (avgCreatorsPerDay * daysRemaining))}
+              </p>
+              <p className="text-xs mt-1" style={{ color: '#525252' }}>
+                {monthlyGoals.creatorsGoal > 0 
+                  ? ((monthCreators + (avgCreatorsPerDay * daysRemaining)) / monthlyGoals.creatorsGoal * 100).toFixed(1)
+                  : 0}% da meta
+              </p>
             </div>
           </div>
 
-          {/* Progress Bar */}
+          {/* Progress Info */}
           <div className="rounded-xl p-6 mb-6" style={{ backgroundColor: '#ffffff', border: '1px solid #d4d4d4' }}>
             <div className="mb-4">
               <div className="flex justify-between text-sm mb-2">
-                <span style={{ color: '#525252' }}>Progresso para a Meta</span>
+                <span style={{ color: '#525252' }}>Meta Mensal</span>
                 <span style={{ color: '#1a1a1a' }}>{monthCreators} / {monthlyGoals.creatorsGoal}</span>
               </div>
               <div className="h-4 rounded-full overflow-hidden" style={{ backgroundColor: '#e5e5e5' }}>
@@ -1912,36 +1915,54 @@ const ChartsDashboard: React.FC = () => {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4 text-center">
+            <div className="grid grid-cols-3 gap-3 text-center">
               <div className="p-3 rounded-lg" style={{ backgroundColor: '#f5f5f5' }}>
-                <p className="text-xs" style={{ color: '#525252' }}>Faltam</p>
-                <p className="text-xl font-bold" style={{ color: '#1a1a1a' }}>{Math.max(0, monthlyGoals.creatorsGoal - monthCreators)}</p>
+                <p className="text-[10px]" style={{ color: '#525252' }}>Faltam</p>
+                <p className="text-lg font-bold" style={{ color: '#1a1a1a' }}>{Math.max(0, monthlyGoals.creatorsGoal - monthCreators)}</p>
               </div>
               <div className="p-3 rounded-lg" style={{ backgroundColor: '#f5f5f5' }}>
-                <p className="text-xs" style={{ color: '#525252' }}>Média Diária</p>
-                <p className="text-xl font-bold" style={{ color: '#1a1a1a' }}>{avgCreatorsPerDay.toFixed(1)}</p>
+                <p className="text-[10px]" style={{ color: '#525252' }}>Média/Dia</p>
+                <p className="text-lg font-bold" style={{ color: '#1a1a1a' }}>{avgCreatorsPerDay.toFixed(1)}</p>
+              </div>
+              <div className="p-3 rounded-lg" style={{ backgroundColor: '#fef3c7' }}>
+                <p className="text-[10px]" style={{ color: '#525252' }}>Necessário/Dia</p>
+                <p className="text-lg font-bold" style={{ color: '#b45309' }}>
+                  {daysRemaining > 0 ? Math.ceil(Math.max(0, monthlyGoals.creatorsGoal - monthCreators) / daysRemaining) : 0}
+                </p>
               </div>
             </div>
           </div>
 
-          {/* Time Info */}
+          {/* Time & Projection Analysis */}
           <div className="rounded-xl p-4" style={{ backgroundColor: '#f5f5f5', border: '1px solid #d4d4d4' }}>
-            <div className="grid grid-cols-3 gap-4 text-center">
+            <div className="grid grid-cols-3 gap-4 text-center mb-4">
               <div>
-                <p className="text-xs" style={{ color: '#525252' }}>Dia Atual</p>
+                <p className="text-xs" style={{ color: '#525252' }}>Dia</p>
                 <p className="text-lg font-bold" style={{ color: '#1a1a1a' }}>{dayOfMonth}/{totalDaysInMonth}</p>
               </div>
               <div>
-                <p className="text-xs" style={{ color: '#525252' }}>Dias Restantes</p>
+                <p className="text-xs" style={{ color: '#525252' }}>Restantes</p>
                 <p className="text-lg font-bold" style={{ color: '#1a1a1a' }}>{daysRemaining}</p>
               </div>
               <div>
-                <p className="text-xs" style={{ color: '#525252' }}>Necessário/Dia</p>
-                <p className="text-lg font-bold" style={{ color: '#1a1a1a' }}>
-                  {daysRemaining > 0 ? Math.ceil((monthlyGoals.creatorsGoal - monthCreators) / daysRemaining) : 0}
-                </p>
+                <p className="text-xs" style={{ color: '#525252' }}>Dias c/ Dados</p>
+                <p className="text-lg font-bold" style={{ color: '#1a1a1a' }}>{daysElapsed}</p>
               </div>
             </div>
+            {/* Projection Status */}
+            {(() => {
+              const projectedCreators = monthCreators + (avgCreatorsPerDay * daysRemaining);
+              const willReachGoal = projectedCreators >= monthlyGoals.creatorsGoal;
+              return (
+                <div className="p-3 rounded-lg text-center" style={{ backgroundColor: willReachGoal ? '#dcfce7' : '#fef2f2', border: `1px solid ${willReachGoal ? '#22c55e' : '#f87171'}` }}>
+                  <p className="text-sm font-medium" style={{ color: willReachGoal ? '#166534' : '#b91c1c' }}>
+                    {willReachGoal 
+                      ? `✓ Projeção indica que a meta será atingida (${Math.round(projectedCreators)} criadores)`
+                      : `⚠ Projeção indica ${Math.round(projectedCreators)} criadores - abaixo da meta`}
+                  </p>
+                </div>
+              );
+            })()}
           </div>
 
           <div className="text-center mt-6 text-xs" style={{ color: '#737373' }}>
