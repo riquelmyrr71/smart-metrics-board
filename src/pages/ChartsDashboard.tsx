@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Plus, Trash2, Diamond, Users, TrendingUp, Save, Loader2, FileText, Calendar, Target, Settings, ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Diamond, Users, TrendingUp, Save, Loader2, FileText, Calendar, Target, Settings, ArrowUpRight, ArrowDownRight, Minus, RotateCcw } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, BarChart, Bar, ComposedChart, PieChart, Pie, Cell } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -245,6 +245,20 @@ const ChartsDashboard: React.FC = () => {
     toast.success('Entrada removida');
   }, []);
 
+  // Reset day metrics
+  const [resetDate, setResetDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
+  
+  const handleResetDayMetrics = useCallback(() => {
+    const existingEntry = entries.find(e => e.date === resetDate);
+    if (!existingEntry) {
+      toast.error('Nenhuma entrada encontrada para esta data');
+      return;
+    }
+    
+    setEntries(prev => prev.filter(e => e.date !== resetDate));
+    toast.success(`Métricas de ${format(new Date(resetDate + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR })} zeradas`);
+  }, [resetDate, entries]);
+
   // Chart data
   const chartData = entries.map(entry => ({
     ...entry,
@@ -430,6 +444,23 @@ const ChartsDashboard: React.FC = () => {
               >
                 {isExportingDaily ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
                 Relatório Diário
+              </Button>
+            </div>
+            <div className="flex items-center gap-2 border-l border-border pl-2">
+              <Input
+                type="date"
+                value={resetDate}
+                onChange={(e) => setResetDate(e.target.value)}
+                className="w-[140px] h-9 bg-background border-border focus:border-destructive text-sm"
+              />
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleResetDayMetrics}
+                className="gap-2 border-destructive/50 hover:bg-destructive/10 hover:text-destructive text-destructive"
+              >
+                <RotateCcw className="w-4 h-4" />
+                Zerar Dia
               </Button>
             </div>
             <Button 
