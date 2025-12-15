@@ -35,6 +35,7 @@ const ChartsDashboard: React.FC = () => {
   const [newDiamonds, setNewDiamonds] = useState<string>('');
   const [newCreators, setNewCreators] = useState<string>('');
   const [selectedDate, setSelectedDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
+  const [dailyReportDate, setDailyReportDate] = useState<string>(format(subDays(new Date(), 1), 'yyyy-MM-dd'));
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
@@ -193,8 +194,7 @@ const ChartsDashboard: React.FC = () => {
       
       pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
       
-      const yesterdayDate = format(subDays(new Date(), 1), 'yyyy-MM-dd');
-      pdf.save(`relatorio-diario-${yesterdayDate}.pdf`);
+      pdf.save(`relatorio-diario-${dailyReportDate}.pdf`);
       
       toast.success('Relatório diário exportado!');
     } catch (error) {
@@ -203,7 +203,7 @@ const ChartsDashboard: React.FC = () => {
     } finally {
       setIsExportingDaily(false);
     }
-  }, []);
+  }, [dailyReportDate]);
 
   // Add new entry
   const handleAddEntry = useCallback(() => {
@@ -323,6 +323,35 @@ const ChartsDashboard: React.FC = () => {
     ? (yesterdayCreators / monthlyGoals.creatorsGoal) * 100 
     : 0;
 
+  // Daily Report selected date data
+  const reportDateEntry = entries.find(e => e.date === dailyReportDate);
+  const reportDiamonds = reportDateEntry?.diamonds || 0;
+  const reportCreators = reportDateEntry?.creators || 0;
+
+  // Day before report date (for comparison)
+  const dayBeforeReportStr = format(subDays(new Date(dailyReportDate + 'T12:00:00'), 1), 'yyyy-MM-dd');
+  const dayBeforeReportEntry = entries.find(e => e.date === dayBeforeReportStr);
+  const dayBeforeReportDiamonds = dayBeforeReportEntry?.diamonds || 0;
+  const dayBeforeReportCreators = dayBeforeReportEntry?.creators || 0;
+
+  // Report date comparison calculations
+  const reportDiamondsDiff = reportDiamonds - dayBeforeReportDiamonds;
+  const reportCreatorsDiff = reportCreators - dayBeforeReportCreators;
+  const reportDiamondsPercentChange = dayBeforeReportDiamonds > 0 
+    ? ((reportDiamonds - dayBeforeReportDiamonds) / dayBeforeReportDiamonds) * 100 
+    : reportDiamonds > 0 ? 100 : 0;
+  const reportCreatorsPercentChange = dayBeforeReportCreators > 0 
+    ? ((reportCreators - dayBeforeReportCreators) / dayBeforeReportCreators) * 100 
+    : reportCreators > 0 ? 100 : 0;
+
+  // Report date goal percentage
+  const reportDiamondsGoalPercent = monthlyGoals.diamondsGoal > 0 
+    ? (reportDiamonds / monthlyGoals.diamondsGoal) * 100 
+    : 0;
+  const reportCreatorsGoalPercent = monthlyGoals.creatorsGoal > 0 
+    ? (reportCreators / monthlyGoals.creatorsGoal) * 100 
+    : 0;
+
   // Comparison calculations
   const diamondsDiff = todayDiamonds - yesterdayDiamonds;
   const creatorsDiff = todayCreators - yesterdayCreators;
@@ -385,16 +414,24 @@ const ChartsDashboard: React.FC = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleExportDailyPDF} 
-              disabled={isExportingDaily || !yesterdayEntry}
-              className="gap-2 border-border hover:bg-muted/50"
-            >
-              {isExportingDaily ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
-              Relatório Diário
-            </Button>
+            <div className="flex items-center gap-2">
+              <Input
+                type="date"
+                value={dailyReportDate}
+                onChange={(e) => setDailyReportDate(e.target.value)}
+                className="w-[140px] h-9 bg-background border-border focus:border-destructive text-sm"
+              />
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleExportDailyPDF} 
+                disabled={isExportingDaily || !reportDateEntry}
+                className="gap-2 border-border hover:bg-muted/50"
+              >
+                {isExportingDaily ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+                Relatório Diário
+              </Button>
+            </div>
             <Button 
               variant="outline" 
               size="sm" 
@@ -1114,12 +1151,12 @@ const ChartsDashboard: React.FC = () => {
             <img src={logoImage} alt="Curli Logo" className="w-16 h-16 mx-auto mb-3 object-contain" />
             <h1 className="text-2xl font-bold mb-2" style={{ color: '#1a1a1a' }}>Relatório Diário</h1>
             <p className="text-lg font-medium" style={{ color: '#b91c1c' }}>
-              {format(subDays(new Date(), 1), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+              {format(new Date(dailyReportDate + 'T12:00:00'), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
             </p>
             <p className="text-sm mt-1" style={{ color: '#525252' }}>CURLI AGÊNCIA</p>
           </div>
 
-          {/* Yesterday's Main Metrics */}
+          {/* Selected Date Main Metrics */}
           <div className="grid grid-cols-2 gap-6 mb-8">
             {/* Diamonds Card - Pastel Red */}
             <div className="rounded-xl p-6" style={{ backgroundColor: '#fecaca', border: '1px solid #f87171' }}>
@@ -1128,23 +1165,23 @@ const ChartsDashboard: React.FC = () => {
                 <span className="text-sm" style={{ color: '#525252' }}>Diamantes</span>
               </div>
               <p className="text-3xl font-bold mb-4" style={{ color: '#991b1b' }}>
-                {yesterdayDiamonds.toLocaleString('pt-BR')}
+                {reportDiamonds.toLocaleString('pt-BR')}
               </p>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span style={{ color: '#525252' }}>Dia anterior:</span>
-                  <span style={{ color: '#1a1a1a' }}>{dayBeforeYesterdayDiamonds.toLocaleString('pt-BR')}</span>
+                  <span style={{ color: '#1a1a1a' }}>{dayBeforeReportDiamonds.toLocaleString('pt-BR')}</span>
                 </div>
                 <div className="flex justify-between">
                   <span style={{ color: '#525252' }}>Diferença:</span>
-                  <span style={{ color: yesterdayDiamondsDiff >= 0 ? '#166534' : '#b91c1c' }}>
-                    {yesterdayDiamondsDiff >= 0 ? '+' : ''}{yesterdayDiamondsDiff.toLocaleString('pt-BR')}
+                  <span style={{ color: reportDiamondsDiff >= 0 ? '#166534' : '#b91c1c' }}>
+                    {reportDiamondsDiff >= 0 ? '+' : ''}{reportDiamondsDiff.toLocaleString('pt-BR')}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span style={{ color: '#525252' }}>Variação:</span>
-                  <span style={{ color: yesterdayDiamondsPercentChange >= 0 ? '#166534' : '#b91c1c' }}>
-                    {yesterdayDiamondsPercentChange >= 0 ? '+' : ''}{yesterdayDiamondsPercentChange.toFixed(1)}%
+                  <span style={{ color: reportDiamondsPercentChange >= 0 ? '#166534' : '#b91c1c' }}>
+                    {reportDiamondsPercentChange >= 0 ? '+' : ''}{reportDiamondsPercentChange.toFixed(1)}%
                   </span>
                 </div>
               </div>
@@ -1157,23 +1194,23 @@ const ChartsDashboard: React.FC = () => {
                 <span className="text-sm" style={{ color: '#525252' }}>Criadores</span>
               </div>
               <p className="text-3xl font-bold mb-4" style={{ color: '#1a1a1a' }}>
-                {yesterdayCreators.toLocaleString('pt-BR')}
+                {reportCreators.toLocaleString('pt-BR')}
               </p>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span style={{ color: '#525252' }}>Dia anterior:</span>
-                  <span style={{ color: '#1a1a1a' }}>{dayBeforeYesterdayCreators.toLocaleString('pt-BR')}</span>
+                  <span style={{ color: '#1a1a1a' }}>{dayBeforeReportCreators.toLocaleString('pt-BR')}</span>
                 </div>
                 <div className="flex justify-between">
                   <span style={{ color: '#525252' }}>Diferença:</span>
-                  <span style={{ color: yesterdayCreatorsDiff >= 0 ? '#166534' : '#b91c1c' }}>
-                    {yesterdayCreatorsDiff >= 0 ? '+' : ''}{yesterdayCreatorsDiff.toLocaleString('pt-BR')}
+                  <span style={{ color: reportCreatorsDiff >= 0 ? '#166534' : '#b91c1c' }}>
+                    {reportCreatorsDiff >= 0 ? '+' : ''}{reportCreatorsDiff.toLocaleString('pt-BR')}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span style={{ color: '#525252' }}>Variação:</span>
-                  <span style={{ color: yesterdayCreatorsPercentChange >= 0 ? '#166534' : '#b91c1c' }}>
-                    {yesterdayCreatorsPercentChange >= 0 ? '+' : ''}{yesterdayCreatorsPercentChange.toFixed(1)}%
+                  <span style={{ color: reportCreatorsPercentChange >= 0 ? '#166534' : '#b91c1c' }}>
+                    {reportCreatorsPercentChange >= 0 ? '+' : ''}{reportCreatorsPercentChange.toFixed(1)}%
                   </span>
                 </div>
               </div>
@@ -1191,13 +1228,13 @@ const ChartsDashboard: React.FC = () => {
                 <div className="flex justify-between text-sm mb-2">
                   <span style={{ color: '#525252' }}>Diamantes</span>
                   <span style={{ color: '#1a1a1a' }}>
-                    {yesterdayDiamondsGoalPercent.toFixed(2)}% da meta diária
+                    {reportDiamondsGoalPercent.toFixed(2)}% da meta diária
                   </span>
                 </div>
                 <div className="h-3 rounded-full overflow-hidden" style={{ backgroundColor: '#fecaca' }}>
                   <div 
                     className="h-full rounded-full"
-                    style={{ width: `${Math.min(100, yesterdayDiamondsGoalPercent)}%`, backgroundColor: '#b91c1c' }}
+                    style={{ width: `${Math.min(100, reportDiamondsGoalPercent)}%`, backgroundColor: '#b91c1c' }}
                   />
                 </div>
               </div>
@@ -1205,13 +1242,13 @@ const ChartsDashboard: React.FC = () => {
                 <div className="flex justify-between text-sm mb-2">
                   <span style={{ color: '#525252' }}>Criadores</span>
                   <span style={{ color: '#1a1a1a' }}>
-                    {yesterdayCreatorsGoalPercent.toFixed(2)}% da meta diária
+                    {reportCreatorsGoalPercent.toFixed(2)}% da meta diária
                   </span>
                 </div>
                 <div className="h-3 rounded-full overflow-hidden" style={{ backgroundColor: '#e5e5e5' }}>
                   <div 
                     className="h-full rounded-full"
-                    style={{ width: `${Math.min(100, yesterdayCreatorsGoalPercent)}%`, backgroundColor: '#1a1a1a' }}
+                    style={{ width: `${Math.min(100, reportCreatorsGoalPercent)}%`, backgroundColor: '#1a1a1a' }}
                   />
                 </div>
               </div>
