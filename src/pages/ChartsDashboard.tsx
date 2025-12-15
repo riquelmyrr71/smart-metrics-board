@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Plus, Trash2, Diamond, Users, TrendingUp, Save, Loader2, FileText, Calendar, Target, Settings, ArrowUpRight, ArrowDownRight, Minus, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Diamond, Users, TrendingUp, Save, Loader2, FileText, Calendar, Target, Settings, ArrowUpRight, ArrowDownRight, Minus, RotateCcw, Check, ChevronRight, Award } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, BarChart, Bar, ComposedChart, PieChart, Pie, Cell } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -20,10 +20,26 @@ interface DailyEntry {
   creators: number;
 }
 
+interface PercentageTarget {
+  percentage: number;
+  diamondsValue: number;
+}
+
 interface MonthlyGoals {
   diamondsGoal: number;
   creatorsGoal: number;
+  percentageTargets: PercentageTarget[];
 }
+
+const DEFAULT_PERCENTAGE_TARGETS: PercentageTarget[] = [
+  { percentage: 2, diamondsValue: 18880000 },
+  { percentage: 5, diamondsValue: 21580000 },
+  { percentage: 7, diamondsValue: 24280000 },
+  { percentage: 9, diamondsValue: 26980000 },
+  { percentage: 11, diamondsValue: 29680000 },
+  { percentage: 13, diamondsValue: 32380000 },
+  { percentage: 15, diamondsValue: 35070000 },
+];
 
 const CHART_DATA_ID = '00000000-0000-0000-0000-000000000002';
 
@@ -31,7 +47,11 @@ const COLORS = ['#dc2626', '#991b1b', '#7f1d1d', '#450a0a', '#1f2937', '#374151'
 
 const ChartsDashboard: React.FC = () => {
   const [entries, setEntries] = useState<DailyEntry[]>([]);
-  const [monthlyGoals, setMonthlyGoals] = useState<MonthlyGoals>({ diamondsGoal: 0, creatorsGoal: 0 });
+  const [monthlyGoals, setMonthlyGoals] = useState<MonthlyGoals>({ 
+    diamondsGoal: 0, 
+    creatorsGoal: 0, 
+    percentageTargets: DEFAULT_PERCENTAGE_TARGETS 
+  });
   const [newDiamonds, setNewDiamonds] = useState<string>('');
   const [newCreators, setNewCreators] = useState<string>('');
   const [selectedDate, setSelectedDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
@@ -40,9 +60,11 @@ const ChartsDashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
   const [isExportingDaily, setIsExportingDaily] = useState(false);
+  const [isExportingGoals, setIsExportingGoals] = useState(false);
   const [showGoalsSettings, setShowGoalsSettings] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
   const dailyReportRef = useRef<HTMLDivElement>(null);
+  const goalsReportRef = useRef<HTMLDivElement>(null);
 
   // Load data from database
   const loadData = useCallback(async () => {
@@ -57,12 +79,16 @@ const ChartsDashboard: React.FC = () => {
       if (error) throw error;
 
       if (data?.data) {
-        const parsed = data.data as { entries?: DailyEntry[]; monthlyGoals?: MonthlyGoals };
+        const parsed = data.data as { entries?: DailyEntry[]; monthlyGoals?: Partial<MonthlyGoals> };
         if (parsed.entries) {
           setEntries(parsed.entries);
         }
         if (parsed.monthlyGoals) {
-          setMonthlyGoals(parsed.monthlyGoals);
+          setMonthlyGoals({
+            diamondsGoal: parsed.monthlyGoals.diamondsGoal || 0,
+            creatorsGoal: parsed.monthlyGoals.creatorsGoal || 0,
+            percentageTargets: parsed.monthlyGoals.percentageTargets || DEFAULT_PERCENTAGE_TARGETS,
+          });
         }
       }
     } catch (error) {
@@ -205,6 +231,58 @@ const ChartsDashboard: React.FC = () => {
     }
   }, [dailyReportDate]);
 
+  // Export Goals Report PDF
+  const handleExportGoalsPDF = useCallback(async () => {
+    if (!goalsReportRef.current) return;
+    
+    try {
+      setIsExportingGoals(true);
+      toast.info('Gerando relatório de metas PDF...');
+      
+      const [html2canvasModule, jsPDFModule] = await Promise.all([
+        import('html2canvas'),
+        import('jspdf')
+      ]);
+      
+      const html2canvas = html2canvasModule.default;
+      const jsPDF = jsPDFModule.default;
+      
+      const element = goalsReportRef.current;
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#fafafa',
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      });
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+      const imgX = (pdfWidth - imgWidth * ratio) / 2;
+      const imgY = 10;
+      
+      pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+      
+      pdf.save(`relatorio-metas-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+      
+      toast.success('Relatório de metas exportado!');
+    } catch (error) {
+      console.error('Erro ao exportar PDF de metas:', error);
+      toast.error('Erro ao exportar relatório de metas');
+    } finally {
+      setIsExportingGoals(false);
+    }
+  }, []);
+
   // Add new entry
   const handleAddEntry = useCallback(() => {
     const diamonds = parseFloat(newDiamonds) || 0;
@@ -300,6 +378,14 @@ const ChartsDashboard: React.FC = () => {
   const creatorsProgress = monthlyGoals.creatorsGoal > 0 
     ? Math.min(100, (monthCreators / monthlyGoals.creatorsGoal) * 100) 
     : 0;
+
+  // Percentage level calculations
+  const sortedTargets = [...monthlyGoals.percentageTargets].sort((a, b) => a.diamondsValue - b.diamondsValue);
+  const currentLevel = sortedTargets.filter(t => monthDiamonds >= t.diamondsValue).pop();
+  const nextLevel = sortedTargets.find(t => monthDiamonds < t.diamondsValue);
+  const progressToNextLevel = nextLevel 
+    ? ((monthDiamonds - (currentLevel?.diamondsValue || 0)) / (nextLevel.diamondsValue - (currentLevel?.diamondsValue || 0))) * 100
+    : 100;
 
   // Today's data
   const todayStr = format(new Date(), 'yyyy-MM-dd');
@@ -550,51 +636,205 @@ const ChartsDashboard: React.FC = () => {
                 <Target className="w-5 h-5 text-destructive" />
                 Metas Mensais
               </CardTitle>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => setShowGoalsSettings(!showGoalsSettings)}
-                className="gap-2"
-              >
-                <Settings className="w-4 h-4" />
-                {showGoalsSettings ? 'Ocultar' : 'Configurar'}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleExportGoalsPDF}
+                  disabled={isExportingGoals}
+                  className="gap-2 border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+                >
+                  {isExportingGoals ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+                  Relatório de Metas
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setShowGoalsSettings(!showGoalsSettings)}
+                  className="gap-2"
+                >
+                  <Settings className="w-4 h-4" />
+                  {showGoalsSettings ? 'Ocultar' : 'Configurar'}
+                </Button>
+              </div>
             </div>
             <CardDescription>Acompanhe o progresso em relação às metas do mês</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {showGoalsSettings && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-4 border-b border-border">
-                <div className="space-y-2">
-                  <Label htmlFor="diamondsGoal" className="flex items-center gap-2">
-                    <Diamond className="w-4 h-4 text-destructive" />
-                    Meta de Diamantes
-                  </Label>
-                  <Input
-                    id="diamondsGoal"
-                    type="number"
-                    placeholder="Ex: 500000"
-                    value={monthlyGoals.diamondsGoal || ''}
-                    onChange={(e) => setMonthlyGoals(prev => ({ ...prev, diamondsGoal: parseFloat(e.target.value) || 0 }))}
-                    className="bg-background border-border focus:border-destructive"
-                  />
+              <div className="space-y-6 pb-4 border-b border-border">
+                {/* Main Goals */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="diamondsGoal" className="flex items-center gap-2">
+                      <Diamond className="w-4 h-4 text-destructive" />
+                      Meta de Diamantes
+                    </Label>
+                    <Input
+                      id="diamondsGoal"
+                      type="number"
+                      placeholder="Ex: 500000"
+                      value={monthlyGoals.diamondsGoal || ''}
+                      onChange={(e) => setMonthlyGoals(prev => ({ ...prev, diamondsGoal: parseFloat(e.target.value) || 0 }))}
+                      className="bg-background border-border focus:border-destructive"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="creatorsGoal" className="flex items-center gap-2">
+                      <Users className="w-4 h-4 text-foreground" />
+                      Meta de Criadores
+                    </Label>
+                    <Input
+                      id="creatorsGoal"
+                      type="number"
+                      placeholder="Ex: 50"
+                      value={monthlyGoals.creatorsGoal || ''}
+                      onChange={(e) => setMonthlyGoals(prev => ({ ...prev, creatorsGoal: parseInt(e.target.value) || 0 }))}
+                      className="bg-background border-border focus:border-destructive"
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="creatorsGoal" className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-foreground" />
-                    Meta de Criadores
+
+                {/* Percentage Targets */}
+                <div className="space-y-3">
+                  <Label className="flex items-center gap-2 text-sm font-medium">
+                    <Award className="w-4 h-4 text-destructive" />
+                    Níveis de Porcentagem (Diamantes)
                   </Label>
-                  <Input
-                    id="creatorsGoal"
-                    type="number"
-                    placeholder="Ex: 50"
-                    value={monthlyGoals.creatorsGoal || ''}
-                    onChange={(e) => setMonthlyGoals(prev => ({ ...prev, creatorsGoal: parseInt(e.target.value) || 0 }))}
-                    className="bg-background border-border focus:border-destructive"
-                  />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                    {monthlyGoals.percentageTargets.map((target, index) => (
+                      <div key={index} className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 border border-border">
+                        <Input
+                          type="number"
+                          value={target.percentage}
+                          onChange={(e) => {
+                            const newTargets = [...monthlyGoals.percentageTargets];
+                            newTargets[index] = { ...target, percentage: parseFloat(e.target.value) || 0 };
+                            setMonthlyGoals(prev => ({ ...prev, percentageTargets: newTargets }));
+                          }}
+                          className="w-16 h-8 text-sm bg-background"
+                          placeholder="%"
+                        />
+                        <span className="text-muted-foreground">%</span>
+                        <Input
+                          type="number"
+                          value={target.diamondsValue}
+                          onChange={(e) => {
+                            const newTargets = [...monthlyGoals.percentageTargets];
+                            newTargets[index] = { ...target, diamondsValue: parseFloat(e.target.value) || 0 };
+                            setMonthlyGoals(prev => ({ ...prev, percentageTargets: newTargets }));
+                          }}
+                          className="flex-1 h-8 text-sm bg-background"
+                          placeholder="Diamantes"
+                        />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            const newTargets = monthlyGoals.percentageTargets.filter((_, i) => i !== index);
+                            setMonthlyGoals(prev => ({ ...prev, percentageTargets: newTargets }));
+                          }}
+                          className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const lastTarget = monthlyGoals.percentageTargets[monthlyGoals.percentageTargets.length - 1];
+                      const newPercentage = lastTarget ? lastTarget.percentage + 2 : 2;
+                      const newValue = lastTarget ? lastTarget.diamondsValue + 2700000 : 18880000;
+                      setMonthlyGoals(prev => ({
+                        ...prev,
+                        percentageTargets: [...prev.percentageTargets, { percentage: newPercentage, diamondsValue: newValue }]
+                      }));
+                    }}
+                    className="gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Adicionar Nível
+                  </Button>
                 </div>
               </div>
             )}
+
+            {/* Current Level Indicator */}
+            {monthlyGoals.percentageTargets.length > 0 && (
+              <div className="p-4 rounded-xl bg-gradient-to-br from-destructive/10 to-destructive/5 border border-destructive/20">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Award className="w-5 h-5 text-destructive" />
+                    <span className="font-medium">Nível Atual</span>
+                  </div>
+                  <span className="text-2xl font-bold text-destructive">
+                    {currentLevel ? `${currentLevel.percentage}%` : '0%'}
+                  </span>
+                </div>
+                {nextLevel && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground flex items-center gap-1">
+                        <ChevronRight className="w-4 h-4" />
+                        Próximo: {nextLevel.percentage}%
+                      </span>
+                      <span className="text-muted-foreground">
+                        Faltam: {(nextLevel.diamondsValue - monthDiamonds).toLocaleString('pt-BR')}
+                      </span>
+                    </div>
+                    <div className="relative h-2 bg-muted rounded-full overflow-hidden">
+                      <div 
+                        className="absolute inset-y-0 left-0 bg-destructive rounded-full transition-all duration-500"
+                        style={{ width: `${Math.min(100, progressToNextLevel)}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+                {!nextLevel && currentLevel && (
+                  <p className="text-sm text-green-500 font-medium flex items-center gap-1">
+                    <Check className="w-4 h-4" />
+                    Máximo atingido!
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Percentage Levels Overview */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2">
+              {sortedTargets.map((target, index) => {
+                const isAchieved = monthDiamonds >= target.diamondsValue;
+                const isCurrent = currentLevel?.percentage === target.percentage;
+                const isNext = nextLevel?.percentage === target.percentage;
+                
+                return (
+                  <div 
+                    key={index}
+                    className={`p-3 rounded-lg text-center transition-all ${
+                      isAchieved 
+                        ? 'bg-green-500/20 border-2 border-green-500/50' 
+                        : isCurrent 
+                          ? 'bg-destructive/20 border-2 border-destructive/50'
+                          : isNext
+                            ? 'bg-yellow-500/20 border-2 border-yellow-500/50'
+                            : 'bg-muted/30 border border-border'
+                    }`}
+                  >
+                    <div className="flex items-center justify-center gap-1 mb-1">
+                      {isAchieved && <Check className="w-3 h-3 text-green-500" />}
+                      <span className={`text-lg font-bold ${isAchieved ? 'text-green-500' : isCurrent ? 'text-destructive' : 'text-foreground'}`}>
+                        {target.percentage}%
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {(target.diamondsValue / 1000000).toFixed(2)}M
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
 
             {/* Progress Indicators */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1315,6 +1555,155 @@ const ChartsDashboard: React.FC = () => {
                 <p className="text-sm mb-1" style={{ color: '#525252' }}>Total Mês (Criadores)</p>
                 <p className="text-xl font-bold" style={{ color: '#1a1a1a' }}>
                   {monthCreators.toLocaleString('pt-BR')}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-center mt-8 text-xs" style={{ color: '#737373' }}>
+            Gerado em {format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+          </div>
+        </div>
+      </div>
+
+      {/* Hidden Goals Report for PDF Export */}
+      <div className="fixed -left-[9999px] -top-[9999px]">
+        <div 
+          ref={goalsReportRef} 
+          className="w-[600px] p-8"
+          style={{ backgroundColor: '#fafafa' }}
+        >
+          {/* Header */}
+          <div className="text-center mb-8 pb-6" style={{ borderBottom: '2px solid #1a1a1a' }}>
+            <img src={logoImage} alt="Curli Logo" className="w-16 h-16 mx-auto mb-3 object-contain" />
+            <h1 className="text-2xl font-bold mb-2" style={{ color: '#1a1a1a' }}>Relatório de Metas</h1>
+            <p className="text-lg font-medium" style={{ color: '#b91c1c' }}>
+              {format(new Date(), "MMMM 'de' yyyy", { locale: ptBR })}
+            </p>
+            <p className="text-sm mt-1" style={{ color: '#525252' }}>CURLI AGÊNCIA</p>
+          </div>
+
+          {/* Current Level */}
+          <div className="rounded-xl p-6 mb-6" style={{ backgroundColor: '#fecaca', border: '2px solid #b91c1c' }}>
+            <div className="text-center">
+              <Award className="w-12 h-12 mx-auto mb-3" style={{ color: '#b91c1c' }} />
+              <p className="text-sm mb-1" style={{ color: '#525252' }}>Nível Atual Atingido</p>
+              <p className="text-4xl font-bold" style={{ color: '#991b1b' }}>
+                {currentLevel ? `${currentLevel.percentage}%` : '0%'}
+              </p>
+              {currentLevel && (
+                <p className="text-sm mt-2" style={{ color: '#525252' }}>
+                  Meta: {currentLevel.diamondsValue.toLocaleString('pt-BR')} diamantes
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Progress Summary */}
+          <div className="rounded-xl p-6 mb-6" style={{ backgroundColor: '#ffffff', border: '1px solid #d4d4d4' }}>
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: '#1a1a1a' }}>
+              <Diamond className="w-5 h-5" style={{ color: '#b91c1c' }} />
+              Progresso Atual
+            </h2>
+            <div className="text-center mb-4">
+              <p className="text-3xl font-bold" style={{ color: '#991b1b' }}>
+                {monthDiamonds.toLocaleString('pt-BR')}
+              </p>
+              <p className="text-sm" style={{ color: '#525252' }}>Diamantes no mês</p>
+            </div>
+            {nextLevel && (
+              <div className="mt-4 p-4 rounded-lg" style={{ backgroundColor: '#fef3c7', border: '1px solid #f59e0b' }}>
+                <p className="text-sm font-medium" style={{ color: '#b45309' }}>
+                  Próximo nível: {nextLevel.percentage}%
+                </p>
+                <p className="text-sm" style={{ color: '#78350f' }}>
+                  Faltam: {(nextLevel.diamondsValue - monthDiamonds).toLocaleString('pt-BR')} diamantes
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Percentage Levels Table */}
+          <div className="rounded-xl p-6 mb-6" style={{ backgroundColor: '#ffffff', border: '1px solid #d4d4d4' }}>
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: '#1a1a1a' }}>
+              <Target className="w-5 h-5" style={{ color: '#b91c1c' }} />
+              Níveis de Meta
+            </h2>
+            <table className="w-full">
+              <thead>
+                <tr style={{ borderBottom: '1px solid #e5e5e5' }}>
+                  <th className="text-left py-2 text-sm font-medium" style={{ color: '#525252' }}>Nível</th>
+                  <th className="text-right py-2 text-sm font-medium" style={{ color: '#525252' }}>Meta de Diamantes</th>
+                  <th className="text-center py-2 text-sm font-medium" style={{ color: '#525252' }}>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedTargets.map((target, index) => {
+                  const isAchieved = monthDiamonds >= target.diamondsValue;
+                  const isCurrent = currentLevel?.percentage === target.percentage;
+                  const isNext = nextLevel?.percentage === target.percentage;
+                  
+                  return (
+                    <tr 
+                      key={index} 
+                      style={{ 
+                        borderBottom: '1px solid #f5f5f5',
+                        backgroundColor: isAchieved ? '#dcfce7' : isCurrent ? '#fef2f2' : isNext ? '#fef3c7' : 'transparent'
+                      }}
+                    >
+                      <td className="py-3 text-left">
+                        <span className="font-bold text-lg" style={{ color: isAchieved ? '#166534' : '#1a1a1a' }}>
+                          {target.percentage}%
+                        </span>
+                      </td>
+                      <td className="py-3 text-right" style={{ color: '#525252' }}>
+                        {target.diamondsValue.toLocaleString('pt-BR')}
+                      </td>
+                      <td className="py-3 text-center">
+                        {isAchieved ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: '#166534', color: '#ffffff' }}>
+                            <Check className="w-3 h-3" /> Atingido
+                          </span>
+                        ) : isNext ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: '#f59e0b', color: '#ffffff' }}>
+                            <ChevronRight className="w-3 h-3" /> Próximo
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: '#e5e5e5', color: '#525252' }}>
+                            Pendente
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Creators Goal */}
+          <div className="rounded-xl p-6 mb-6" style={{ backgroundColor: '#e5e5e5', border: '1px solid #a3a3a3' }}>
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: '#1a1a1a' }}>
+              <Users className="w-5 h-5" style={{ color: '#1a1a1a' }} />
+              Meta de Criadores
+            </h2>
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <p className="text-sm mb-1" style={{ color: '#525252' }}>Atual</p>
+                <p className="text-2xl font-bold" style={{ color: '#1a1a1a' }}>
+                  {monthCreators}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm mb-1" style={{ color: '#525252' }}>Meta</p>
+                <p className="text-2xl font-bold" style={{ color: '#1a1a1a' }}>
+                  {monthlyGoals.creatorsGoal}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm mb-1" style={{ color: '#525252' }}>Progresso</p>
+                <p className="text-2xl font-bold" style={{ color: creatorsProgress >= 100 ? '#166534' : '#b91c1c' }}>
+                  {creatorsProgress.toFixed(1)}%
                 </p>
               </div>
             </div>
