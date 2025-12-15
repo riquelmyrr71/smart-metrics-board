@@ -8,7 +8,7 @@ import { ArrowLeft, Plus, Trash2, Diamond, Users, TrendingUp, Save, Loader2, Fil
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, BarChart, Bar, ComposedChart, PieChart, Pie, Cell } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { format, startOfMonth, endOfMonth, isWithinInterval, subDays, isToday, parseISO } from 'date-fns';
+import { format, startOfMonth, endOfMonth, isWithinInterval, subDays, isToday, parseISO, getDaysInMonth, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { WeeklyAnalysis } from '@/components/Charts/WeeklyAnalysis';
 import logoImage from '@/assets/logo-curli.png';
@@ -387,6 +387,20 @@ const ChartsDashboard: React.FC = () => {
     ? ((monthDiamonds - (currentLevel?.diamondsValue || 0)) / (nextLevel.diamondsValue - (currentLevel?.diamondsValue || 0))) * 100
     : 100;
 
+  // Projection calculations
+  const totalDaysInMonth = getDaysInMonth(now);
+  const dayOfMonth = now.getDate();
+  const daysElapsed = currentMonthEntries.length > 0 ? currentMonthEntries.length : dayOfMonth;
+  const daysRemaining = totalDaysInMonth - dayOfMonth;
+  
+  // Average daily diamonds based on current month entries
+  const avgDailyDiamonds = daysElapsed > 0 ? monthDiamonds / daysElapsed : 0;
+  const projectedMonthDiamonds = monthDiamonds + (avgDailyDiamonds * daysRemaining);
+  
+  // Find projected level at month end
+  const projectedLevel = sortedTargets.filter(t => projectedMonthDiamonds >= t.diamondsValue).pop();
+  const projectedNextLevel = sortedTargets.find(t => projectedMonthDiamonds < t.diamondsValue);
+
   // Today's data
   const todayStr = format(new Date(), 'yyyy-MM-dd');
   const todayEntry = entries.find(e => e.date === todayStr);
@@ -762,82 +776,183 @@ const ChartsDashboard: React.FC = () => {
               </div>
             )}
 
-            {/* Current Level Indicator */}
+            {/* Visual Trail - Levels Progress */}
             {monthlyGoals.percentageTargets.length > 0 && (
-              <div className="p-4 rounded-xl bg-gradient-to-br from-destructive/10 to-destructive/5 border border-destructive/20">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Award className="w-5 h-5 text-destructive" />
-                    <span className="font-medium">Nível Atual</span>
+              <div className="space-y-6">
+                {/* Header with Current and Projected */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Current Level */}
+                  <div className="p-4 rounded-xl bg-gradient-to-br from-destructive/15 to-destructive/5 border-2 border-destructive/30">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Award className="w-5 h-5 text-destructive" />
+                      <span className="text-sm font-medium text-muted-foreground">Nível Atual</span>
+                    </div>
+                    <p className="text-3xl font-bold text-destructive">
+                      {currentLevel ? `${currentLevel.percentage}%` : '0%'}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {monthDiamonds.toLocaleString('pt-BR')} diamantes
+                    </p>
                   </div>
-                  <span className="text-2xl font-bold text-destructive">
-                    {currentLevel ? `${currentLevel.percentage}%` : '0%'}
-                  </span>
+
+                  {/* Projection */}
+                  <div className="p-4 rounded-xl bg-gradient-to-br from-yellow-500/15 to-yellow-500/5 border-2 border-yellow-500/30">
+                    <div className="flex items-center gap-2 mb-2">
+                      <TrendingUp className="w-5 h-5 text-yellow-500" />
+                      <span className="text-sm font-medium text-muted-foreground">Projeção Fim do Mês</span>
+                    </div>
+                    <p className="text-3xl font-bold text-yellow-500">
+                      {projectedLevel ? `${projectedLevel.percentage}%` : currentLevel ? `${currentLevel.percentage}%` : '0%'}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {Math.round(projectedMonthDiamonds).toLocaleString('pt-BR')} diamantes
+                    </p>
+                  </div>
+
+                  {/* Days Info */}
+                  <div className="p-4 rounded-xl bg-gradient-to-br from-muted/50 to-muted/20 border border-border">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Calendar className="w-5 h-5 text-muted-foreground" />
+                      <span className="text-sm font-medium text-muted-foreground">Tempo</span>
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                      <p className="text-3xl font-bold text-foreground">{daysRemaining}</p>
+                      <p className="text-sm text-muted-foreground">dias restantes</p>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Dia {dayOfMonth} de {totalDaysInMonth} • Média: {Math.round(avgDailyDiamonds).toLocaleString('pt-BR')}/dia
+                    </p>
+                  </div>
                 </div>
+
+                {/* Visual Trail */}
+                <div className="relative">
+                  {/* Background Trail Line */}
+                  <div className="absolute top-6 left-0 right-0 h-2 bg-muted rounded-full" />
+                  
+                  {/* Progress Line */}
+                  <div 
+                    className="absolute top-6 left-0 h-2 bg-gradient-to-r from-destructive to-green-500 rounded-full transition-all duration-700"
+                    style={{ 
+                      width: sortedTargets.length > 0 
+                        ? `${Math.min(100, (monthDiamonds / sortedTargets[sortedTargets.length - 1].diamondsValue) * 100)}%` 
+                        : '0%' 
+                    }}
+                  />
+
+                  {/* Projection Line (dashed) */}
+                  {projectedMonthDiamonds > monthDiamonds && (
+                    <div 
+                      className="absolute top-6 h-2 bg-yellow-500/40 rounded-full transition-all duration-700"
+                      style={{ 
+                        left: sortedTargets.length > 0 
+                          ? `${Math.min(100, (monthDiamonds / sortedTargets[sortedTargets.length - 1].diamondsValue) * 100)}%`
+                          : '0%',
+                        width: sortedTargets.length > 0 
+                          ? `${Math.min(100 - (monthDiamonds / sortedTargets[sortedTargets.length - 1].diamondsValue) * 100, ((projectedMonthDiamonds - monthDiamonds) / sortedTargets[sortedTargets.length - 1].diamondsValue) * 100)}%`
+                          : '0%'
+                      }}
+                    />
+                  )}
+                  
+                  {/* Level Markers */}
+                  <div className="relative flex justify-between">
+                    {sortedTargets.map((target, index) => {
+                      const isAchieved = monthDiamonds >= target.diamondsValue;
+                      const isCurrent = currentLevel?.percentage === target.percentage;
+                      const isProjected = projectedLevel?.percentage === target.percentage;
+                      const isNext = nextLevel?.percentage === target.percentage;
+                      const position = sortedTargets.length > 1 
+                        ? (index / (sortedTargets.length - 1)) * 100 
+                        : 50;
+                      
+                      return (
+                        <div 
+                          key={index}
+                          className="flex flex-col items-center relative"
+                          style={{ position: 'absolute', left: `${position}%`, transform: 'translateX(-50%)' }}
+                        >
+                          {/* Marker Circle */}
+                          <div 
+                            className={`w-12 h-12 rounded-full flex items-center justify-center border-4 transition-all duration-300 ${
+                              isAchieved 
+                                ? 'bg-green-500 border-green-400 shadow-lg shadow-green-500/30' 
+                                : isCurrent 
+                                  ? 'bg-destructive border-destructive/70 shadow-lg shadow-destructive/30 animate-pulse'
+                                  : isProjected && !isAchieved
+                                    ? 'bg-yellow-500 border-yellow-400 shadow-lg shadow-yellow-500/30'
+                                    : isNext
+                                      ? 'bg-muted border-yellow-500/50'
+                                      : 'bg-muted border-border'
+                            }`}
+                          >
+                            {isAchieved ? (
+                              <Check className="w-5 h-5 text-white" />
+                            ) : (
+                              <span className={`text-sm font-bold ${isCurrent ? 'text-white' : isProjected ? 'text-white' : 'text-muted-foreground'}`}>
+                                {target.percentage}%
+                              </span>
+                            )}
+                          </div>
+                          
+                          {/* Label */}
+                          <div className="mt-2 text-center">
+                            <p className={`text-xs font-bold ${
+                              isAchieved ? 'text-green-500' : isCurrent ? 'text-destructive' : isProjected ? 'text-yellow-500' : 'text-muted-foreground'
+                            }`}>
+                              {target.percentage}%
+                            </p>
+                            <p className="text-[10px] text-muted-foreground">
+                              {(target.diamondsValue / 1000000).toFixed(1)}M
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Spacer for trail markers */}
+                <div className="h-16" />
+
+                {/* Next Level Progress */}
                 {nextLevel && (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground flex items-center gap-1">
-                        <ChevronRight className="w-4 h-4" />
-                        Próximo: {nextLevel.percentage}%
-                      </span>
-                      <span className="text-muted-foreground">
+                  <div className="p-4 rounded-xl bg-muted/30 border border-border">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <ChevronRight className="w-5 h-5 text-yellow-500" />
+                        <span className="font-medium">Progresso para {nextLevel.percentage}%</span>
+                      </div>
+                      <span className="text-sm text-muted-foreground">
                         Faltam: {(nextLevel.diamondsValue - monthDiamonds).toLocaleString('pt-BR')}
                       </span>
                     </div>
-                    <div className="relative h-2 bg-muted rounded-full overflow-hidden">
+                    <div className="relative h-3 bg-muted rounded-full overflow-hidden">
                       <div 
-                        className="absolute inset-y-0 left-0 bg-destructive rounded-full transition-all duration-500"
+                        className="absolute inset-y-0 left-0 bg-gradient-to-r from-destructive to-yellow-500 rounded-full transition-all duration-500"
                         style={{ width: `${Math.min(100, progressToNextLevel)}%` }}
                       />
                     </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {progressToNextLevel.toFixed(1)}% completo
+                    </p>
                   </div>
                 )}
+
+                {/* Achievement status */}
                 {!nextLevel && currentLevel && (
-                  <p className="text-sm text-green-500 font-medium flex items-center gap-1">
-                    <Check className="w-4 h-4" />
-                    Máximo atingido!
-                  </p>
+                  <div className="p-4 rounded-xl bg-green-500/10 border-2 border-green-500/30">
+                    <p className="text-lg font-medium text-green-500 flex items-center gap-2">
+                      <Check className="w-5 h-5" />
+                      Nível máximo atingido! ({currentLevel.percentage}%)
+                    </p>
+                  </div>
                 )}
               </div>
             )}
 
-            {/* Percentage Levels Overview */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2">
-              {sortedTargets.map((target, index) => {
-                const isAchieved = monthDiamonds >= target.diamondsValue;
-                const isCurrent = currentLevel?.percentage === target.percentage;
-                const isNext = nextLevel?.percentage === target.percentage;
-                
-                return (
-                  <div 
-                    key={index}
-                    className={`p-3 rounded-lg text-center transition-all ${
-                      isAchieved 
-                        ? 'bg-green-500/20 border-2 border-green-500/50' 
-                        : isCurrent 
-                          ? 'bg-destructive/20 border-2 border-destructive/50'
-                          : isNext
-                            ? 'bg-yellow-500/20 border-2 border-yellow-500/50'
-                            : 'bg-muted/30 border border-border'
-                    }`}
-                  >
-                    <div className="flex items-center justify-center gap-1 mb-1">
-                      {isAchieved && <Check className="w-3 h-3 text-green-500" />}
-                      <span className={`text-lg font-bold ${isAchieved ? 'text-green-500' : isCurrent ? 'text-destructive' : 'text-foreground'}`}>
-                        {target.percentage}%
-                      </span>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {(target.diamondsValue / 1000000).toFixed(2)}M
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-
             {/* Progress Indicators */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
               {/* Diamonds Progress */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
@@ -1583,19 +1698,52 @@ const ChartsDashboard: React.FC = () => {
             <p className="text-sm mt-1" style={{ color: '#525252' }}>CURLI AGÊNCIA</p>
           </div>
 
-          {/* Current Level */}
-          <div className="rounded-xl p-6 mb-6" style={{ backgroundColor: '#fecaca', border: '2px solid #b91c1c' }}>
-            <div className="text-center">
-              <Award className="w-12 h-12 mx-auto mb-3" style={{ color: '#b91c1c' }} />
-              <p className="text-sm mb-1" style={{ color: '#525252' }}>Nível Atual Atingido</p>
-              <p className="text-4xl font-bold" style={{ color: '#991b1b' }}>
-                {currentLevel ? `${currentLevel.percentage}%` : '0%'}
-              </p>
-              {currentLevel && (
-                <p className="text-sm mt-2" style={{ color: '#525252' }}>
-                  Meta: {currentLevel.diamondsValue.toLocaleString('pt-BR')} diamantes
+          {/* Current vs Projection */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            {/* Current Level */}
+            <div className="rounded-xl p-6" style={{ backgroundColor: '#fecaca', border: '2px solid #b91c1c' }}>
+              <div className="text-center">
+                <Award className="w-10 h-10 mx-auto mb-2" style={{ color: '#b91c1c' }} />
+                <p className="text-xs mb-1" style={{ color: '#525252' }}>Nível Atual</p>
+                <p className="text-3xl font-bold" style={{ color: '#991b1b' }}>
+                  {currentLevel ? `${currentLevel.percentage}%` : '0%'}
                 </p>
-              )}
+                <p className="text-xs mt-1" style={{ color: '#525252' }}>
+                  {monthDiamonds.toLocaleString('pt-BR')} 💎
+                </p>
+              </div>
+            </div>
+
+            {/* Projected Level */}
+            <div className="rounded-xl p-6" style={{ backgroundColor: '#fef3c7', border: '2px solid #f59e0b' }}>
+              <div className="text-center">
+                <TrendingUp className="w-10 h-10 mx-auto mb-2" style={{ color: '#d97706' }} />
+                <p className="text-xs mb-1" style={{ color: '#525252' }}>Projeção Fim do Mês</p>
+                <p className="text-3xl font-bold" style={{ color: '#b45309' }}>
+                  {projectedLevel ? `${projectedLevel.percentage}%` : currentLevel ? `${currentLevel.percentage}%` : '0%'}
+                </p>
+                <p className="text-xs mt-1" style={{ color: '#525252' }}>
+                  {Math.round(projectedMonthDiamonds).toLocaleString('pt-BR')} 💎
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Time Info */}
+          <div className="rounded-xl p-4 mb-6" style={{ backgroundColor: '#f5f5f5', border: '1px solid #d4d4d4' }}>
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <p className="text-xs" style={{ color: '#525252' }}>Dia Atual</p>
+                <p className="text-xl font-bold" style={{ color: '#1a1a1a' }}>{dayOfMonth}/{totalDaysInMonth}</p>
+              </div>
+              <div>
+                <p className="text-xs" style={{ color: '#525252' }}>Dias Restantes</p>
+                <p className="text-xl font-bold" style={{ color: '#1a1a1a' }}>{daysRemaining}</p>
+              </div>
+              <div>
+                <p className="text-xs" style={{ color: '#525252' }}>Média Diária</p>
+                <p className="text-xl font-bold" style={{ color: '#b91c1c' }}>{Math.round(avgDailyDiamonds).toLocaleString('pt-BR')}</p>
+              </div>
             </div>
           </div>
 
@@ -1603,21 +1751,31 @@ const ChartsDashboard: React.FC = () => {
           <div className="rounded-xl p-6 mb-6" style={{ backgroundColor: '#ffffff', border: '1px solid #d4d4d4' }}>
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: '#1a1a1a' }}>
               <Diamond className="w-5 h-5" style={{ color: '#b91c1c' }} />
-              Progresso Atual
+              Análise de Projeção
             </h2>
-            <div className="text-center mb-4">
-              <p className="text-3xl font-bold" style={{ color: '#991b1b' }}>
-                {monthDiamonds.toLocaleString('pt-BR')}
-              </p>
-              <p className="text-sm" style={{ color: '#525252' }}>Diamantes no mês</p>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center p-3 rounded-lg" style={{ backgroundColor: '#fef2f2' }}>
+                <span style={{ color: '#525252' }}>Diamantes Atuais:</span>
+                <span className="font-bold" style={{ color: '#991b1b' }}>{monthDiamonds.toLocaleString('pt-BR')}</span>
+              </div>
+              <div className="flex justify-between items-center p-3 rounded-lg" style={{ backgroundColor: '#fef3c7' }}>
+                <span style={{ color: '#525252' }}>Projeção Fim do Mês:</span>
+                <span className="font-bold" style={{ color: '#b45309' }}>{Math.round(projectedMonthDiamonds).toLocaleString('pt-BR')}</span>
+              </div>
+              <div className="flex justify-between items-center p-3 rounded-lg" style={{ backgroundColor: '#dcfce7' }}>
+                <span style={{ color: '#525252' }}>Diamantes Necessários/Dia:</span>
+                <span className="font-bold" style={{ color: '#166534' }}>
+                  {nextLevel ? Math.ceil((nextLevel.diamondsValue - monthDiamonds) / Math.max(1, daysRemaining)).toLocaleString('pt-BR') : 'Meta atingida'}
+                </span>
+              </div>
             </div>
             {nextLevel && (
               <div className="mt-4 p-4 rounded-lg" style={{ backgroundColor: '#fef3c7', border: '1px solid #f59e0b' }}>
                 <p className="text-sm font-medium" style={{ color: '#b45309' }}>
-                  Próximo nível: {nextLevel.percentage}%
+                  Para atingir {nextLevel.percentage}% até o fim do mês:
                 </p>
                 <p className="text-sm" style={{ color: '#78350f' }}>
-                  Faltam: {(nextLevel.diamondsValue - monthDiamonds).toLocaleString('pt-BR')} diamantes
+                  Você precisa de {Math.ceil((nextLevel.diamondsValue - monthDiamonds) / Math.max(1, daysRemaining)).toLocaleString('pt-BR')} diamantes/dia
                 </p>
               </div>
             )}
