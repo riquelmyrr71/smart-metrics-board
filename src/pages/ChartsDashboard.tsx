@@ -60,11 +60,13 @@ const ChartsDashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
   const [isExportingDaily, setIsExportingDaily] = useState(false);
-  const [isExportingGoals, setIsExportingGoals] = useState(false);
+  const [isExportingDiamondsGoals, setIsExportingDiamondsGoals] = useState(false);
+  const [isExportingCreatorsGoals, setIsExportingCreatorsGoals] = useState(false);
   const [showGoalsSettings, setShowGoalsSettings] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
   const dailyReportRef = useRef<HTMLDivElement>(null);
-  const goalsReportRef = useRef<HTMLDivElement>(null);
+  const diamondsGoalsReportRef = useRef<HTMLDivElement>(null);
+  const creatorsGoalsReportRef = useRef<HTMLDivElement>(null);
 
   // Load data from database
   const loadData = useCallback(async () => {
@@ -231,13 +233,13 @@ const ChartsDashboard: React.FC = () => {
     }
   }, [dailyReportDate]);
 
-  // Export Goals Report PDF
-  const handleExportGoalsPDF = useCallback(async () => {
-    if (!goalsReportRef.current) return;
+  // Export Diamonds Goals Report PDF
+  const handleExportDiamondsGoalsPDF = useCallback(async () => {
+    if (!diamondsGoalsReportRef.current) return;
     
     try {
-      setIsExportingGoals(true);
-      toast.info('Gerando relatório de metas PDF...');
+      setIsExportingDiamondsGoals(true);
+      toast.info('Gerando relatório de diamantes...');
       
       const [html2canvasModule, jsPDFModule] = await Promise.all([
         import('html2canvas'),
@@ -247,7 +249,7 @@ const ChartsDashboard: React.FC = () => {
       const html2canvas = html2canvasModule.default;
       const jsPDF = jsPDFModule.default;
       
-      const element = goalsReportRef.current;
+      const element = diamondsGoalsReportRef.current;
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
@@ -272,14 +274,66 @@ const ChartsDashboard: React.FC = () => {
       
       pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
       
-      pdf.save(`relatorio-metas-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+      pdf.save(`relatorio-diamantes-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
       
-      toast.success('Relatório de metas exportado!');
+      toast.success('Relatório de diamantes exportado!');
     } catch (error) {
-      console.error('Erro ao exportar PDF de metas:', error);
-      toast.error('Erro ao exportar relatório de metas');
+      console.error('Erro ao exportar PDF de diamantes:', error);
+      toast.error('Erro ao exportar relatório');
     } finally {
-      setIsExportingGoals(false);
+      setIsExportingDiamondsGoals(false);
+    }
+  }, []);
+
+  // Export Creators Goals Report PDF
+  const handleExportCreatorsGoalsPDF = useCallback(async () => {
+    if (!creatorsGoalsReportRef.current) return;
+    
+    try {
+      setIsExportingCreatorsGoals(true);
+      toast.info('Gerando relatório de criadores...');
+      
+      const [html2canvasModule, jsPDFModule] = await Promise.all([
+        import('html2canvas'),
+        import('jspdf')
+      ]);
+      
+      const html2canvas = html2canvasModule.default;
+      const jsPDF = jsPDFModule.default;
+      
+      const element = creatorsGoalsReportRef.current;
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#fafafa',
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      });
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+      const imgX = (pdfWidth - imgWidth * ratio) / 2;
+      const imgY = 10;
+      
+      pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+      
+      pdf.save(`relatorio-criadores-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+      
+      toast.success('Relatório de criadores exportado!');
+    } catch (error) {
+      console.error('Erro ao exportar PDF de criadores:', error);
+      toast.error('Erro ao exportar relatório');
+    } finally {
+      setIsExportingCreatorsGoals(false);
     }
   }, []);
 
@@ -654,12 +708,22 @@ const ChartsDashboard: React.FC = () => {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  onClick={handleExportGoalsPDF}
-                  disabled={isExportingGoals}
+                  onClick={handleExportDiamondsGoalsPDF}
+                  disabled={isExportingDiamondsGoals}
                   className="gap-2 border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
                 >
-                  {isExportingGoals ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
-                  Relatório de Metas
+                  {isExportingDiamondsGoals ? <Loader2 className="w-4 h-4 animate-spin" /> : <Diamond className="w-4 h-4" />}
+                  Relatório Diamantes
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleExportCreatorsGoalsPDF}
+                  disabled={isExportingCreatorsGoals}
+                  className="gap-2 border-border hover:bg-muted"
+                >
+                  {isExportingCreatorsGoals ? <Loader2 className="w-4 h-4 animate-spin" /> : <Users className="w-4 h-4" />}
+                  Relatório Criadores
                 </Button>
                 <Button 
                   variant="ghost" 
@@ -825,95 +889,108 @@ const ChartsDashboard: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Visual Trail */}
-                <div className="relative">
-                  {/* Background Trail Line */}
-                  <div className="absolute top-6 left-0 right-0 h-2 bg-muted rounded-full" />
-                  
-                  {/* Progress Line */}
-                  <div 
-                    className="absolute top-6 left-0 h-2 bg-gradient-to-r from-destructive to-green-500 rounded-full transition-all duration-700"
-                    style={{ 
-                      width: sortedTargets.length > 0 
-                        ? `${Math.min(100, (monthDiamonds / sortedTargets[sortedTargets.length - 1].diamondsValue) * 100)}%` 
-                        : '0%' 
-                    }}
-                  />
-
-                  {/* Projection Line (dashed) */}
-                  {projectedMonthDiamonds > monthDiamonds && (
+                {/* Visual Trail - Enhanced */}
+                <div className="relative pt-4 pb-8">
+                  {/* Trail Container */}
+                  <div className="relative mx-4">
+                    {/* Background Track */}
+                    <div className="absolute top-8 left-0 right-0 h-3 bg-gradient-to-r from-muted via-muted to-muted rounded-full shadow-inner" />
+                    
+                    {/* Achieved Progress */}
                     <div 
-                      className="absolute top-6 h-2 bg-yellow-500/40 rounded-full transition-all duration-700"
+                      className="absolute top-8 left-0 h-3 rounded-full transition-all duration-1000 ease-out"
                       style={{ 
-                        left: sortedTargets.length > 0 
-                          ? `${Math.min(100, (monthDiamonds / sortedTargets[sortedTargets.length - 1].diamondsValue) * 100)}%`
-                          : '0%',
                         width: sortedTargets.length > 0 
-                          ? `${Math.min(100 - (monthDiamonds / sortedTargets[sortedTargets.length - 1].diamondsValue) * 100, ((projectedMonthDiamonds - monthDiamonds) / sortedTargets[sortedTargets.length - 1].diamondsValue) * 100)}%`
-                          : '0%'
+                          ? `${Math.min(100, (monthDiamonds / sortedTargets[sortedTargets.length - 1].diamondsValue) * 100)}%` 
+                          : '0%',
+                        background: 'linear-gradient(90deg, #22c55e 0%, #16a34a 50%, #15803d 100%)',
+                        boxShadow: '0 0 10px rgba(34, 197, 94, 0.5)'
                       }}
                     />
-                  )}
-                  
-                  {/* Level Markers */}
-                  <div className="relative flex justify-between">
-                    {sortedTargets.map((target, index) => {
-                      const isAchieved = monthDiamonds >= target.diamondsValue;
-                      const isCurrent = currentLevel?.percentage === target.percentage;
-                      const isProjected = projectedLevel?.percentage === target.percentage;
-                      const isNext = nextLevel?.percentage === target.percentage;
-                      const position = sortedTargets.length > 1 
-                        ? (index / (sortedTargets.length - 1)) * 100 
-                        : 50;
-                      
-                      return (
-                        <div 
-                          key={index}
-                          className="flex flex-col items-center relative"
-                          style={{ position: 'absolute', left: `${position}%`, transform: 'translateX(-50%)' }}
-                        >
-                          {/* Marker Circle */}
+
+                    {/* Projection Extension */}
+                    {projectedMonthDiamonds > monthDiamonds && (
+                      <div 
+                        className="absolute top-8 h-3 rounded-full transition-all duration-1000"
+                        style={{ 
+                          left: sortedTargets.length > 0 
+                            ? `${Math.min(100, (monthDiamonds / sortedTargets[sortedTargets.length - 1].diamondsValue) * 100)}%`
+                            : '0%',
+                          width: sortedTargets.length > 0 
+                            ? `${Math.min(100 - (monthDiamonds / sortedTargets[sortedTargets.length - 1].diamondsValue) * 100, ((projectedMonthDiamonds - monthDiamonds) / sortedTargets[sortedTargets.length - 1].diamondsValue) * 100)}%`
+                            : '0%',
+                          background: 'repeating-linear-gradient(90deg, #eab308 0px, #eab308 8px, #fbbf24 8px, #fbbf24 16px)',
+                          opacity: 0.7
+                        }}
+                      />
+                    )}
+                    
+                    {/* Level Markers */}
+                    <div className="relative h-24">
+                      {sortedTargets.map((target, index) => {
+                        const isAchieved = monthDiamonds >= target.diamondsValue;
+                        const isCurrent = currentLevel?.percentage === target.percentage;
+                        const isProjected = projectedLevel?.percentage === target.percentage && !isAchieved;
+                        const isNext = nextLevel?.percentage === target.percentage;
+                        const position = sortedTargets.length > 1 
+                          ? (index / (sortedTargets.length - 1)) * 100 
+                          : 50;
+                        
+                        return (
                           <div 
-                            className={`w-12 h-12 rounded-full flex items-center justify-center border-4 transition-all duration-300 ${
-                              isAchieved 
-                                ? 'bg-green-500 border-green-400 shadow-lg shadow-green-500/30' 
-                                : isCurrent 
-                                  ? 'bg-destructive border-destructive/70 shadow-lg shadow-destructive/30 animate-pulse'
-                                  : isProjected && !isAchieved
-                                    ? 'bg-yellow-500 border-yellow-400 shadow-lg shadow-yellow-500/30'
-                                    : isNext
-                                      ? 'bg-muted border-yellow-500/50'
-                                      : 'bg-muted border-border'
-                            }`}
+                            key={index}
+                            className="absolute flex flex-col items-center"
+                            style={{ left: `${position}%`, transform: 'translateX(-50%)' }}
                           >
-                            {isAchieved ? (
-                              <Check className="w-5 h-5 text-white" />
-                            ) : (
-                              <span className={`text-sm font-bold ${isCurrent ? 'text-white' : isProjected ? 'text-white' : 'text-muted-foreground'}`}>
-                                {target.percentage}%
-                              </span>
-                            )}
+                            {/* Vertical connector */}
+                            <div 
+                              className={`w-0.5 h-4 ${
+                                isAchieved ? 'bg-green-500' : isProjected ? 'bg-yellow-500' : 'bg-muted-foreground/30'
+                              }`}
+                            />
+                            
+                            {/* Marker Node */}
+                            <div 
+                              className={`relative w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 ${
+                                isAchieved 
+                                  ? 'bg-green-500 ring-4 ring-green-500/30' 
+                                  : isCurrent 
+                                    ? 'bg-destructive ring-4 ring-destructive/30 animate-pulse'
+                                    : isProjected
+                                      ? 'bg-yellow-500 ring-4 ring-yellow-500/30'
+                                      : isNext
+                                        ? 'bg-muted ring-2 ring-yellow-500/50'
+                                        : 'bg-muted ring-2 ring-border'
+                              }`}
+                            >
+                              {isAchieved ? (
+                                <Check className="w-5 h-5 text-white" />
+                              ) : (
+                                <span className={`text-xs font-bold ${
+                                  isCurrent || isProjected ? 'text-white' : 'text-muted-foreground'
+                                }`}>
+                                  {target.percentage}%
+                                </span>
+                              )}
+                            </div>
+                            
+                            {/* Label below */}
+                            <div className="mt-1 text-center">
+                              <p className={`text-[11px] font-semibold ${
+                                isAchieved ? 'text-green-500' : isCurrent ? 'text-destructive' : isProjected ? 'text-yellow-500' : 'text-muted-foreground'
+                              }`}>
+                                {(target.diamondsValue / 1000000).toFixed(1)}M
+                              </p>
+                            </div>
                           </div>
-                          
-                          {/* Label */}
-                          <div className="mt-2 text-center">
-                            <p className={`text-xs font-bold ${
-                              isAchieved ? 'text-green-500' : isCurrent ? 'text-destructive' : isProjected ? 'text-yellow-500' : 'text-muted-foreground'
-                            }`}>
-                              {target.percentage}%
-                            </p>
-                            <p className="text-[10px] text-muted-foreground">
-                              {(target.diamondsValue / 1000000).toFixed(1)}M
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
 
                 {/* Spacer for trail markers */}
-                <div className="h-16" />
+                <div className="h-8" />
 
                 {/* Next Level Progress */}
                 {nextLevel && (
@@ -1681,155 +1758,96 @@ const ChartsDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Hidden Goals Report for PDF Export */}
+      {/* Hidden Diamonds Goals Report for PDF Export */}
       <div className="fixed -left-[9999px] -top-[9999px]">
         <div 
-          ref={goalsReportRef} 
+          ref={diamondsGoalsReportRef} 
           className="w-[600px] p-8"
           style={{ backgroundColor: '#fafafa' }}
         >
           {/* Header */}
-          <div className="text-center mb-8 pb-6" style={{ borderBottom: '2px solid #1a1a1a' }}>
+          <div className="text-center mb-8 pb-6" style={{ borderBottom: '2px solid #b91c1c' }}>
             <img src={logoImage} alt="Curli Logo" className="w-16 h-16 mx-auto mb-3 object-contain" />
-            <h1 className="text-2xl font-bold mb-2" style={{ color: '#1a1a1a' }}>Relatório de Metas</h1>
-            <p className="text-lg font-medium" style={{ color: '#b91c1c' }}>
+            <h1 className="text-2xl font-bold mb-2" style={{ color: '#b91c1c' }}>Relatório de Diamantes</h1>
+            <p className="text-lg font-medium" style={{ color: '#1a1a1a' }}>
               {format(new Date(), "MMMM 'de' yyyy", { locale: ptBR })}
             </p>
-            <p className="text-sm mt-1" style={{ color: '#525252' }}>CURLI AGÊNCIA</p>
           </div>
 
-          {/* Current vs Projection */}
+          {/* Current Status */}
           <div className="grid grid-cols-2 gap-4 mb-6">
-            {/* Current Level */}
-            <div className="rounded-xl p-6" style={{ backgroundColor: '#fecaca', border: '2px solid #b91c1c' }}>
-              <div className="text-center">
-                <Award className="w-10 h-10 mx-auto mb-2" style={{ color: '#b91c1c' }} />
-                <p className="text-xs mb-1" style={{ color: '#525252' }}>Nível Atual</p>
-                <p className="text-3xl font-bold" style={{ color: '#991b1b' }}>
-                  {currentLevel ? `${currentLevel.percentage}%` : '0%'}
-                </p>
-                <p className="text-xs mt-1" style={{ color: '#525252' }}>
-                  {monthDiamonds.toLocaleString('pt-BR')} 💎
-                </p>
-              </div>
+            <div className="rounded-xl p-6 text-center" style={{ backgroundColor: '#fecaca', border: '2px solid #b91c1c' }}>
+              <Diamond className="w-8 h-8 mx-auto mb-2" style={{ color: '#b91c1c' }} />
+              <p className="text-xs mb-1" style={{ color: '#525252' }}>Nível Atual</p>
+              <p className="text-4xl font-bold" style={{ color: '#991b1b' }}>
+                {currentLevel ? `${currentLevel.percentage}%` : '0%'}
+              </p>
             </div>
-
-            {/* Projected Level */}
-            <div className="rounded-xl p-6" style={{ backgroundColor: '#fef3c7', border: '2px solid #f59e0b' }}>
-              <div className="text-center">
-                <TrendingUp className="w-10 h-10 mx-auto mb-2" style={{ color: '#d97706' }} />
-                <p className="text-xs mb-1" style={{ color: '#525252' }}>Projeção Fim do Mês</p>
-                <p className="text-3xl font-bold" style={{ color: '#b45309' }}>
-                  {projectedLevel ? `${projectedLevel.percentage}%` : currentLevel ? `${currentLevel.percentage}%` : '0%'}
-                </p>
-                <p className="text-xs mt-1" style={{ color: '#525252' }}>
-                  {Math.round(projectedMonthDiamonds).toLocaleString('pt-BR')} 💎
-                </p>
-              </div>
+            <div className="rounded-xl p-6 text-center" style={{ backgroundColor: '#fef3c7', border: '2px solid #f59e0b' }}>
+              <TrendingUp className="w-8 h-8 mx-auto mb-2" style={{ color: '#d97706' }} />
+              <p className="text-xs mb-1" style={{ color: '#525252' }}>Projeção</p>
+              <p className="text-4xl font-bold" style={{ color: '#b45309' }}>
+                {projectedLevel ? `${projectedLevel.percentage}%` : currentLevel ? `${currentLevel.percentage}%` : '0%'}
+              </p>
             </div>
           </div>
 
-          {/* Time Info */}
-          <div className="rounded-xl p-4 mb-6" style={{ backgroundColor: '#f5f5f5', border: '1px solid #d4d4d4' }}>
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div>
-                <p className="text-xs" style={{ color: '#525252' }}>Dia Atual</p>
-                <p className="text-xl font-bold" style={{ color: '#1a1a1a' }}>{dayOfMonth}/{totalDaysInMonth}</p>
-              </div>
-              <div>
-                <p className="text-xs" style={{ color: '#525252' }}>Dias Restantes</p>
-                <p className="text-xl font-bold" style={{ color: '#1a1a1a' }}>{daysRemaining}</p>
-              </div>
-              <div>
-                <p className="text-xs" style={{ color: '#525252' }}>Média Diária</p>
-                <p className="text-xl font-bold" style={{ color: '#b91c1c' }}>{Math.round(avgDailyDiamonds).toLocaleString('pt-BR')}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Progress Summary */}
+          {/* Progress Info */}
           <div className="rounded-xl p-6 mb-6" style={{ backgroundColor: '#ffffff', border: '1px solid #d4d4d4' }}>
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: '#1a1a1a' }}>
-              <Diamond className="w-5 h-5" style={{ color: '#b91c1c' }} />
-              Análise de Projeção
-            </h2>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center p-3 rounded-lg" style={{ backgroundColor: '#fef2f2' }}>
-                <span style={{ color: '#525252' }}>Diamantes Atuais:</span>
-                <span className="font-bold" style={{ color: '#991b1b' }}>{monthDiamonds.toLocaleString('pt-BR')}</span>
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="text-center p-3 rounded-lg" style={{ backgroundColor: '#fef2f2' }}>
+                <p className="text-xs" style={{ color: '#525252' }}>Diamantes Acumulados</p>
+                <p className="text-2xl font-bold" style={{ color: '#991b1b' }}>{monthDiamonds.toLocaleString('pt-BR')}</p>
               </div>
-              <div className="flex justify-between items-center p-3 rounded-lg" style={{ backgroundColor: '#fef3c7' }}>
-                <span style={{ color: '#525252' }}>Projeção Fim do Mês:</span>
-                <span className="font-bold" style={{ color: '#b45309' }}>{Math.round(projectedMonthDiamonds).toLocaleString('pt-BR')}</span>
-              </div>
-              <div className="flex justify-between items-center p-3 rounded-lg" style={{ backgroundColor: '#dcfce7' }}>
-                <span style={{ color: '#525252' }}>Diamantes Necessários/Dia:</span>
-                <span className="font-bold" style={{ color: '#166534' }}>
-                  {nextLevel ? Math.ceil((nextLevel.diamondsValue - monthDiamonds) / Math.max(1, daysRemaining)).toLocaleString('pt-BR') : 'Meta atingida'}
-                </span>
+              <div className="text-center p-3 rounded-lg" style={{ backgroundColor: '#fef3c7' }}>
+                <p className="text-xs" style={{ color: '#525252' }}>Projeção Fim do Mês</p>
+                <p className="text-2xl font-bold" style={{ color: '#b45309' }}>{Math.round(projectedMonthDiamonds).toLocaleString('pt-BR')}</p>
               </div>
             </div>
-            {nextLevel && (
-              <div className="mt-4 p-4 rounded-lg" style={{ backgroundColor: '#fef3c7', border: '1px solid #f59e0b' }}>
-                <p className="text-sm font-medium" style={{ color: '#b45309' }}>
-                  Para atingir {nextLevel.percentage}% até o fim do mês:
-                </p>
-                <p className="text-sm" style={{ color: '#78350f' }}>
-                  Você precisa de {Math.ceil((nextLevel.diamondsValue - monthDiamonds) / Math.max(1, daysRemaining)).toLocaleString('pt-BR')} diamantes/dia
-                </p>
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="p-2 rounded-lg" style={{ backgroundColor: '#f5f5f5' }}>
+                <p className="text-[10px]" style={{ color: '#525252' }}>Dia {dayOfMonth}/{totalDaysInMonth}</p>
               </div>
-            )}
+              <div className="p-2 rounded-lg" style={{ backgroundColor: '#f5f5f5' }}>
+                <p className="text-[10px]" style={{ color: '#525252' }}>{daysRemaining} dias restantes</p>
+              </div>
+              <div className="p-2 rounded-lg" style={{ backgroundColor: '#f5f5f5' }}>
+                <p className="text-[10px]" style={{ color: '#525252' }}>Média: {Math.round(avgDailyDiamonds).toLocaleString('pt-BR')}/dia</p>
+              </div>
+            </div>
           </div>
 
-          {/* Percentage Levels Table */}
-          <div className="rounded-xl p-6 mb-6" style={{ backgroundColor: '#ffffff', border: '1px solid #d4d4d4' }}>
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: '#1a1a1a' }}>
-              <Target className="w-5 h-5" style={{ color: '#b91c1c' }} />
-              Níveis de Meta
-            </h2>
+          {/* Levels Table */}
+          <div className="rounded-xl p-6" style={{ backgroundColor: '#ffffff', border: '1px solid #d4d4d4' }}>
+            <h2 className="text-sm font-semibold mb-4" style={{ color: '#1a1a1a' }}>Níveis de Meta</h2>
             <table className="w-full">
               <thead>
                 <tr style={{ borderBottom: '1px solid #e5e5e5' }}>
-                  <th className="text-left py-2 text-sm font-medium" style={{ color: '#525252' }}>Nível</th>
-                  <th className="text-right py-2 text-sm font-medium" style={{ color: '#525252' }}>Meta de Diamantes</th>
-                  <th className="text-center py-2 text-sm font-medium" style={{ color: '#525252' }}>Status</th>
+                  <th className="text-left py-2 text-xs" style={{ color: '#525252' }}>Nível</th>
+                  <th className="text-right py-2 text-xs" style={{ color: '#525252' }}>Diamantes</th>
+                  <th className="text-center py-2 text-xs" style={{ color: '#525252' }}>Status</th>
                 </tr>
               </thead>
               <tbody>
                 {sortedTargets.map((target, index) => {
                   const isAchieved = monthDiamonds >= target.diamondsValue;
-                  const isCurrent = currentLevel?.percentage === target.percentage;
                   const isNext = nextLevel?.percentage === target.percentage;
                   
                   return (
-                    <tr 
-                      key={index} 
-                      style={{ 
-                        borderBottom: '1px solid #f5f5f5',
-                        backgroundColor: isAchieved ? '#dcfce7' : isCurrent ? '#fef2f2' : isNext ? '#fef3c7' : 'transparent'
-                      }}
-                    >
-                      <td className="py-3 text-left">
-                        <span className="font-bold text-lg" style={{ color: isAchieved ? '#166534' : '#1a1a1a' }}>
-                          {target.percentage}%
-                        </span>
+                    <tr key={index} style={{ borderBottom: '1px solid #f5f5f5', backgroundColor: isAchieved ? '#dcfce7' : isNext ? '#fef3c7' : 'transparent' }}>
+                      <td className="py-2">
+                        <span className="font-bold" style={{ color: isAchieved ? '#166534' : '#1a1a1a' }}>{target.percentage}%</span>
                       </td>
-                      <td className="py-3 text-right" style={{ color: '#525252' }}>
+                      <td className="py-2 text-right text-sm" style={{ color: '#525252' }}>
                         {target.diamondsValue.toLocaleString('pt-BR')}
                       </td>
-                      <td className="py-3 text-center">
+                      <td className="py-2 text-center">
                         {isAchieved ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: '#166534', color: '#ffffff' }}>
-                            <Check className="w-3 h-3" /> Atingido
-                          </span>
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-medium" style={{ backgroundColor: '#166534', color: '#ffffff' }}>✓</span>
                         ) : isNext ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: '#f59e0b', color: '#ffffff' }}>
-                            <ChevronRight className="w-3 h-3" /> Próximo
-                          </span>
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-medium" style={{ backgroundColor: '#f59e0b', color: '#ffffff' }}>→</span>
                         ) : (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: '#e5e5e5', color: '#525252' }}>
-                            Pendente
-                          </span>
+                          <span className="text-[10px]" style={{ color: '#a3a3a3' }}>-</span>
                         )}
                       </td>
                     </tr>
@@ -1839,35 +1857,94 @@ const ChartsDashboard: React.FC = () => {
             </table>
           </div>
 
-          {/* Creators Goal */}
-          <div className="rounded-xl p-6 mb-6" style={{ backgroundColor: '#e5e5e5', border: '1px solid #a3a3a3' }}>
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: '#1a1a1a' }}>
-              <Users className="w-5 h-5" style={{ color: '#1a1a1a' }} />
-              Meta de Criadores
-            </h2>
+          <div className="text-center mt-6 text-xs" style={{ color: '#737373' }}>
+            Gerado em {format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+          </div>
+        </div>
+      </div>
+
+      {/* Hidden Creators Goals Report for PDF Export */}
+      <div className="fixed -left-[9999px] -top-[9999px]">
+        <div 
+          ref={creatorsGoalsReportRef} 
+          className="w-[600px] p-8"
+          style={{ backgroundColor: '#fafafa' }}
+        >
+          {/* Header */}
+          <div className="text-center mb-8 pb-6" style={{ borderBottom: '2px solid #1a1a1a' }}>
+            <img src={logoImage} alt="Curli Logo" className="w-16 h-16 mx-auto mb-3 object-contain" />
+            <h1 className="text-2xl font-bold mb-2" style={{ color: '#1a1a1a' }}>Relatório de Criadores</h1>
+            <p className="text-lg font-medium" style={{ color: '#525252' }}>
+              {format(new Date(), "MMMM 'de' yyyy", { locale: ptBR })}
+            </p>
+          </div>
+
+          {/* Current Status */}
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="rounded-xl p-6 text-center" style={{ backgroundColor: '#e5e5e5', border: '1px solid #a3a3a3' }}>
+              <Users className="w-8 h-8 mx-auto mb-2" style={{ color: '#1a1a1a' }} />
+              <p className="text-xs mb-1" style={{ color: '#525252' }}>Atual</p>
+              <p className="text-3xl font-bold" style={{ color: '#1a1a1a' }}>{monthCreators}</p>
+            </div>
+            <div className="rounded-xl p-6 text-center" style={{ backgroundColor: '#f5f5f5', border: '1px solid #d4d4d4' }}>
+              <Target className="w-8 h-8 mx-auto mb-2" style={{ color: '#525252' }} />
+              <p className="text-xs mb-1" style={{ color: '#525252' }}>Meta</p>
+              <p className="text-3xl font-bold" style={{ color: '#1a1a1a' }}>{monthlyGoals.creatorsGoal}</p>
+            </div>
+            <div className="rounded-xl p-6 text-center" style={{ backgroundColor: creatorsProgress >= 100 ? '#dcfce7' : '#fef2f2', border: `1px solid ${creatorsProgress >= 100 ? '#22c55e' : '#f87171'}` }}>
+              <TrendingUp className="w-8 h-8 mx-auto mb-2" style={{ color: creatorsProgress >= 100 ? '#166534' : '#b91c1c' }} />
+              <p className="text-xs mb-1" style={{ color: '#525252' }}>Progresso</p>
+              <p className="text-3xl font-bold" style={{ color: creatorsProgress >= 100 ? '#166534' : '#b91c1c' }}>{creatorsProgress.toFixed(1)}%</p>
+            </div>
+          </div>
+
+          {/* Progress Bar */}
+          <div className="rounded-xl p-6 mb-6" style={{ backgroundColor: '#ffffff', border: '1px solid #d4d4d4' }}>
+            <div className="mb-4">
+              <div className="flex justify-between text-sm mb-2">
+                <span style={{ color: '#525252' }}>Progresso para a Meta</span>
+                <span style={{ color: '#1a1a1a' }}>{monthCreators} / {monthlyGoals.creatorsGoal}</span>
+              </div>
+              <div className="h-4 rounded-full overflow-hidden" style={{ backgroundColor: '#e5e5e5' }}>
+                <div 
+                  className="h-full rounded-full"
+                  style={{ width: `${Math.min(100, creatorsProgress)}%`, backgroundColor: creatorsProgress >= 100 ? '#22c55e' : '#1a1a1a' }}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4 text-center">
+              <div className="p-3 rounded-lg" style={{ backgroundColor: '#f5f5f5' }}>
+                <p className="text-xs" style={{ color: '#525252' }}>Faltam</p>
+                <p className="text-xl font-bold" style={{ color: '#1a1a1a' }}>{Math.max(0, monthlyGoals.creatorsGoal - monthCreators)}</p>
+              </div>
+              <div className="p-3 rounded-lg" style={{ backgroundColor: '#f5f5f5' }}>
+                <p className="text-xs" style={{ color: '#525252' }}>Média Diária</p>
+                <p className="text-xl font-bold" style={{ color: '#1a1a1a' }}>{avgCreatorsPerDay.toFixed(1)}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Time Info */}
+          <div className="rounded-xl p-4" style={{ backgroundColor: '#f5f5f5', border: '1px solid #d4d4d4' }}>
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
-                <p className="text-sm mb-1" style={{ color: '#525252' }}>Atual</p>
-                <p className="text-2xl font-bold" style={{ color: '#1a1a1a' }}>
-                  {monthCreators}
-                </p>
+                <p className="text-xs" style={{ color: '#525252' }}>Dia Atual</p>
+                <p className="text-lg font-bold" style={{ color: '#1a1a1a' }}>{dayOfMonth}/{totalDaysInMonth}</p>
               </div>
               <div>
-                <p className="text-sm mb-1" style={{ color: '#525252' }}>Meta</p>
-                <p className="text-2xl font-bold" style={{ color: '#1a1a1a' }}>
-                  {monthlyGoals.creatorsGoal}
-                </p>
+                <p className="text-xs" style={{ color: '#525252' }}>Dias Restantes</p>
+                <p className="text-lg font-bold" style={{ color: '#1a1a1a' }}>{daysRemaining}</p>
               </div>
               <div>
-                <p className="text-sm mb-1" style={{ color: '#525252' }}>Progresso</p>
-                <p className="text-2xl font-bold" style={{ color: creatorsProgress >= 100 ? '#166534' : '#b91c1c' }}>
-                  {creatorsProgress.toFixed(1)}%
+                <p className="text-xs" style={{ color: '#525252' }}>Necessário/Dia</p>
+                <p className="text-lg font-bold" style={{ color: '#1a1a1a' }}>
+                  {daysRemaining > 0 ? Math.ceil((monthlyGoals.creatorsGoal - monthCreators) / daysRemaining) : 0}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="text-center mt-8 text-xs" style={{ color: '#737373' }}>
+          <div className="text-center mt-6 text-xs" style={{ color: '#737373' }}>
             Gerado em {format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
           </div>
         </div>
