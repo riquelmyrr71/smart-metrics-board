@@ -100,7 +100,7 @@ export const generatePDFContent = (
     positive: '#22c55e',
     negative: '#ef4444',
     warning: '#f59e0b',
-    over100: '#be185d',
+    over100: '#00ff00',
   };
 
   const styles = `
