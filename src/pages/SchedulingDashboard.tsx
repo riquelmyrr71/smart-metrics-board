@@ -904,9 +904,32 @@ const SchedulingDashboard = () => {
         </div>
 
         <div className="p-6">
-          {/* Summary Bar */}
-          <div className="flex items-center justify-between bg-white rounded-lg shadow-sm p-4 mb-6 border border-gray-200">
-            <div className="flex items-center gap-8">
+          {/* Monthly Summary */}
+          <div className="bg-white rounded-lg shadow-sm p-4 mb-6 border border-gray-200">
+            <div className="text-xs text-gray-500 uppercase tracking-wide mb-3">Resumo do Mês</div>
+            <div className="grid grid-cols-4 gap-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-gray-900">{reportDate.getDate()}</div>
+                <div className="text-xs text-gray-500">Dia Atual</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-gray-900">{getDaysInMonth(reportDate)}</div>
+                <div className="text-xs text-gray-500">Dias no Mês</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-emerald-600">{reportTotals.rate.toFixed(0)}%</div>
+                <div className="text-xs text-gray-500">Taxa Período</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-600">{metrics.scheduledRate.toFixed(0)}%</div>
+                <div className="text-xs text-gray-500">Taxa Mensal</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Period Totals */}
+          <div className="flex items-center justify-between bg-gray-100 rounded-lg p-3 mb-6">
+            <div className="flex items-center gap-6">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-emerald-500" />
                 <span className="text-gray-600 text-sm">Agendados:</span>
@@ -918,17 +941,17 @@ const SchedulingDashboard = () => {
                 <span className="font-bold text-gray-900">{reportTotals.totalNotScheduled}</span>
               </div>
             </div>
-            <div className="flex items-center gap-2 bg-gray-100 px-4 py-2 rounded-full">
-              <span className="text-gray-600 text-sm">Taxa:</span>
-              <span className="font-bold text-gray-900 text-lg">{reportTotals.rate.toFixed(0)}%</span>
+            <div className="text-sm text-gray-600">
+              {reportRangeData.length} dia{reportRangeData.length > 1 ? 's' : ''} no período
             </div>
           </div>
 
           {/* Daily breakdown */}
           <div className="space-y-4">
             {reportRangeData.map((dayData) => {
-              const dayRate = dayData.scheduled.length + dayData.notScheduled.length > 0 
-                ? (dayData.scheduled.length / (dayData.scheduled.length + dayData.notScheduled.length)) * 100 
+              const totalMembers = dayData.scheduled.length + dayData.notScheduled.length;
+              const dayRate = totalMembers > 0 
+                ? (dayData.scheduled.length / totalMembers) * 100 
                 : 0;
               return (
                 <div key={dayData.date} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
@@ -936,29 +959,47 @@ const SchedulingDashboard = () => {
                     <span className="font-medium text-sm">
                       {format(new Date(dayData.date + 'T12:00:00'), "EEEE, dd/MM", { locale: ptBR })}
                     </span>
-                    <div className="flex items-center gap-4 text-xs">
-                      <span className="text-emerald-400">{dayData.scheduled.length} ✓</span>
-                      <span className="text-red-400">{dayData.notScheduled.length} ✗</span>
-                      <span className="bg-white/20 px-2 py-0.5 rounded">{dayRate.toFixed(0)}%</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-300">{dayData.scheduled.length}/{totalMembers}</span>
+                      <span className="bg-white/20 px-2 py-0.5 rounded text-xs font-bold">{dayRate.toFixed(0)}%</span>
                     </div>
                   </div>
-                  {dayData.notScheduled.length > 0 && (
-                    <div className="px-4 py-3">
-                      <div className="text-xs text-red-600 font-medium mb-2">Não agendaram:</div>
-                      <div className="flex flex-wrap gap-2">
-                        {dayData.notScheduled.map((name, idx) => (
-                          <span key={idx} className="bg-red-50 text-red-700 px-2 py-1 rounded text-xs border border-red-200">
-                            {name}
-                          </span>
-                        ))}
+                  <div className="grid grid-cols-2 gap-4 p-4">
+                    <div>
+                      <div className="text-xs text-emerald-600 font-medium mb-2 flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                        Agendaram ({dayData.scheduled.length})
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {dayData.scheduled.length === 0 ? (
+                          <span className="text-gray-400 text-xs italic">Nenhum</span>
+                        ) : (
+                          dayData.scheduled.map((name, idx) => (
+                            <span key={idx} className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded text-xs border border-emerald-200">
+                              {name}
+                            </span>
+                          ))
+                        )}
                       </div>
                     </div>
-                  )}
-                  {dayData.notScheduled.length === 0 && (
-                    <div className="px-4 py-3 text-center">
-                      <span className="text-emerald-600 text-sm font-medium">✓ Todos agendaram</span>
+                    <div>
+                      <div className="text-xs text-red-600 font-medium mb-2 flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-red-500" />
+                        Não Agendaram ({dayData.notScheduled.length})
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {dayData.notScheduled.length === 0 ? (
+                          <span className="text-emerald-500 text-xs font-medium">✓ Todos agendaram!</span>
+                        ) : (
+                          dayData.notScheduled.map((name, idx) => (
+                            <span key={idx} className="bg-red-50 text-red-700 px-2 py-0.5 rounded text-xs border border-red-200">
+                              {name}
+                            </span>
+                          ))
+                        )}
+                      </div>
                     </div>
-                  )}
+                  </div>
                 </div>
               );
             })}
