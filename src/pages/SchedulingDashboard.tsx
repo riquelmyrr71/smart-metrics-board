@@ -884,85 +884,90 @@ const SchedulingDashboard = () => {
       {/* Hidden PDF Report */}
       <div
         ref={reportRef}
-        className={cn("absolute left-[-9999px] top-0 w-[800px] bg-[#fafafa] p-8", isExportingPDF && "left-0")}
+        className={cn("absolute left-[-9999px] top-0 w-[800px] bg-[#fafafa]", isExportingPDF && "left-0")}
         style={{ fontFamily: 'Arial, sans-serif' }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between mb-6 pb-4 border-b-2 border-gray-300">
-          <img src={curliLogo} alt="Curli Logo" className="h-16 object-contain" />
-          <div className="text-right">
-            <h1 className="text-2xl font-bold text-gray-800">Relatório de Agendamentos</h1>
-            <p className="text-lg text-gray-600">
-              {reportType === 'daily' && format(reportDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-              {reportType === 'weekly' && `${format(reportDateRange.start, "dd/MM")} a ${format(reportDateRange.end, "dd/MM/yyyy")}`}
-              {reportType === 'monthly' && `${format(reportDateRange.start, "dd/MM")} a ${format(reportDateRange.end, "dd/MM/yyyy")}`}
-            </p>
-            <p className="text-sm text-gray-500">
-              {reportType === 'daily' ? 'Relatório Diário' : reportType === 'weekly' ? 'Últimos 7 Dias' : 'Relatório Mensal'}
-            </p>
+        <div className="bg-gradient-to-r from-gray-900 to-gray-800 text-white p-6">
+          <div className="flex items-center justify-between">
+            <img src={curliLogo} alt="Curli Logo" className="h-14 object-contain brightness-0 invert" />
+            <div className="text-right">
+              <h1 className="text-xl font-bold tracking-wide">AGENDAMENTO LIVE</h1>
+              <p className="text-gray-300 text-sm mt-1">
+                {reportType === 'daily' 
+                  ? format(reportDate, "dd/MM/yyyy", { locale: ptBR })
+                  : `${format(reportDateRange.start, "dd/MM")} - ${format(reportDateRange.end, "dd/MM/yyyy")}`
+                }
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* Summary Metrics */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="bg-emerald-100 p-4 rounded-lg text-center">
-            <div className="text-3xl font-bold text-emerald-700">{reportTotals.totalScheduled}</div>
-            <div className="text-sm text-emerald-600">Total Agendados</div>
+        <div className="p-6">
+          {/* Summary Bar */}
+          <div className="flex items-center justify-between bg-white rounded-lg shadow-sm p-4 mb-6 border border-gray-200">
+            <div className="flex items-center gap-8">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-emerald-500" />
+                <span className="text-gray-600 text-sm">Agendados:</span>
+                <span className="font-bold text-gray-900">{reportTotals.totalScheduled}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-red-500" />
+                <span className="text-gray-600 text-sm">Não Agendados:</span>
+                <span className="font-bold text-gray-900">{reportTotals.totalNotScheduled}</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 bg-gray-100 px-4 py-2 rounded-full">
+              <span className="text-gray-600 text-sm">Taxa:</span>
+              <span className="font-bold text-gray-900 text-lg">{reportTotals.rate.toFixed(0)}%</span>
+            </div>
           </div>
-          <div className="bg-red-100 p-4 rounded-lg text-center">
-            <div className="text-3xl font-bold text-red-700">{reportTotals.totalNotScheduled}</div>
-            <div className="text-sm text-red-600">Total Não Agendados</div>
-          </div>
-          <div className="bg-purple-100 p-4 rounded-lg text-center">
-            <div className="text-3xl font-bold text-purple-700">{reportTotals.rate.toFixed(0)}%</div>
-            <div className="text-sm text-purple-600">Taxa de Agendamento</div>
+
+          {/* Daily breakdown */}
+          <div className="space-y-4">
+            {reportRangeData.map((dayData) => {
+              const dayRate = dayData.scheduled.length + dayData.notScheduled.length > 0 
+                ? (dayData.scheduled.length / (dayData.scheduled.length + dayData.notScheduled.length)) * 100 
+                : 0;
+              return (
+                <div key={dayData.date} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                  <div className="flex items-center justify-between bg-gray-900 text-white px-4 py-2">
+                    <span className="font-medium text-sm">
+                      {format(new Date(dayData.date + 'T12:00:00'), "EEEE, dd/MM", { locale: ptBR })}
+                    </span>
+                    <div className="flex items-center gap-4 text-xs">
+                      <span className="text-emerald-400">{dayData.scheduled.length} ✓</span>
+                      <span className="text-red-400">{dayData.notScheduled.length} ✗</span>
+                      <span className="bg-white/20 px-2 py-0.5 rounded">{dayRate.toFixed(0)}%</span>
+                    </div>
+                  </div>
+                  {dayData.notScheduled.length > 0 && (
+                    <div className="px-4 py-3">
+                      <div className="text-xs text-red-600 font-medium mb-2">Não agendaram:</div>
+                      <div className="flex flex-wrap gap-2">
+                        {dayData.notScheduled.map((name, idx) => (
+                          <span key={idx} className="bg-red-50 text-red-700 px-2 py-1 rounded text-xs border border-red-200">
+                            {name}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {dayData.notScheduled.length === 0 && (
+                    <div className="px-4 py-3 text-center">
+                      <span className="text-emerald-600 text-sm font-medium">✓ Todos agendaram</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
-
-        {/* Daily breakdown */}
-        {reportRangeData.map((dayData) => (
-          <div key={dayData.date} className="mb-6 border border-gray-200 rounded-lg overflow-hidden">
-            <div className="bg-gray-800 text-white p-3 font-bold">
-              {format(new Date(dayData.date + 'T12:00:00'), "EEEE, dd 'de' MMMM", { locale: ptBR })}
-            </div>
-            <div className="grid grid-cols-2 gap-4 p-4">
-              <div>
-                <h4 className="font-bold text-emerald-700 mb-2 flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-emerald-500" />
-                  Agendaram ({dayData.scheduled.length})
-                </h4>
-                <div className="space-y-1">
-                  {dayData.scheduled.length === 0 ? (
-                    <p className="text-gray-500 italic text-sm">Nenhum</p>
-                  ) : (
-                    dayData.scheduled.map((name, idx) => (
-                      <div key={idx} className="text-sm text-gray-700">{name}</div>
-                    ))
-                  )}
-                </div>
-              </div>
-              <div>
-                <h4 className="font-bold text-red-700 mb-2 flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-red-500" />
-                  Não Agendaram ({dayData.notScheduled.length})
-                </h4>
-                <div className="space-y-1">
-                  {dayData.notScheduled.length === 0 ? (
-                    <p className="text-gray-500 italic text-sm">Todos agendaram!</p>
-                  ) : (
-                    dayData.notScheduled.map((name, idx) => (
-                      <div key={idx} className="text-sm text-gray-700">{name}</div>
-                    ))
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
 
         {/* Footer */}
-        <div className="mt-8 pt-4 border-t border-gray-300 text-center text-xs text-gray-500">
-          Relatório gerado em {format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+        <div className="bg-gray-100 px-6 py-3 text-center text-xs text-gray-500 border-t border-gray-200">
+          Gerado em {format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
         </div>
       </div>
     </div>
