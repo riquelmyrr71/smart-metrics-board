@@ -1389,8 +1389,8 @@ const SchedulingDashboard = () => {
                 <div className="text-xs text-gray-500">Dia Mais Problemático</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-emerald-600">{reportTotals.rate.toFixed(0)}%</div>
-                <div className="text-xs text-gray-500">Taxa Período</div>
+                <div className="text-2xl font-bold text-orange-600">{impactAnalysis.daysWithDropAndMissing}</div>
+                <div className="text-xs text-gray-500">Dias Queda + Falta</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-blue-600">{metrics.scheduledRate.toFixed(0)}%</div>
