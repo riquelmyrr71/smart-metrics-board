@@ -97,6 +97,7 @@ export type Database = {
       }
       scheduling_goals: {
         Row: {
+          active_creators: number | null
           created_at: string
           days_goal: number
           id: string
@@ -105,6 +106,7 @@ export type Database = {
           year: number
         }
         Insert: {
+          active_creators?: number | null
           created_at?: string
           days_goal?: number
           id?: string
@@ -113,6 +115,7 @@ export type Database = {
           year: number
         }
         Update: {
+          active_creators?: number | null
           created_at?: string
           days_goal?: number
           id?: string
