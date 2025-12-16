@@ -38,6 +38,7 @@ export const Dashboard: React.FC = () => {
     deleteMember,
     addExecutive,
     editExecutiveName,
+    deleteExecutive,
   } = useDashboardState();
 
   const { saveDashboard, loadDashboard, resetDashboard, isSaving, lastSaved } = useDashboardPersistence();
@@ -215,6 +216,11 @@ export const Dashboard: React.FC = () => {
     editExecutiveName(rowId, newName);
     toast.success('Nome do executivo atualizado');
   }, [editExecutiveName]);
+
+  const handleDeleteExecutive = useCallback((sectionId: string) => {
+    deleteExecutive(sectionId);
+    toast.success('Executivo excluído');
+  }, [deleteExecutive]);
   
   const handlePaste = useCallback((rowId: string, columnId: string, data: string[][]) => {
     // Find starting position
@@ -325,6 +331,7 @@ export const Dashboard: React.FC = () => {
             onDeleteMember={handleDeleteMember}
             onIncrement={handleIncrement}
             onEditExecutiveName={handleEditExecutiveName}
+            onDeleteExecutive={handleDeleteExecutive}
           />
         </div>
         

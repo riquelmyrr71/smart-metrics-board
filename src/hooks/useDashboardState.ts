@@ -596,6 +596,15 @@ export const useDashboardState = (initialState?: Partial<DashboardState>) => {
       });
     });
   }, []);
+
+  // Delete an executive section and all its members
+  const deleteExecutive = useCallback((sectionId: string) => {
+    setRows(prevRows => {
+      const newRows = prevRows.filter(row => row.sectionId !== sectionId);
+      const withProjections = recalculateAllProjections(newRows);
+      return recalculateSubtotalsAndTotals(withProjections);
+    });
+  }, [recalculateAllProjections, recalculateSubtotalsAndTotals]);
   
   return {
     // State
@@ -629,6 +638,7 @@ export const useDashboardState = (initialState?: Partial<DashboardState>) => {
     deleteMember,
     addExecutive,
     editExecutiveName,
+    deleteExecutive,
     
     // Computed
     canUndo: historyIndex >= 0,
