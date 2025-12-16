@@ -1,7 +1,7 @@
-import { useState, useEffect, useMemo } from 'react';
-import { format, getDaysInMonth, startOfMonth, addDays, getDay, parse, isSameMonth } from 'date-fns';
+import React, { useState, useEffect, useMemo } from 'react';
+import { format, getDaysInMonth, startOfMonth, addDays, getDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Calendar, BarChart3, Target, TrendingUp, Users, ChevronLeft, ChevronRight, Save, Home } from 'lucide-react';
+import { Calendar, BarChart3, Target, TrendingUp, Users, ChevronLeft, ChevronRight, Save, Home, CheckCircle2, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -145,6 +145,49 @@ const SchedulingDashboard = () => {
         [memberName]: {
           ...memberData,
           [dateStr]: !memberData[dateStr],
+        },
+      };
+    });
+  };
+
+  // Mark all days for a member as scheduled
+  const markAllScheduled = (memberName: string) => {
+    setScheduleData((prev) => {
+      const newDates: { [date: string]: boolean } = {};
+      days.forEach((day) => {
+        newDates[format(day, 'yyyy-MM-dd')] = true;
+      });
+      return {
+        ...prev,
+        [memberName]: newDates,
+      };
+    });
+  };
+
+  // Mark all days for a member as not scheduled
+  const markAllNotScheduled = (memberName: string) => {
+    setScheduleData((prev) => {
+      const newDates: { [date: string]: boolean } = {};
+      days.forEach((day) => {
+        newDates[format(day, 'yyyy-MM-dd')] = false;
+      });
+      return {
+        ...prev,
+        [memberName]: newDates,
+      };
+    });
+  };
+
+  // Set schedule directly
+  const setSchedule = (memberName: string, date: Date, value: boolean) => {
+    const dateStr = format(date, 'yyyy-MM-dd');
+    setScheduleData((prev) => {
+      const memberData = prev[memberName] || {};
+      return {
+        ...prev,
+        [memberName]: {
+          ...memberData,
+          [dateStr]: value,
         },
       };
     });
@@ -470,7 +513,12 @@ const SchedulingDashboard = () => {
             <table className="w-full text-xs">
               <thead>
                 <tr>
-                  <th className="sticky left-0 bg-background z-10 text-left p-2 min-w-[150px]">Membro</th>
+                  <th className="sticky left-0 bg-background z-10 text-left p-2 min-w-[180px]">
+                    <div className="flex items-center gap-1">
+                      <span>Membro</span>
+                      <span className="text-[10px] text-muted-foreground ml-1">(atalhos)</span>
+                    </div>
+                  </th>
                   {days.map((day) => (
                     <th key={day.toISOString()} className="p-1 text-center min-w-[28px]">
                       {format(day, 'dd')}
@@ -481,9 +529,9 @@ const SchedulingDashboard = () => {
               </thead>
               <tbody>
                 {TEAM_STRUCTURE.map((team) => (
-                  <>
+                  <React.Fragment key={team.executive}>
                     {/* Executive Header */}
-                    <tr key={team.executive} className="bg-foreground/90">
+                    <tr className="bg-foreground/90">
                       <td colSpan={days.length + 2} className="p-2 font-bold text-background text-center">
                         {team.executive}
                       </td>
@@ -492,9 +540,27 @@ const SchedulingDashboard = () => {
                     {team.members.map((member) => {
                       const memberScheduled = Object.values(scheduleData[member] || {}).filter(Boolean).length;
                       return (
-                        <tr key={member} className="hover:bg-muted/50 transition-colors">
-                          <td className="sticky left-0 bg-background z-10 p-2 font-medium border-b border-border">
-                            {member}
+                        <tr key={member} className="hover:bg-muted/50 transition-colors group">
+                          <td className="sticky left-0 bg-background z-10 p-1 font-medium border-b border-border">
+                            <div className="flex items-center justify-between gap-1">
+                              <span className="truncate text-xs">{member}</span>
+                              <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button
+                                  onClick={() => markAllScheduled(member)}
+                                  className="p-1 rounded hover:bg-emerald-500/20 text-emerald-500"
+                                  title="Marcar todos como agendado (G)"
+                                >
+                                  <CheckCircle2 className="h-3.5 w-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => markAllNotScheduled(member)}
+                                  className="p-1 rounded hover:bg-red-500/20 text-red-500"
+                                  title="Marcar todos como não agendado (R)"
+                                >
+                                  <XCircle className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
+                            </div>
                           </td>
                           {days.map((day) => {
                             const dateStr = format(day, 'yyyy-MM-dd');
@@ -505,12 +571,23 @@ const SchedulingDashboard = () => {
                                 className="p-0.5 border-b border-border"
                               >
                                 <button
-                                  onClick={() => toggleSchedule(member, day)}
+                                  onClick={(e) => {
+                                    if (e.shiftKey) {
+                                      // Shift+click = mark as scheduled (green)
+                                      setSchedule(member, day, true);
+                                    } else if (e.ctrlKey || e.metaKey) {
+                                      // Ctrl+click = mark as not scheduled (red)
+                                      setSchedule(member, day, false);
+                                    } else {
+                                      toggleSchedule(member, day);
+                                    }
+                                  }}
                                   className={`w-full h-6 rounded-sm transition-all ${
                                     isScheduled
                                       ? 'bg-emerald-500 hover:bg-emerald-600'
                                       : 'bg-red-500/30 hover:bg-red-500/50'
                                   }`}
+                                  title="Clique: alternar | Shift+clique: agendar | Ctrl+clique: remover"
                                 />
                               </td>
                             );
@@ -521,7 +598,7 @@ const SchedulingDashboard = () => {
                         </tr>
                       );
                     })}
-                  </>
+                  </React.Fragment>
                 ))}
               </tbody>
             </table>
@@ -529,15 +606,22 @@ const SchedulingDashboard = () => {
         </CardContent>
       </Card>
 
-      {/* Legend */}
-      <div className="flex items-center justify-center gap-6 mt-4">
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded-sm bg-emerald-500" />
-          <span className="text-sm text-muted-foreground">Agendado</span>
+      {/* Legend and Shortcuts */}
+      <div className="flex flex-col items-center gap-3 mt-4">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded-sm bg-emerald-500" />
+            <span className="text-sm text-muted-foreground">Agendado</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded-sm bg-red-500/30" />
+            <span className="text-sm text-muted-foreground">Não Agendado</span>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded-sm bg-red-500/30" />
-          <span className="text-sm text-muted-foreground">Não Agendado</span>
+        <div className="flex items-center gap-4 text-xs text-muted-foreground bg-muted/50 px-4 py-2 rounded-lg">
+          <span><kbd className="px-1.5 py-0.5 bg-background rounded border text-[10px]">Shift</kbd> + Clique = Agendar</span>
+          <span><kbd className="px-1.5 py-0.5 bg-background rounded border text-[10px]">Ctrl</kbd> + Clique = Remover</span>
+          <span>Ícones na linha = Marcar toda linha</span>
         </div>
       </div>
     </div>
