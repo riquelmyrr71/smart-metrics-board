@@ -5,8 +5,6 @@ import { Calendar as CalendarIcon, BarChart3, Target, TrendingUp, Users, Chevron
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -394,7 +392,7 @@ const SchedulingDashboard = () => {
             <Home className="h-4 w-4" />
           </Button>
           <div className="flex items-center gap-2">
-            <Calendar className="h-6 w-6 text-primary" />
+            <CalendarIcon className="h-6 w-6 text-primary" />
             <h1 className="text-2xl font-bold">Agendamento de Lives</h1>
           </div>
         </div>
@@ -426,23 +424,12 @@ const SchedulingDashboard = () => {
               <span className="font-medium">Relatório Diário de Agendamentos</span>
             </div>
             <div className="flex items-center gap-3">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className={cn("w-[200px] justify-start text-left font-normal")}>
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {format(reportDate, "dd 'de' MMMM, yyyy", { locale: ptBR })}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="end">
-                  <Calendar
-                    mode="single"
-                    selected={reportDate}
-                    onSelect={(date) => date && setReportDate(date)}
-                    initialFocus
-                    className="pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
+              <Input
+                type="date"
+                value={format(reportDate, 'yyyy-MM-dd')}
+                onChange={(e) => e.target.value && setReportDate(new Date(e.target.value + 'T12:00:00'))}
+                className="w-[180px]"
+              />
               <Button onClick={handleExportPDF} disabled={isExportingPDF}>
                 <FileText className="h-4 w-4 mr-2" />
                 {isExportingPDF ? 'Gerando...' : 'Exportar PDF'}
@@ -595,7 +582,7 @@ const SchedulingDashboard = () => {
       <Card>
         <CardHeader>
           <CardTitle className="text-sm flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
+            <CalendarIcon className="h-4 w-4" />
             Mapa de Agendamentos
           </CardTitle>
         </CardHeader>
@@ -736,7 +723,7 @@ const SchedulingDashboard = () => {
         </div>
 
         {/* Metrics Summary */}
-        <div className="grid grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-3 gap-4 mb-6">
           <div className="bg-emerald-100 p-4 rounded-lg text-center">
             <div className="text-3xl font-bold text-emerald-700">{reportData.scheduled.length}</div>
             <div className="text-sm text-emerald-600">Agendados</div>
@@ -744,10 +731,6 @@ const SchedulingDashboard = () => {
           <div className="bg-red-100 p-4 rounded-lg text-center">
             <div className="text-3xl font-bold text-red-700">{reportData.notScheduled.length}</div>
             <div className="text-sm text-red-600">Não Agendados</div>
-          </div>
-          <div className="bg-blue-100 p-4 rounded-lg text-center">
-            <div className="text-3xl font-bold text-blue-700">{allMembers.length}</div>
-            <div className="text-sm text-blue-600">Total Membros</div>
           </div>
           <div className="bg-purple-100 p-4 rounded-lg text-center">
             <div className="text-3xl font-bold text-purple-700">
@@ -760,19 +743,9 @@ const SchedulingDashboard = () => {
         {/* Monthly Metrics */}
         <div className="bg-gray-100 p-4 rounded-lg mb-6">
           <h3 className="font-bold text-gray-800 mb-3">Métricas do Mês</h3>
-          <div className="grid grid-cols-3 gap-4 text-sm">
-            <div>
-              <span className="text-gray-600">Taxa Mensal:</span>
-              <span className="font-bold ml-2">{metrics.scheduledRate.toFixed(1)}%</span>
-            </div>
-            <div>
-              <span className="text-gray-600">Meta:</span>
-              <span className="font-bold ml-2">{daysGoal} dias</span>
-            </div>
-            <div>
-              <span className="text-gray-600">Melhor Membro:</span>
-              <span className="font-bold ml-2">{metrics.ranking[0]?.name || '-'}</span>
-            </div>
+          <div className="text-sm">
+            <span className="text-gray-600">Taxa Mensal de Agendamentos:</span>
+            <span className="font-bold ml-2">{metrics.scheduledRate.toFixed(1)}%</span>
           </div>
         </div>
 
