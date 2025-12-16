@@ -450,8 +450,7 @@ const SchedulingDashboard = () => {
         pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
       }
 
-      const reportTypeName = reportType === 'daily' ? 'diario' : reportType === 'weekly' ? '7dias' : 'mensal';
-      pdf.save(`relatorio-agendamentos-${reportTypeName}-${format(reportDate, 'dd-MM-yyyy')}.pdf`);
+      pdf.save(`relatorio agendamento live ${format(reportDate, 'dd-MM-yyyy')}.pdf`);
 
       toast({ title: 'PDF exportado com sucesso!' });
     } catch (error) {
