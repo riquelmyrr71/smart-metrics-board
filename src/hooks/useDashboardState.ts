@@ -569,6 +569,33 @@ export const useDashboardState = (initialState?: Partial<DashboardState>) => {
       return recalculateSubtotalsAndTotals(withProjections);
     });
   }, [recalculateAllProjections, recalculateSubtotalsAndTotals]);
+
+  // Edit executive name (section header)
+  const editExecutiveName = useCallback((rowId: string, newName: string) => {
+    setRows(prevRows => {
+      return prevRows.map(row => {
+        if (row.id !== rowId || row.type !== 'section-header') return row;
+        
+        const teamCell = row.cells.team;
+        if (!teamCell) return row;
+        
+        return {
+          ...row,
+          cells: {
+            ...row.cells,
+            team: {
+              ...teamCell,
+              value: {
+                ...teamCell.value,
+                raw: newName,
+                displayValue: newName,
+              },
+            },
+          },
+        };
+      });
+    });
+  }, []);
   
   return {
     // State
@@ -601,6 +628,7 @@ export const useDashboardState = (initialState?: Partial<DashboardState>) => {
     addMember,
     deleteMember,
     addExecutive,
+    editExecutiveName,
     
     // Computed
     canUndo: historyIndex >= 0,
