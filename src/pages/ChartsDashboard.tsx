@@ -398,15 +398,16 @@ const ChartsDashboard: React.FC = () => {
   const nextLevel = sortedTargets.find(t => monthDiamonds < t.diamondsValue);
   const progressToNextLevel = nextLevel ? (monthDiamonds - (currentLevel?.diamondsValue || 0)) / (nextLevel.diamondsValue - (currentLevel?.diamondsValue || 0)) * 100 : 100;
 
-  // Projection calculations
+  // Projection calculations - Option A: usar número de entradas como dias decorridos
   const totalDaysInMonth = getDaysInMonth(now);
   const dayOfMonth = now.getDate();
-  const daysElapsed = currentMonthEntries.length > 0 ? currentMonthEntries.length : dayOfMonth;
+  const daysWithData = currentMonthEntries.length;
   const daysRemaining = totalDaysInMonth - dayOfMonth;
+  const daysElapsed = daysWithData;
 
-  // Average daily diamonds based on current month entries
-  const avgDailyDiamonds = daysElapsed > 0 ? monthDiamonds / daysElapsed : 0;
-  const projectedMonthDiamonds = monthDiamonds + avgDailyDiamonds * daysRemaining;
+  // Projeção = (acumulado / dias_com_dados) × total_dias_mês
+  const avgDailyDiamonds = daysWithData > 0 ? monthDiamonds / daysWithData : 0;
+  const projectedMonthDiamonds = daysWithData > 0 ? (monthDiamonds / daysWithData) * totalDaysInMonth : 0;
 
   // Find projected level at month end
   const projectedLevel = sortedTargets.filter(t => projectedMonthDiamonds >= t.diamondsValue).pop();
