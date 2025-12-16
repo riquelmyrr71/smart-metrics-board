@@ -74,6 +74,7 @@ const SchedulingDashboard = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [scheduleData, setScheduleData] = useState<ScheduleData>({});
   const [daysGoal, setDaysGoal] = useState(20);
+  const [activeCreators, setActiveCreators] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [reportDate, setReportDate] = useState<Date>(new Date());
@@ -141,6 +142,7 @@ const SchedulingDashboard = () => {
 
         if (goals) {
           setDaysGoal(goals.days_goal);
+          setActiveCreators((goals as any).active_creators || 0);
         }
       } catch (error) {
         console.error('Error loading data:', error);
@@ -288,7 +290,8 @@ const SchedulingDashboard = () => {
             month: currentMonth.getMonth() + 1,
             year: currentMonth.getFullYear(),
             days_goal: daysGoal,
-          },
+            active_creators: activeCreators,
+          } as any,
           { onConflict: 'month,year' }
         );
       if (goalError) throw goalError;
@@ -690,6 +693,27 @@ const SchedulingDashboard = () => {
             </div>
           </CardContent>
         </Card>
+
+        <Card className="bg-cyan-500/10 border-cyan-500/30">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-cyan-400 flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Criadores Ativos
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                value={activeCreators}
+                onChange={(e) => setActiveCreators(parseInt(e.target.value) || 0)}
+                className="w-20 h-8 text-center"
+              />
+              <span className="text-sm text-muted-foreground">ativos</span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">Total de criadores ativos no mês</p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Charts Row */}
@@ -909,12 +933,8 @@ const SchedulingDashboard = () => {
             <div className="text-xs text-gray-500 uppercase tracking-wide mb-3">Resumo do Mês</div>
             <div className="grid grid-cols-4 gap-4">
               <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">
-                  {reportRangeData.length > 0 
-                    ? Math.round(reportTotals.totalScheduled / reportRangeData.length) 
-                    : 0}
-                </div>
-                <div className="text-xs text-gray-500">Média Criadores Ativos</div>
+                <div className="text-2xl font-bold text-gray-900">{activeCreators}</div>
+                <div className="text-xs text-gray-500">Criadores Ativos</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-red-600">{metrics.worstDays[0]?.dayName || '-'}</div>
