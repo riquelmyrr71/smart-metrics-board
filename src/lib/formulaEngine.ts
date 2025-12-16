@@ -83,8 +83,32 @@ export class FormulaEngine {
         return isNaN(num) ? 0 : num / 100;
       }
       
-      // Handle currency
-      const cleaned = raw.replace(/[R$,.\s]/g, '').replace(',', '.');
+      // Handle Brazilian currency/number format
+      let cleaned = raw.replace(/[R$\s]/g, '');
+      
+      // Brazilian format detection
+      if (cleaned.includes('.') && cleaned.includes(',')) {
+        const lastDot = cleaned.lastIndexOf('.');
+        const lastComma = cleaned.lastIndexOf(',');
+        if (lastComma > lastDot) {
+          cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+        } else {
+          cleaned = cleaned.replace(/,/g, '');
+        }
+      } else if (cleaned.includes(',')) {
+        const parts = cleaned.split(',');
+        if (parts.length === 2 && parts[1].length <= 2) {
+          cleaned = cleaned.replace(',', '.');
+        } else {
+          cleaned = cleaned.replace(/,/g, '');
+        }
+      } else if (cleaned.includes('.')) {
+        const parts = cleaned.split('.');
+        if (parts.length > 2 || (parts.length === 2 && parts[parts.length - 1].length === 3)) {
+          cleaned = cleaned.replace(/\./g, '');
+        }
+      }
+      
       const num = parseFloat(cleaned);
       return isNaN(num) ? 0 : num;
     }

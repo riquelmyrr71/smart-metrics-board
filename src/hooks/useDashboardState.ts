@@ -180,6 +180,40 @@ export const useDashboardState = (initialState?: Partial<DashboardState>) => {
   const recalculateSummaryRow = (summaryRow: Row, sourceRows: Row[], cols: Column[]): Row => {
     const updatedCells = { ...summaryRow.cells };
     
+    // Helper to parse numeric values from various formats
+    const parseNumericValue = (raw: string | number | null | undefined): number => {
+      if (typeof raw === 'number') return raw;
+      if (!raw) return 0;
+      
+      let str = String(raw).replace(/[R$\s]/g, '');
+      
+      // Brazilian format detection
+      if (str.includes('.') && str.includes(',')) {
+        const lastDot = str.lastIndexOf('.');
+        const lastComma = str.lastIndexOf(',');
+        if (lastComma > lastDot) {
+          str = str.replace(/\./g, '').replace(',', '.');
+        } else {
+          str = str.replace(/,/g, '');
+        }
+      } else if (str.includes(',')) {
+        const parts = str.split(',');
+        if (parts.length === 2 && parts[1].length <= 2) {
+          str = str.replace(',', '.');
+        } else {
+          str = str.replace(/,/g, '');
+        }
+      } else if (str.includes('.')) {
+        const parts = str.split('.');
+        if (parts.length > 2 || (parts.length === 2 && parts[parts.length - 1].length === 3)) {
+          str = str.replace(/\./g, '');
+        }
+      }
+      
+      const num = parseFloat(str);
+      return isNaN(num) ? 0 : num;
+    };
+    
     cols.forEach(col => {
       if (!updatedCells[col.id]) return;
       
@@ -187,7 +221,7 @@ export const useDashboardState = (initialState?: Partial<DashboardState>) => {
         const sum = sourceRows.reduce((acc, row) => {
           const cell = row.cells[col.id];
           if (cell) {
-            const value = typeof cell.value.raw === 'number' ? cell.value.raw : 0;
+            const value = parseNumericValue(cell.value.raw);
             return acc + value;
           }
           return acc;
@@ -205,8 +239,8 @@ export const useDashboardState = (initialState?: Partial<DashboardState>) => {
         // For percentages in summary rows, recalculate based on totals
         // ATG % = Total Atual / Total Meta
         if (col.id === 'atg_percent') {
-          const totalAtual = sourceRows.reduce((acc, row) => acc + (typeof row.cells.rec_atual?.value.raw === 'number' ? row.cells.rec_atual.value.raw : 0), 0);
-          const totalMeta = sourceRows.reduce((acc, row) => acc + (typeof row.cells.meta_rec?.value.raw === 'number' ? row.cells.meta_rec.value.raw : 0), 0);
+          const totalAtual = sourceRows.reduce((acc, row) => acc + parseNumericValue(row.cells.rec_atual?.value.raw), 0);
+          const totalMeta = sourceRows.reduce((acc, row) => acc + parseNumericValue(row.cells.meta_rec?.value.raw), 0);
           const atg = totalMeta > 0 ? (totalAtual / totalMeta) * 100 : 0;
           
           updatedCells[col.id] = {
@@ -218,8 +252,8 @@ export const useDashboardState = (initialState?: Partial<DashboardState>) => {
             },
           };
         } else if (col.id === 'atg_proj_rec') {
-          const totalProj = sourceRows.reduce((acc, row) => acc + (typeof row.cells.proj_rec?.value.raw === 'number' ? row.cells.proj_rec.value.raw : 0), 0);
-          const totalMeta = sourceRows.reduce((acc, row) => acc + (typeof row.cells.meta_rec?.value.raw === 'number' ? row.cells.meta_rec.value.raw : 0), 0);
+          const totalProj = sourceRows.reduce((acc, row) => acc + parseNumericValue(row.cells.proj_rec?.value.raw), 0);
+          const totalMeta = sourceRows.reduce((acc, row) => acc + parseNumericValue(row.cells.meta_rec?.value.raw), 0);
           const atg = totalMeta > 0 ? (totalProj / totalMeta) * 100 : 0;
           
           updatedCells[col.id] = {
@@ -231,8 +265,8 @@ export const useDashboardState = (initialState?: Partial<DashboardState>) => {
             },
           };
         } else if (col.id === 'atg_dima') {
-          const totalAtual = sourceRows.reduce((acc, row) => acc + (typeof row.cells.diamantes_atuais?.value.raw === 'number' ? row.cells.diamantes_atuais.value.raw : 0), 0);
-          const totalMeta = sourceRows.reduce((acc, row) => acc + (typeof row.cells.meta_diamantes?.value.raw === 'number' ? row.cells.meta_diamantes.value.raw : 0), 0);
+          const totalAtual = sourceRows.reduce((acc, row) => acc + parseNumericValue(row.cells.diamantes_atuais?.value.raw), 0);
+          const totalMeta = sourceRows.reduce((acc, row) => acc + parseNumericValue(row.cells.meta_diamantes?.value.raw), 0);
           const atg = totalMeta > 0 ? (totalAtual / totalMeta) * 100 : 0;
           
           updatedCells[col.id] = {
@@ -244,8 +278,8 @@ export const useDashboardState = (initialState?: Partial<DashboardState>) => {
             },
           };
         } else if (col.id === 'atg_proj_dima') {
-          const totalProj = sourceRows.reduce((acc, row) => acc + (typeof row.cells.proj_dima?.value.raw === 'number' ? row.cells.proj_dima.value.raw : 0), 0);
-          const totalMeta = sourceRows.reduce((acc, row) => acc + (typeof row.cells.meta_diamantes?.value.raw === 'number' ? row.cells.meta_diamantes.value.raw : 0), 0);
+          const totalProj = sourceRows.reduce((acc, row) => acc + parseNumericValue(row.cells.proj_dima?.value.raw), 0);
+          const totalMeta = sourceRows.reduce((acc, row) => acc + parseNumericValue(row.cells.meta_diamantes?.value.raw), 0);
           const atg = totalMeta > 0 ? (totalProj / totalMeta) * 100 : 0;
           
           updatedCells[col.id] = {

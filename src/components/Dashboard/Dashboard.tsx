@@ -137,7 +137,44 @@ export const Dashboard: React.FC = () => {
         // Store as decimal
         parsedValue = parsedValue / 100;
       } else if (column.type === 'number' || column.type === 'currency') {
-        const cleanValue = value.replace(/[^\d.,-]/g, '').replace(',', '.');
+        // Handle Brazilian number format (1.000.000,50 = 1000000.50)
+        // Remove spaces and currency symbols
+        let cleanValue = value.replace(/[R$\s]/g, '');
+        
+        // Check if it's Brazilian format (uses dots as thousand separators and comma as decimal)
+        // Brazilian: 1.000.000,50 - American: 1,000,000.50
+        if (cleanValue.includes('.') && cleanValue.includes(',')) {
+          // Has both: determine format by position of last separator
+          const lastDot = cleanValue.lastIndexOf('.');
+          const lastComma = cleanValue.lastIndexOf(',');
+          
+          if (lastComma > lastDot) {
+            // Brazilian format: dots are thousands, comma is decimal
+            cleanValue = cleanValue.replace(/\./g, '').replace(',', '.');
+          } else {
+            // American format: commas are thousands, dot is decimal
+            cleanValue = cleanValue.replace(/,/g, '');
+          }
+        } else if (cleanValue.includes(',')) {
+          // Only commas: could be Brazilian decimal or American thousands
+          const parts = cleanValue.split(',');
+          if (parts.length === 2 && parts[1].length <= 2) {
+            // Likely Brazilian decimal (e.g., "1000,50")
+            cleanValue = cleanValue.replace(',', '.');
+          } else {
+            // American thousands (e.g., "1,000,000")
+            cleanValue = cleanValue.replace(/,/g, '');
+          }
+        } else if (cleanValue.includes('.')) {
+          // Only dots: check if Brazilian thousands
+          const parts = cleanValue.split('.');
+          // If multiple dots or last part has 3 digits, it's thousands separators
+          if (parts.length > 2 || (parts.length === 2 && parts[parts.length - 1].length === 3)) {
+            cleanValue = cleanValue.replace(/\./g, '');
+          }
+          // Otherwise keep as decimal
+        }
+        
         parsedValue = parseFloat(cleanValue);
         if (isNaN(parsedValue)) {
           toast.error('Valor numérico inválido');
