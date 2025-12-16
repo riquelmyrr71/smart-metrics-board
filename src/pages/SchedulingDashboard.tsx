@@ -909,12 +909,16 @@ const SchedulingDashboard = () => {
             <div className="text-xs text-gray-500 uppercase tracking-wide mb-3">Resumo do Mês</div>
             <div className="grid grid-cols-4 gap-4">
               <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">{reportDate.getDate()}</div>
-                <div className="text-xs text-gray-500">Dia Atual</div>
+                <div className="text-2xl font-bold text-gray-900">
+                  {reportRangeData.length > 0 
+                    ? Math.round(reportTotals.totalScheduled / reportRangeData.length) 
+                    : 0}
+                </div>
+                <div className="text-xs text-gray-500">Média Criadores Ativos</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">{getDaysInMonth(reportDate)}</div>
-                <div className="text-xs text-gray-500">Dias no Mês</div>
+                <div className="text-2xl font-bold text-red-600">{metrics.worstDays[0]?.dayName || '-'}</div>
+                <div className="text-xs text-gray-500">Dia Mais Problemático</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-emerald-600">{reportTotals.rate.toFixed(0)}%</div>
@@ -966,11 +970,11 @@ const SchedulingDashboard = () => {
                   </div>
                   <div className="grid grid-cols-2 gap-4 p-4">
                     <div>
-                      <div className="text-xs text-emerald-600 font-medium mb-2 flex items-center gap-2">
+                      <div className="text-xs text-emerald-600 font-medium mb-2 flex items-center justify-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-emerald-500" />
                         Agendaram ({dayData.scheduled.length})
                       </div>
-                      <div className="flex flex-wrap gap-1">
+                      <div className="flex flex-wrap justify-center gap-1">
                         {dayData.scheduled.length === 0 ? (
                           <span className="text-gray-400 text-xs italic">Nenhum</span>
                         ) : (
@@ -983,11 +987,11 @@ const SchedulingDashboard = () => {
                       </div>
                     </div>
                     <div>
-                      <div className="text-xs text-red-600 font-medium mb-2 flex items-center gap-2">
+                      <div className="text-xs text-red-600 font-medium mb-2 flex items-center justify-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-red-500" />
                         Não Agendaram ({dayData.notScheduled.length})
                       </div>
-                      <div className="flex flex-wrap gap-1">
+                      <div className="flex flex-wrap justify-center gap-1">
                         {dayData.notScheduled.length === 0 ? (
                           <span className="text-emerald-500 text-xs font-medium">✓ Todos agendaram!</span>
                         ) : (
