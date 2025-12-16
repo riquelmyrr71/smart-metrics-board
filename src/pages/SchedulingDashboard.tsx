@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { format, getDaysInMonth, startOfMonth, addDays, getDay, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Calendar as CalendarIcon, BarChart3, Target, TrendingUp, Users, ChevronLeft, ChevronRight, Save, Home, CheckCircle2, XCircle, FileText, Plus, Trash2 } from 'lucide-react';
+import { Calendar as CalendarIcon, BarChart3, Target, TrendingUp, TrendingDown, Users, ChevronLeft, ChevronRight, Save, Home, CheckCircle2, XCircle, FileText, Plus, Trash2, AlertTriangle, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -25,6 +25,8 @@ import {
   BarChart,
   Bar,
   Cell,
+  ComposedChart,
+  Area,
 } from 'recharts';
 
 interface TeamMember {
@@ -42,6 +44,15 @@ interface TeamStructure {
   executive: string;
   members: string[];
 }
+
+interface DiamondEntry {
+  id: string;
+  date: string;
+  diamonds: number;
+  creators: number;
+}
+
+const CHART_DATA_ID = '00000000-0000-0000-0000-000000000002';
 
 const DEFAULT_TEAM_STRUCTURE: TeamStructure[] = [
   {
@@ -86,6 +97,7 @@ const SchedulingDashboard = () => {
   const [showExecutiveDialog, setShowExecutiveDialog] = useState(false);
   const [showAssociateDialog, setShowAssociateDialog] = useState(false);
   const [reportType, setReportType] = useState<'daily' | 'weekly' | 'monthly'>('daily');
+  const [diamondEntries, setDiamondEntries] = useState<DiamondEntry[]>([]);
   const reportRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -115,16 +127,31 @@ const SchedulingDashboard = () => {
       setIsLoading(true);
       try {
         const monthStr = format(currentMonth, 'yyyy-MM');
-        const { data: schedules, error } = await supabase
-          .from('live_schedules')
-          .select('*')
-          .gte('schedule_date', `${monthStr}-01`)
-          .lte('schedule_date', `${monthStr}-31`);
+        
+        // Load schedules and diamond data in parallel
+        const [schedulesResult, goalsResult, diamondsResult] = await Promise.all([
+          supabase
+            .from('live_schedules')
+            .select('*')
+            .gte('schedule_date', `${monthStr}-01`)
+            .lte('schedule_date', `${monthStr}-31`),
+          supabase
+            .from('scheduling_goals')
+            .select('*')
+            .eq('month', currentMonth.getMonth() + 1)
+            .eq('year', currentMonth.getFullYear())
+            .maybeSingle(),
+          supabase
+            .from('dashboard_data')
+            .select('*')
+            .eq('id', CHART_DATA_ID)
+            .maybeSingle()
+        ]);
 
-        if (error) throw error;
+        if (schedulesResult.error) throw schedulesResult.error;
 
         const newScheduleData: ScheduleData = {};
-        schedules?.forEach((schedule) => {
+        schedulesResult.data?.forEach((schedule) => {
           if (!newScheduleData[schedule.member_name]) {
             newScheduleData[schedule.member_name] = {};
           }
@@ -133,16 +160,17 @@ const SchedulingDashboard = () => {
         setScheduleData(newScheduleData);
 
         // Load goals
-        const { data: goals } = await supabase
-          .from('scheduling_goals')
-          .select('*')
-          .eq('month', currentMonth.getMonth() + 1)
-          .eq('year', currentMonth.getFullYear())
-          .maybeSingle();
+        if (goalsResult.data) {
+          setDaysGoal(goalsResult.data.days_goal);
+          setActiveCreators((goalsResult.data as any).active_creators || 0);
+        }
 
-        if (goals) {
-          setDaysGoal(goals.days_goal);
-          setActiveCreators((goals as any).active_creators || 0);
+        // Load diamond entries
+        if (diamondsResult.data?.data) {
+          const parsed = diamondsResult.data.data as { entries?: DiamondEntry[] };
+          if (parsed.entries) {
+            setDiamondEntries(parsed.entries);
+          }
         }
       } catch (error) {
         console.error('Error loading data:', error);
@@ -386,6 +414,101 @@ const SchedulingDashboard = () => {
       goalProgress: daysGoal > 0 ? Math.min(100, (totalScheduled / allMembers.length / daysGoal) * 100) : 0,
     };
   }, [scheduleData, allMembers, days, daysInMonth, daysGoal]);
+
+  // Impact Analysis - Correlate scheduling with diamond performance
+  const impactAnalysis = useMemo(() => {
+    const monthStr = format(currentMonth, 'yyyy-MM');
+    const currentMonthDiamonds = diamondEntries.filter(e => e.date.startsWith(monthStr));
+    
+    // Create daily correlation data
+    const correlationData: {
+      date: string;
+      dateLabel: string;
+      schedulingRate: number;
+      diamonds: number;
+      diamondChange: number;
+      diamondChangePercent: number;
+      impact: 'positive' | 'negative' | 'neutral';
+      impactScore: number;
+    }[] = [];
+
+    // Sort diamond entries by date
+    const sortedDiamonds = [...currentMonthDiamonds].sort((a, b) => a.date.localeCompare(b.date));
+    
+    sortedDiamonds.forEach((entry, index) => {
+      const dateStr = entry.date;
+      const dayStats = metrics.dayStats[dateStr];
+      const schedulingRate = dayStats 
+        ? (dayStats.scheduled / dayStats.total) * 100 
+        : 0;
+      
+      // Calculate diamond change from previous day
+      const prevEntry = index > 0 ? sortedDiamonds[index - 1] : null;
+      const diamondChange = prevEntry ? entry.diamonds - prevEntry.diamonds : 0;
+      const diamondChangePercent = prevEntry && prevEntry.diamonds > 0 
+        ? ((entry.diamonds - prevEntry.diamonds) / prevEntry.diamonds) * 100 
+        : 0;
+      
+      // Determine impact
+      let impact: 'positive' | 'negative' | 'neutral' = 'neutral';
+      let impactScore = 0;
+      
+      if (schedulingRate < 50 && diamondChange < 0) {
+        impact = 'negative';
+        impactScore = ((100 - schedulingRate) * Math.abs(diamondChange)) / 1000000;
+      } else if (schedulingRate >= 70 && diamondChange > 0) {
+        impact = 'positive';
+        impactScore = (schedulingRate * diamondChange) / 1000000;
+      }
+      
+      correlationData.push({
+        date: dateStr,
+        dateLabel: format(new Date(dateStr + 'T12:00:00'), 'dd/MM', { locale: ptBR }),
+        schedulingRate,
+        diamonds: entry.diamonds,
+        diamondChange,
+        diamondChangePercent,
+        impact,
+        impactScore,
+      });
+    });
+
+    // Calculate summary statistics
+    const negativeDays = correlationData.filter(d => d.impact === 'negative');
+    const positiveDays = correlationData.filter(d => d.impact === 'positive');
+    
+    const avgDiamondsHighScheduling = correlationData
+      .filter(d => d.schedulingRate >= 70)
+      .reduce((sum, d) => sum + d.diamonds, 0) / 
+      (correlationData.filter(d => d.schedulingRate >= 70).length || 1);
+    
+    const avgDiamondsLowScheduling = correlationData
+      .filter(d => d.schedulingRate < 50)
+      .reduce((sum, d) => sum + d.diamonds, 0) / 
+      (correlationData.filter(d => d.schedulingRate < 50).length || 1);
+
+    const totalNegativeImpact = negativeDays.reduce((sum, d) => sum + Math.abs(d.diamondChange), 0);
+    
+    // Most problematic days (low scheduling + diamond drop)
+    const problematicDays = correlationData
+      .filter(d => d.impact === 'negative')
+      .sort((a, b) => b.impactScore - a.impactScore)
+      .slice(0, 5);
+
+    return {
+      correlationData,
+      negativeDays: negativeDays.length,
+      positiveDays: positiveDays.length,
+      avgDiamondsHighScheduling,
+      avgDiamondsLowScheduling,
+      differencePercent: avgDiamondsHighScheduling > 0 && avgDiamondsLowScheduling > 0
+        ? ((avgDiamondsHighScheduling - avgDiamondsLowScheduling) / avgDiamondsLowScheduling) * 100
+        : 0,
+      totalNegativeImpact,
+      problematicDays,
+      hasData: correlationData.length > 0,
+    };
+  }, [currentMonth, diamondEntries, metrics.dayStats]);
 
   const prevMonth = () => setCurrentMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
   const nextMonth = () => setCurrentMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
@@ -773,6 +896,167 @@ const SchedulingDashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Impact Analysis Section */}
+      {impactAnalysis.hasData && (
+        <Card className="mb-6 border-orange-500/30 bg-orange-500/5">
+          <CardHeader>
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Activity className="h-4 w-4 text-orange-500" />
+              Análise de Impacto: Agendamentos × Diamantes
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {/* Summary Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <div className="bg-background rounded-lg p-4 border">
+                <div className="flex items-center gap-2 mb-2">
+                  <TrendingDown className="h-4 w-4 text-red-500" />
+                  <span className="text-xs text-muted-foreground">Dias com Impacto Negativo</span>
+                </div>
+                <div className="text-2xl font-bold text-red-500">{impactAnalysis.negativeDays}</div>
+                <p className="text-xs text-muted-foreground">baixo agendamento + queda</p>
+              </div>
+              
+              <div className="bg-background rounded-lg p-4 border">
+                <div className="flex items-center gap-2 mb-2">
+                  <TrendingUp className="h-4 w-4 text-emerald-500" />
+                  <span className="text-xs text-muted-foreground">Dias com Impacto Positivo</span>
+                </div>
+                <div className="text-2xl font-bold text-emerald-500">{impactAnalysis.positiveDays}</div>
+                <p className="text-xs text-muted-foreground">alto agendamento + alta</p>
+              </div>
+              
+              <div className="bg-background rounded-lg p-4 border">
+                <div className="flex items-center gap-2 mb-2">
+                  <BarChart3 className="h-4 w-4 text-blue-500" />
+                  <span className="text-xs text-muted-foreground">Média (Alta Taxa)</span>
+                </div>
+                <div className="text-2xl font-bold text-blue-500">
+                  {impactAnalysis.avgDiamondsHighScheduling > 0 
+                    ? (impactAnalysis.avgDiamondsHighScheduling / 1000000).toFixed(2) + 'M'
+                    : '-'}
+                </div>
+                <p className="text-xs text-muted-foreground">diamantes/dia (≥70%)</p>
+              </div>
+              
+              <div className="bg-background rounded-lg p-4 border">
+                <div className="flex items-center gap-2 mb-2">
+                  <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                  <span className="text-xs text-muted-foreground">Média (Baixa Taxa)</span>
+                </div>
+                <div className="text-2xl font-bold text-yellow-500">
+                  {impactAnalysis.avgDiamondsLowScheduling > 0 
+                    ? (impactAnalysis.avgDiamondsLowScheduling / 1000000).toFixed(2) + 'M'
+                    : '-'}
+                </div>
+                <p className="text-xs text-muted-foreground">diamantes/dia (&lt;50%)</p>
+              </div>
+            </div>
+
+            {/* Correlation Chart */}
+            <div className="mb-6">
+              <h4 className="text-xs font-medium text-muted-foreground mb-3">Correlação: Taxa de Agendamento vs Variação de Diamantes</h4>
+              <ResponsiveContainer width="100%" height={250}>
+                <ComposedChart data={impactAnalysis.correlationData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="dateLabel" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} />
+                  <YAxis 
+                    yAxisId="left" 
+                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} 
+                    label={{ value: 'Taxa %', angle: -90, position: 'insideLeft', fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+                  />
+                  <YAxis 
+                    yAxisId="right" 
+                    orientation="right"
+                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+                    tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`}
+                    label={{ value: 'Diamantes', angle: 90, position: 'insideRight', fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px',
+                    }}
+                    formatter={(value: any, name: string) => {
+                      if (name === 'schedulingRate') return [`${value.toFixed(0)}%`, 'Taxa Agendamento'];
+                      if (name === 'diamonds') return [(value / 1000000).toFixed(2) + 'M', 'Diamantes'];
+                      return [value, name];
+                    }}
+                  />
+                  <Area 
+                    yAxisId="left"
+                    type="monotone" 
+                    dataKey="schedulingRate" 
+                    fill="hsl(var(--primary) / 0.2)" 
+                    stroke="hsl(var(--primary))"
+                    strokeWidth={2}
+                  />
+                  <Line 
+                    yAxisId="right"
+                    type="monotone" 
+                    dataKey="diamonds" 
+                    stroke="#f59e0b" 
+                    strokeWidth={2}
+                    dot={{ fill: '#f59e0b', r: 3 }}
+                  />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Problematic Days List */}
+            {impactAnalysis.problematicDays.length > 0 && (
+              <div>
+                <h4 className="text-xs font-medium text-muted-foreground mb-3 flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-red-500" />
+                  Dias Mais Problemáticos (Baixa Taxa + Queda de Diamantes)
+                </h4>
+                <div className="space-y-2">
+                  {impactAnalysis.problematicDays.map((day) => (
+                    <div 
+                      key={day.date} 
+                      className="flex items-center justify-between bg-red-500/10 rounded-lg p-3 border border-red-500/20"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="text-sm font-medium">{day.dateLabel}</div>
+                        <div className="flex items-center gap-2 text-xs">
+                          <span className="px-2 py-0.5 bg-red-500/20 text-red-400 rounded">
+                            {day.schedulingRate.toFixed(0)}% agendamento
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <TrendingDown className="h-4 w-4 text-red-500" />
+                        <span className="text-sm text-red-400 font-medium">
+                          {(day.diamondChange / 1000000).toFixed(2)}M
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          ({day.diamondChangePercent.toFixed(1)}%)
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Difference indicator */}
+            {impactAnalysis.differencePercent !== 0 && (
+              <div className="mt-4 p-4 bg-background rounded-lg border">
+                <div className="text-xs text-muted-foreground mb-1">Diferença de Performance</div>
+                <div className="text-lg font-bold">
+                  Dias com alta taxa de agendamento (≥70%) têm{' '}
+                  <span className={impactAnalysis.differencePercent > 0 ? 'text-emerald-500' : 'text-red-500'}>
+                    {impactAnalysis.differencePercent > 0 ? '+' : ''}{impactAnalysis.differencePercent.toFixed(1)}%
+                  </span>{' '}
+                  mais diamantes em média
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Heatmap Table */}
       <Card>
