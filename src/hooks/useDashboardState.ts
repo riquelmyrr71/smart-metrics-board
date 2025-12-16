@@ -77,7 +77,7 @@ export const useDashboardState = (initialState?: Partial<DashboardState>) => {
           value: {
             ...updatedCells.atg_percent.value,
             raw: atgPercent / 100,
-            displayValue: `${atgPercent.toFixed(2)}%`,
+            displayValue: `${Math.round(atgPercent)}%`,
           },
         };
       }
@@ -99,7 +99,7 @@ export const useDashboardState = (initialState?: Partial<DashboardState>) => {
           value: {
             ...updatedCells.atg_proj_rec.value,
             raw: atgProjRec / 100,
-            displayValue: `${atgProjRec.toFixed(2)}%`,
+            displayValue: `${Math.round(atgProjRec)}%`,
           },
         };
       }
@@ -110,7 +110,7 @@ export const useDashboardState = (initialState?: Partial<DashboardState>) => {
           value: {
             ...updatedCells.atg_dima.value,
             raw: atgDima / 100,
-            displayValue: `${atgDima.toFixed(2)}%`,
+            displayValue: `${Math.round(atgDima)}%`,
           },
         };
       }
@@ -132,7 +132,7 @@ export const useDashboardState = (initialState?: Partial<DashboardState>) => {
           value: {
             ...updatedCells.atg_proj_dima.value,
             raw: atgProjDima / 100,
-            displayValue: `${atgProjDima.toFixed(2)}%`,
+            displayValue: `${Math.round(atgProjDima)}%`,
           },
         };
       }
@@ -248,7 +248,7 @@ export const useDashboardState = (initialState?: Partial<DashboardState>) => {
             value: {
               ...updatedCells[col.id].value,
               raw: atg / 100,
-              displayValue: `${atg.toFixed(2)}%`,
+            displayValue: `${Math.round(atg)}%`,
             },
           };
         } else if (col.id === 'atg_proj_rec') {
@@ -261,7 +261,7 @@ export const useDashboardState = (initialState?: Partial<DashboardState>) => {
             value: {
               ...updatedCells[col.id].value,
               raw: atg / 100,
-              displayValue: `${atg.toFixed(2)}%`,
+            displayValue: `${Math.round(atg)}%`,
             },
           };
         } else if (col.id === 'atg_dima') {
@@ -274,7 +274,7 @@ export const useDashboardState = (initialState?: Partial<DashboardState>) => {
             value: {
               ...updatedCells[col.id].value,
               raw: atg / 100,
-              displayValue: `${atg.toFixed(2)}%`,
+            displayValue: `${Math.round(atg)}%`,
             },
           };
         } else if (col.id === 'atg_proj_dima') {
@@ -287,7 +287,7 @@ export const useDashboardState = (initialState?: Partial<DashboardState>) => {
             value: {
               ...updatedCells[col.id].value,
               raw: atg / 100,
-              displayValue: `${atg.toFixed(2)}%`,
+              displayValue: `${Math.round(atg)}%`,
             },
           };
         }
