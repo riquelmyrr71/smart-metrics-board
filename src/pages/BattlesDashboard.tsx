@@ -468,6 +468,12 @@ const BattlesDashboard = () => {
     }
   };
 
+  // Get executive name for a member
+  const getExecutiveForMember = (memberName: string): string => {
+    const exec = teamStructure.find(e => e.members.includes(memberName));
+    return exec ? exec.executive.split('(')[0].trim() : '-';
+  };
+
   // Get report data based on config
   const reportData = useMemo(() => {
     const { startDate, endDate, selectedMembers } = reportConfig;
@@ -497,8 +503,10 @@ const BattlesDashboard = () => {
         const sum = chunk.reduce((s, d) => s + d.count, 0);
         avgEvery3Days.push(chunk.length > 0 ? sum / chunk.length : 0);
       }
+
+      const executive = getExecutiveForMember(member);
       
-      return { name: member, dailyData, total, avgEvery3Days };
+      return { name: member, executive, dailyData, total, avgEvery3Days };
     }).sort((a, b) => b.total - a.total);
 
     const grandTotal = memberData.reduce((sum, m) => sum + m.total, 0);
@@ -519,7 +527,7 @@ const BattlesDashboard = () => {
       : 0;
 
     return { memberData, grandTotal, avgPerMember, topPerformers, lowPerformers, dailyTotals, reportDays, avgBattlesPerDay };
-  }, [reportConfig, battleData]);
+  }, [reportConfig, battleData, teamStructure]);
 
   if (isLoading) {
     return (
@@ -972,76 +980,57 @@ const BattlesDashboard = () => {
 
       {/* Hidden Custom Report for PDF Export */}
       <div className="fixed left-[-9999px] top-0">
-        <div ref={customReportRef} className="p-6" style={{ backgroundColor: '#ffffff', width: `${Math.max(900, 200 + reportData.dailyTotals.length * 45)}px` }}>
+        <div ref={customReportRef} className="p-8" style={{ backgroundColor: '#ffffff', width: `${Math.max(1000, 300 + reportData.dailyTotals.length * 50)}px` }}>
           {/* Header */}
-          <div className="flex items-center justify-between mb-4 pb-3 border-b-2" style={{ borderColor: '#1a1a1a' }}>
+          <div className="flex items-center justify-between mb-6 pb-4" style={{ borderBottom: '3px solid #000000' }}>
             <div className="flex items-center gap-4">
-              <img src={curliLogo} alt="Curli" className="h-10 w-auto" />
+              <img src={curliLogo} alt="Curli" className="h-12 w-auto" />
               <div>
-                <h1 className="text-xl font-bold" style={{ color: '#1a1a1a' }}>RELATÓRIO DE BATALHAS</h1>
-                <p className="text-sm" style={{ color: '#525252' }}>
+                <h1 className="text-2xl font-black" style={{ color: '#000000' }}>RELATÓRIO DE BATALHAS</h1>
+                <p className="text-base font-bold" style={{ color: '#000000' }}>
                   {format(parseISO(reportConfig.startDate), "dd/MM/yyyy")} - {format(parseISO(reportConfig.endDate), "dd/MM/yyyy")}
                 </p>
               </div>
             </div>
-            <div className="text-right text-xs" style={{ color: '#525252' }}>
+            <div className="text-right text-sm font-semibold" style={{ color: '#000000' }}>
               Gerado em {format(new Date(), "dd/MM/yyyy 'às' HH:mm")}
             </div>
           </div>
 
-          {/* Summary Stats */}
-          {reportConfig.metrics.totalBattles && (
-            <div className="mb-4 grid grid-cols-4 gap-3">
-              <div className="rounded-lg p-3 text-center" style={{ backgroundColor: '#fecaca', border: '2px solid #dc2626' }}>
-                <div className="text-2xl font-black" style={{ color: '#991b1b' }}>{reportData.grandTotal}</div>
-                <div className="text-xs font-semibold" style={{ color: '#1a1a1a' }}>TOTAL BATALHAS</div>
-              </div>
-              <div className="rounded-lg p-3 text-center" style={{ backgroundColor: '#e5e5e5', border: '2px solid #525252' }}>
-                <div className="text-2xl font-black" style={{ color: '#1a1a1a' }}>{reportData.avgBattlesPerDay.toFixed(1)}</div>
-                <div className="text-xs font-semibold" style={{ color: '#525252' }}>MÉDIA/DIA</div>
-              </div>
-              <div className="rounded-lg p-3 text-center" style={{ backgroundColor: '#e5e5e5', border: '2px solid #525252' }}>
-                <div className="text-2xl font-black" style={{ color: '#1a1a1a' }}>{reportData.avgPerMember.toFixed(1)}</div>
-                <div className="text-xs font-semibold" style={{ color: '#525252' }}>MÉDIA/MEMBRO</div>
-              </div>
-              <div className="rounded-lg p-3 text-center" style={{ backgroundColor: '#e5e5e5', border: '2px solid #525252' }}>
-                <div className="text-2xl font-black" style={{ color: '#1a1a1a' }}>{reportConfig.selectedMembers.length}</div>
-                <div className="text-xs font-semibold" style={{ color: '#525252' }}>ASSOCIADOS</div>
-              </div>
-            </div>
-          )}
-
           {/* Main Spreadsheet Table */}
           {reportConfig.metrics.dailyBreakdown && (
-            <div className="mb-4 rounded-lg overflow-hidden" style={{ border: '2px solid #1a1a1a' }}>
+            <div className="mb-6" style={{ border: '3px solid #000000' }}>
               <table className="w-full" style={{ borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr style={{ backgroundColor: '#1a1a1a' }}>
-                    <th className="px-3 py-2 text-left font-bold text-sm" style={{ color: '#ffffff', minWidth: '150px', borderRight: '1px solid #525252' }}>
+                  <tr style={{ backgroundColor: '#000000' }}>
+                    <th className="px-3 py-3 text-left font-black text-sm" style={{ color: '#ffffff', minWidth: '120px', borderRight: '2px solid #000000' }}>
+                      EXECUTIVO
+                    </th>
+                    <th className="px-3 py-3 text-left font-black text-sm" style={{ color: '#ffffff', minWidth: '130px', borderRight: '2px solid #000000' }}>
                       ASSOCIADO
                     </th>
                     {reportData.dailyTotals.map(day => (
-                      <th key={day.date} className="px-1 py-2 text-center font-bold text-xs" style={{ color: '#ffffff', minWidth: '40px', borderRight: '1px solid #525252' }}>
+                      <th key={day.date} className="px-2 py-3 text-center font-black text-sm" style={{ color: '#ffffff', minWidth: '45px', borderRight: '2px solid #000000' }}>
                         {day.dateLabel}
                       </th>
                     ))}
-                    <th className="px-2 py-2 text-center font-bold text-xs" style={{ color: '#ffffff', backgroundColor: '#dc2626', minWidth: '50px', borderRight: '1px solid #525252' }}>
+                    <th className="px-3 py-3 text-center font-black text-sm" style={{ color: '#ffffff', backgroundColor: '#dc2626', minWidth: '60px' }}>
                       TOTAL
-                    </th>
-                    <th className="px-2 py-2 text-center font-bold text-xs" style={{ color: '#ffffff', backgroundColor: '#525252', minWidth: '50px' }}>
-                      MÉD 3D
                     </th>
                   </tr>
                 </thead>
                 <tbody>
                   {reportData.memberData.map((member, memberIdx) => (
-                    <tr key={member.name} style={{ backgroundColor: memberIdx % 2 === 0 ? '#ffffff' : '#f5f5f5', borderBottom: '1px solid #e5e5e5' }}>
-                      <td className="px-3 py-2 font-semibold text-sm" style={{ color: '#1a1a1a', borderRight: '1px solid #e5e5e5' }}>
+                    <tr key={member.name} style={{ backgroundColor: memberIdx % 2 === 0 ? '#ffffff' : '#f0f0f0' }}>
+                      <td className="px-3 py-3 font-bold text-sm" style={{ color: '#000000', borderRight: '2px solid #000000', borderBottom: '2px solid #000000' }}>
+                        {member.executive}
+                      </td>
+                      <td className="px-3 py-3 font-bold text-sm" style={{ color: '#000000', borderRight: '2px solid #000000', borderBottom: '2px solid #000000' }}>
                         {member.name}
                       </td>
                       {member.dailyData.map(day => {
                         let bgColor = '#ffffff';
-                        let textColor = '#1a1a1a';
+                        let textColor = '#000000';
                         
                         if (day.count === 0) {
                           bgColor = '#dc2626';
@@ -1054,32 +1043,30 @@ const BattlesDashboard = () => {
                         return (
                           <td 
                             key={day.date} 
-                            className="px-1 py-2 text-center font-bold text-sm"
+                            className="px-2 py-3 text-center font-black text-base"
                             style={{ 
                               backgroundColor: bgColor, 
                               color: textColor,
-                              borderRight: '1px solid #e5e5e5'
+                              borderRight: '2px solid #000000',
+                              borderBottom: '2px solid #000000'
                             }}
                           >
                             {day.count}
                           </td>
                         );
                       })}
-                      <td className="px-2 py-2 text-center font-black text-sm" style={{ backgroundColor: '#fecaca', color: '#991b1b', borderRight: '1px solid #e5e5e5' }}>
+                      <td className="px-3 py-3 text-center font-black text-lg" style={{ backgroundColor: '#fecaca', color: '#991b1b', borderBottom: '2px solid #000000' }}>
                         {member.total}
-                      </td>
-                      <td className="px-2 py-2 text-center font-bold text-sm" style={{ backgroundColor: '#e5e5e5', color: '#1a1a1a' }}>
-                        {member.avgEvery3Days.length > 0 ? (member.avgEvery3Days.reduce((a, b) => a + b, 0) / member.avgEvery3Days.length).toFixed(1) : '0'}
                       </td>
                     </tr>
                   ))}
                   {/* Daily Totals Row */}
-                  <tr style={{ backgroundColor: '#1a1a1a', borderTop: '2px solid #1a1a1a' }}>
-                    <td className="px-3 py-2 font-black text-sm" style={{ color: '#ffffff', borderRight: '1px solid #525252' }}>
-                      TOTAL/DIA
+                  <tr style={{ backgroundColor: '#000000' }}>
+                    <td colSpan={2} className="px-3 py-3 font-black text-sm" style={{ color: '#ffffff', borderRight: '2px solid #000000' }}>
+                      TOTAL POR DIA
                     </td>
                     {reportData.dailyTotals.map(day => {
-                      let bgColor = '#1a1a1a';
+                      let bgColor = '#000000';
                       let textColor = '#ffffff';
                       
                       if (day.total === 0) {
@@ -1091,22 +1078,19 @@ const BattlesDashboard = () => {
                       return (
                         <td 
                           key={day.date} 
-                          className="px-1 py-2 text-center font-black text-sm"
+                          className="px-2 py-3 text-center font-black text-base"
                           style={{ 
                             backgroundColor: bgColor, 
                             color: textColor,
-                            borderRight: '1px solid #525252'
+                            borderRight: '2px solid #000000'
                           }}
                         >
                           {day.total}
                         </td>
                       );
                     })}
-                    <td className="px-2 py-2 text-center font-black text-sm" style={{ backgroundColor: '#dc2626', color: '#ffffff', borderRight: '1px solid #525252' }}>
+                    <td className="px-3 py-3 text-center font-black text-lg" style={{ backgroundColor: '#dc2626', color: '#ffffff' }}>
                       {reportData.grandTotal}
-                    </td>
-                    <td className="px-2 py-2 text-center font-black text-sm" style={{ backgroundColor: '#525252', color: '#ffffff' }}>
-                      {reportData.avgBattlesPerDay.toFixed(1)}
                     </td>
                   </tr>
                 </tbody>
@@ -1114,30 +1098,40 @@ const BattlesDashboard = () => {
             </div>
           )}
 
-          {/* Member Totals Grid */}
-          {reportConfig.metrics.memberTotals && !reportConfig.metrics.dailyBreakdown && (
-            <div className="mb-4 rounded-lg p-4" style={{ backgroundColor: '#f5f5f5', border: '2px solid #1a1a1a' }}>
-              <h2 className="text-base font-black mb-3" style={{ color: '#1a1a1a' }}>TOTAIS POR ASSOCIADO</h2>
-              <div className="grid grid-cols-4 gap-2">
-                {reportData.memberData.map(member => (
-                  <div key={member.name} className="rounded p-2 text-center" style={{ backgroundColor: '#ffffff', border: '1px solid #e5e5e5' }}>
-                    <div className="text-xs font-semibold truncate" style={{ color: '#525252' }}>{member.name}</div>
-                    <div className="text-xl font-black" style={{ color: '#1a1a1a' }}>{member.total}</div>
-                  </div>
-                ))}
+          {/* Summary Metrics */}
+          {reportConfig.metrics.totalBattles && (
+            <div className="mb-6" style={{ border: '3px solid #000000', padding: '20px', backgroundColor: '#f5f5f5' }}>
+              <h2 className="text-lg font-black mb-4" style={{ color: '#000000', borderBottom: '2px solid #000000', paddingBottom: '10px' }}>RESUMO DE MÉTRICAS</h2>
+              <div className="grid grid-cols-4 gap-4">
+                <div className="text-center p-4" style={{ backgroundColor: '#ffffff', border: '2px solid #000000' }}>
+                  <div className="text-3xl font-black" style={{ color: '#dc2626' }}>{reportData.grandTotal}</div>
+                  <div className="text-sm font-black" style={{ color: '#000000' }}>TOTAL DE BATALHAS</div>
+                </div>
+                <div className="text-center p-4" style={{ backgroundColor: '#ffffff', border: '2px solid #000000' }}>
+                  <div className="text-3xl font-black" style={{ color: '#000000' }}>{reportData.avgBattlesPerDay.toFixed(1)}</div>
+                  <div className="text-sm font-black" style={{ color: '#000000' }}>MÉDIA POR DIA</div>
+                </div>
+                <div className="text-center p-4" style={{ backgroundColor: '#ffffff', border: '2px solid #000000' }}>
+                  <div className="text-3xl font-black" style={{ color: '#000000' }}>{reportData.avgPerMember.toFixed(1)}</div>
+                  <div className="text-sm font-black" style={{ color: '#000000' }}>MÉDIA POR ASSOCIADO</div>
+                </div>
+                <div className="text-center p-4" style={{ backgroundColor: '#ffffff', border: '2px solid #000000' }}>
+                  <div className="text-3xl font-black" style={{ color: '#000000' }}>{reportConfig.selectedMembers.length}</div>
+                  <div className="text-sm font-black" style={{ color: '#000000' }}>TOTAL ASSOCIADOS</div>
+                </div>
               </div>
             </div>
           )}
 
           {/* Top Performers */}
           {reportConfig.metrics.topPerformers && (
-            <div className="mb-4 rounded-lg p-4" style={{ backgroundColor: '#f5f5f5', border: '2px solid #16a34a' }}>
-              <h2 className="text-base font-black mb-3" style={{ color: '#16a34a' }}>🏆 TOP PERFORMERS</h2>
-              <div className="space-y-2">
+            <div className="mb-6" style={{ border: '3px solid #16a34a', padding: '20px', backgroundColor: '#f0fdf4' }}>
+              <h2 className="text-lg font-black mb-4" style={{ color: '#16a34a', borderBottom: '2px solid #16a34a', paddingBottom: '10px' }}>🏆 TOP PERFORMERS</h2>
+              <div className="space-y-3">
                 {reportData.topPerformers.map((member, idx) => (
-                  <div key={member.name} className="flex items-center justify-between rounded p-2" style={{ backgroundColor: '#dcfce7', border: '1px solid #16a34a' }}>
-                    <span className="font-bold text-sm" style={{ color: '#1a1a1a' }}>#{idx + 1} {member.name}</span>
-                    <span className="font-black text-sm" style={{ color: '#16a34a' }}>{member.total} batalhas</span>
+                  <div key={member.name} className="flex items-center justify-between p-3" style={{ backgroundColor: '#ffffff', border: '2px solid #000000' }}>
+                    <span className="font-black text-base" style={{ color: '#000000' }}>#{idx + 1} {member.name}</span>
+                    <span className="font-black text-xl" style={{ color: '#16a34a' }}>{member.total} batalhas</span>
                   </div>
                 ))}
               </div>
@@ -1146,13 +1140,13 @@ const BattlesDashboard = () => {
 
           {/* Low Performers */}
           {reportConfig.metrics.lowPerformers && reportData.lowPerformers.length > 0 && (
-            <div className="mb-4 rounded-lg p-4" style={{ backgroundColor: '#f5f5f5', border: '2px solid #dc2626' }}>
-              <h2 className="text-base font-black mb-3" style={{ color: '#dc2626' }}>⚠️ BAIXO DESEMPENHO (&lt;10)</h2>
-              <div className="grid grid-cols-3 gap-2">
+            <div className="mb-6" style={{ border: '3px solid #dc2626', padding: '20px', backgroundColor: '#fef2f2' }}>
+              <h2 className="text-lg font-black mb-4" style={{ color: '#dc2626', borderBottom: '2px solid #dc2626', paddingBottom: '10px' }}>⚠️ BAIXO DESEMPENHO (&lt;10 batalhas)</h2>
+              <div className="grid grid-cols-3 gap-3">
                 {reportData.lowPerformers.map(member => (
-                  <div key={member.name} className="rounded p-2 text-center" style={{ backgroundColor: '#fecaca', border: '1px solid #dc2626' }}>
-                    <div className="text-xs font-semibold truncate" style={{ color: '#1a1a1a' }}>{member.name}</div>
-                    <div className="text-xl font-black" style={{ color: '#dc2626' }}>{member.total}</div>
+                  <div key={member.name} className="text-center p-3" style={{ backgroundColor: '#ffffff', border: '2px solid #dc2626' }}>
+                    <div className="text-sm font-black truncate" style={{ color: '#000000' }}>{member.name}</div>
+                    <div className="text-2xl font-black" style={{ color: '#dc2626' }}>{member.total}</div>
                   </div>
                 ))}
               </div>
@@ -1161,51 +1155,70 @@ const BattlesDashboard = () => {
 
           {/* Impact Analysis */}
           {reportConfig.metrics.impactAnalysis && impactAnalysis.hasData && (
-            <div className="rounded-lg p-4" style={{ backgroundColor: '#f5f5f5', border: '2px solid #525252' }}>
-              <h2 className="text-base font-black mb-3" style={{ color: '#1a1a1a' }}>📊 ANÁLISE DE IMPACTO</h2>
-              <div className="grid grid-cols-3 gap-4 mb-3">
-                <div className="text-center rounded p-3" style={{ backgroundColor: '#fecaca', border: '1px solid #dc2626' }}>
-                  <div className="text-2xl font-black" style={{ color: '#dc2626' }}>{impactAnalysis.daysWithLowBattles}</div>
-                  <div className="text-xs font-semibold" style={{ color: '#1a1a1a' }}>Dias Baixa Batalha</div>
+            <div className="mb-6" style={{ border: '3px solid #000000', padding: '20px', backgroundColor: '#fff7ed' }}>
+              <h2 className="text-lg font-black mb-4" style={{ color: '#000000', borderBottom: '2px solid #000000', paddingBottom: '10px' }}>📊 ANÁLISE DE IMPACTO: BATALHAS x DIAMANTES</h2>
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div className="text-center p-4" style={{ backgroundColor: '#fecaca', border: '2px solid #dc2626' }}>
+                  <div className="text-3xl font-black" style={{ color: '#dc2626' }}>{impactAnalysis.daysWithLowBattles}</div>
+                  <div className="text-sm font-black" style={{ color: '#000000' }}>DIAS COM BAIXA BATALHA</div>
+                  <div className="text-xs font-semibold" style={{ color: '#525252' }}>&lt;10 batalhas/dia</div>
                 </div>
-                <div className="text-center rounded p-3" style={{ backgroundColor: '#dbeafe', border: '1px solid #2563eb' }}>
-                  <div className="text-xl font-black" style={{ color: '#2563eb' }}>
+                <div className="text-center p-4" style={{ backgroundColor: '#dbeafe', border: '2px solid #2563eb' }}>
+                  <div className="text-2xl font-black" style={{ color: '#2563eb' }}>
                     {impactAnalysis.avgDiamondsHighBattles ? (impactAnalysis.avgDiamondsHighBattles / 1000000).toFixed(2) + 'M' : '-'}
                   </div>
-                  <div className="text-xs font-semibold" style={{ color: '#1a1a1a' }}>💎 Alta Batalha</div>
+                  <div className="text-sm font-black" style={{ color: '#000000' }}>💎 MÉDIA ALTA BATALHA</div>
+                  <div className="text-xs font-semibold" style={{ color: '#525252' }}>&gt;20 batalhas/dia</div>
                 </div>
-                <div className="text-center rounded p-3" style={{ backgroundColor: '#e5e5e5', border: '1px solid #525252' }}>
-                  <div className="text-xl font-black" style={{ color: '#525252' }}>
+                <div className="text-center p-4" style={{ backgroundColor: '#e5e5e5', border: '2px solid #525252' }}>
+                  <div className="text-2xl font-black" style={{ color: '#525252' }}>
                     {impactAnalysis.avgDiamondsLowBattles ? (impactAnalysis.avgDiamondsLowBattles / 1000000).toFixed(2) + 'M' : '-'}
                   </div>
-                  <div className="text-xs font-semibold" style={{ color: '#1a1a1a' }}>💎 Baixa Batalha</div>
+                  <div className="text-sm font-black" style={{ color: '#000000' }}>💎 MÉDIA BAIXA BATALHA</div>
+                  <div className="text-xs font-semibold" style={{ color: '#525252' }}>&lt;10 batalhas/dia</div>
                 </div>
               </div>
               {impactAnalysis.differencePercent !== 0 && (
-                <div className="rounded p-3 text-center" style={{ backgroundColor: impactAnalysis.differencePercent > 0 ? '#dcfce7' : '#fecaca', border: `1px solid ${impactAnalysis.differencePercent > 0 ? '#16a34a' : '#dc2626'}` }}>
-                  <span className="text-sm font-semibold" style={{ color: '#1a1a1a' }}>Alta batalha = </span>
-                  <span className="text-xl font-black" style={{ color: impactAnalysis.differencePercent > 0 ? '#16a34a' : '#dc2626' }}>
+                <div className="text-center p-4" style={{ backgroundColor: impactAnalysis.differencePercent > 0 ? '#dcfce7' : '#fecaca', border: `3px solid ${impactAnalysis.differencePercent > 0 ? '#16a34a' : '#dc2626'}` }}>
+                  <span className="text-base font-black" style={{ color: '#000000' }}>IMPACTO: Alta batalha = </span>
+                  <span className="text-2xl font-black" style={{ color: impactAnalysis.differencePercent > 0 ? '#16a34a' : '#dc2626' }}>
                     {impactAnalysis.differencePercent > 0 ? '+' : ''}{impactAnalysis.differencePercent.toFixed(1)}%
                   </span>
-                  <span className="text-sm font-semibold" style={{ color: '#1a1a1a' }}> 💎</span>
+                  <span className="text-base font-black" style={{ color: '#000000' }}> em diamantes 💎</span>
+                </div>
+              )}
+              {impactAnalysis.problematicDays.length > 0 && (
+                <div className="mt-4">
+                  <h3 className="text-base font-black mb-3" style={{ color: '#dc2626' }}>⚠️ DIAS PROBLEMÁTICOS (Baixa batalha + Queda de 💎)</h3>
+                  <div className="space-y-2">
+                    {impactAnalysis.problematicDays.slice(0, 7).map(day => (
+                      <div key={day.date} className="flex items-center justify-between p-3" style={{ backgroundColor: '#fecaca', border: '2px solid #dc2626' }}>
+                        <span className="font-black text-base" style={{ color: '#000000' }}>{day.dateLabel}</span>
+                        <div className="flex items-center gap-6">
+                          <span className="font-black text-base" style={{ color: '#f59e0b' }}>{day.battles} batalhas</span>
+                          <span className="font-black text-base" style={{ color: '#dc2626' }}>{(day.diamondChange / 1000000).toFixed(2)}M 💎</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
           )}
 
           {/* Legend */}
-          <div className="mt-4 flex items-center justify-center gap-6 text-xs" style={{ color: '#525252' }}>
+          <div className="mt-6 flex items-center justify-center gap-8 text-sm font-bold" style={{ color: '#000000' }}>
             <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded" style={{ backgroundColor: '#dc2626' }}></div>
-              <span className="font-semibold">0 batalhas</span>
+              <div className="w-6 h-6" style={{ backgroundColor: '#dc2626', border: '2px solid #000000' }}></div>
+              <span>0 batalhas</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded" style={{ backgroundColor: '#ffffff', border: '1px solid #e5e5e5' }}></div>
-              <span className="font-semibold">1-3 batalhas</span>
+              <div className="w-6 h-6" style={{ backgroundColor: '#ffffff', border: '2px solid #000000' }}></div>
+              <span>1-3 batalhas</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded" style={{ backgroundColor: '#16a34a' }}></div>
-              <span className="font-semibold">4+ batalhas</span>
+              <div className="w-6 h-6" style={{ backgroundColor: '#16a34a', border: '2px solid #000000' }}></div>
+              <span>4+ batalhas</span>
             </div>
           </div>
         </div>
