@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { format, getDaysInMonth, startOfMonth, addDays, getDay } from 'date-fns';
+import { format, getDaysInMonth, startOfMonth, addDays, getDay, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Calendar as CalendarIcon, BarChart3, Target, TrendingUp, Users, ChevronLeft, ChevronRight, Save, Home, CheckCircle2, XCircle, FileText } from 'lucide-react';
+import { Calendar as CalendarIcon, BarChart3, Target, TrendingUp, Users, ChevronLeft, ChevronRight, Save, Home, CheckCircle2, XCircle, FileText, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -36,7 +38,12 @@ interface ScheduleData {
   };
 }
 
-const TEAM_STRUCTURE: { executive: string; members: string[] }[] = [
+interface TeamStructure {
+  executive: string;
+  members: string[];
+}
+
+const DEFAULT_TEAM_STRUCTURE: TeamStructure[] = [
   {
     executive: 'LUCAS ZAMPOLI (DIRETOR EXECUTIVO)',
     members: ['BIANCA FOSCHINI', 'IAGO PATRICIO', 'BKARO', 'GABRIELLE SOUSA'],
@@ -71,6 +78,13 @@ const SchedulingDashboard = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [reportDate, setReportDate] = useState<Date>(new Date());
   const [isExportingPDF, setIsExportingPDF] = useState(false);
+  const [teamStructure, setTeamStructure] = useState<TeamStructure[]>(DEFAULT_TEAM_STRUCTURE);
+  const [newExecutiveName, setNewExecutiveName] = useState('');
+  const [newAssociateName, setNewAssociateName] = useState('');
+  const [selectedExecutive, setSelectedExecutive] = useState('');
+  const [showExecutiveDialog, setShowExecutiveDialog] = useState(false);
+  const [showAssociateDialog, setShowAssociateDialog] = useState(false);
+  const [reportType, setReportType] = useState<'daily' | 'weekly' | 'monthly'>('daily');
   const reportRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -86,13 +100,13 @@ const SchedulingDashboard = () => {
   // Get all members flattened
   const allMembers = useMemo(() => {
     const members: TeamMember[] = [];
-    TEAM_STRUCTURE.forEach((team) => {
+    teamStructure.forEach((team) => {
       team.members.forEach((member) => {
         members.push({ name: member, executive: team.executive });
       });
     });
     return members;
-  }, []);
+  }, [teamStructure]);
 
   // Load data from Supabase
   useEffect(() => {
@@ -142,8 +156,8 @@ const SchedulingDashboard = () => {
     loadData();
   }, [currentMonth, toast]);
 
-  // Toggle schedule
-  const toggleSchedule = (memberName: string, date: Date) => {
+  // Set schedule directly
+  const setSchedule = (memberName: string, date: Date, value: boolean) => {
     const dateStr = format(date, 'yyyy-MM-dd');
     setScheduleData((prev) => {
       const memberData = prev[memberName] || {};
@@ -151,10 +165,20 @@ const SchedulingDashboard = () => {
         ...prev,
         [memberName]: {
           ...memberData,
-          [dateStr]: !memberData[dateStr],
+          [dateStr]: value,
         },
       };
     });
+  };
+
+  // Handle single click - mark as scheduled
+  const handleSingleClick = (memberName: string, date: Date) => {
+    setSchedule(memberName, date, true);
+  };
+
+  // Handle double click - mark as not scheduled
+  const handleDoubleClick = (memberName: string, date: Date) => {
+    setSchedule(memberName, date, false);
   };
 
   // Mark all days for a member as scheduled
@@ -185,19 +209,50 @@ const SchedulingDashboard = () => {
     });
   };
 
-  // Set schedule directly
-  const setSchedule = (memberName: string, date: Date, value: boolean) => {
-    const dateStr = format(date, 'yyyy-MM-dd');
-    setScheduleData((prev) => {
-      const memberData = prev[memberName] || {};
-      return {
-        ...prev,
-        [memberName]: {
-          ...memberData,
-          [dateStr]: value,
-        },
-      };
-    });
+  // Add new executive
+  const addExecutive = () => {
+    if (!newExecutiveName.trim()) return;
+    setTeamStructure((prev) => [
+      ...prev,
+      { executive: newExecutiveName.toUpperCase(), members: [] },
+    ]);
+    setNewExecutiveName('');
+    setShowExecutiveDialog(false);
+    toast({ title: 'Executivo adicionado!' });
+  };
+
+  // Add new associate
+  const addAssociate = () => {
+    if (!newAssociateName.trim() || !selectedExecutive) return;
+    setTeamStructure((prev) =>
+      prev.map((team) =>
+        team.executive === selectedExecutive
+          ? { ...team, members: [...team.members, newAssociateName.toUpperCase()] }
+          : team
+      )
+    );
+    setNewAssociateName('');
+    setSelectedExecutive('');
+    setShowAssociateDialog(false);
+    toast({ title: 'Associado adicionado!' });
+  };
+
+  // Remove executive
+  const removeExecutive = (executiveName: string) => {
+    setTeamStructure((prev) => prev.filter((team) => team.executive !== executiveName));
+    toast({ title: 'Executivo removido!' });
+  };
+
+  // Remove associate
+  const removeAssociate = (executiveName: string, memberName: string) => {
+    setTeamStructure((prev) =>
+      prev.map((team) =>
+        team.executive === executiveName
+          ? { ...team, members: team.members.filter((m) => m !== memberName) }
+          : team
+      )
+    );
+    toast({ title: 'Associado removido!' });
   };
 
   // Save data
@@ -332,24 +387,32 @@ const SchedulingDashboard = () => {
   const prevMonth = () => setCurrentMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
   const nextMonth = () => setCurrentMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
 
-  // Get report data for specific date
-  const getReportData = (date: Date) => {
-    const dateStr = format(date, 'yyyy-MM-dd');
-    const scheduled: { name: string; executive: string }[] = [];
-    const notScheduled: { name: string; executive: string }[] = [];
+  // Get report data for date range
+  const getReportDataRange = (startDate: Date, endDate: Date) => {
+    const dailyData: { date: string; scheduled: string[]; notScheduled: string[] }[] = [];
+    let currentDate = new Date(startDate);
 
-    TEAM_STRUCTURE.forEach((team) => {
-      team.members.forEach((member) => {
-        const isScheduled = scheduleData[member]?.[dateStr] || false;
-        if (isScheduled) {
-          scheduled.push({ name: member, executive: team.executive });
-        } else {
-          notScheduled.push({ name: member, executive: team.executive });
-        }
+    while (currentDate <= endDate) {
+      const dateStr = format(currentDate, 'yyyy-MM-dd');
+      const scheduled: string[] = [];
+      const notScheduled: string[] = [];
+
+      teamStructure.forEach((team) => {
+        team.members.forEach((member) => {
+          const isScheduled = scheduleData[member]?.[dateStr] || false;
+          if (isScheduled) {
+            scheduled.push(member);
+          } else {
+            notScheduled.push(member);
+          }
+        });
       });
-    });
 
-    return { scheduled, notScheduled, date: dateStr };
+      dailyData.push({ date: dateStr, scheduled, notScheduled });
+      currentDate = addDays(currentDate, 1);
+    }
+
+    return dailyData;
   };
 
   // Export PDF report
@@ -369,8 +432,26 @@ const SchedulingDashboard = () => {
       const imgWidth = 210;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-      pdf.save(`relatorio-agendamentos-${format(reportDate, 'dd-MM-yyyy')}.pdf`);
+      // Handle multi-page PDFs
+      if (imgHeight > 297) {
+        let heightLeft = imgHeight;
+        let position = 0;
+
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= 297;
+
+        while (heightLeft > 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+          heightLeft -= 297;
+        }
+      } else {
+        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      }
+
+      const reportTypeName = reportType === 'daily' ? 'diario' : reportType === 'weekly' ? '7dias' : 'mensal';
+      pdf.save(`relatorio-agendamentos-${reportTypeName}-${format(reportDate, 'dd-MM-yyyy')}.pdf`);
 
       toast({ title: 'PDF exportado com sucesso!' });
     } catch (error) {
@@ -381,7 +462,30 @@ const SchedulingDashboard = () => {
     }
   };
 
-  const reportData = getReportData(reportDate);
+  // Get date range based on report type
+  const getReportDateRange = () => {
+    if (reportType === 'daily') {
+      return { start: reportDate, end: reportDate };
+    } else if (reportType === 'weekly') {
+      return { start: subDays(reportDate, 6), end: reportDate };
+    } else {
+      return { start: startOfMonth(reportDate), end: reportDate };
+    }
+  };
+
+  const reportDateRange = getReportDateRange();
+  const reportRangeData = getReportDataRange(reportDateRange.start, reportDateRange.end);
+
+  // Calculate totals for report
+  const reportTotals = useMemo(() => {
+    let totalScheduled = 0;
+    let totalNotScheduled = 0;
+    reportRangeData.forEach((day) => {
+      totalScheduled += day.scheduled.length;
+      totalNotScheduled += day.notScheduled.length;
+    });
+    return { totalScheduled, totalNotScheduled, rate: totalScheduled + totalNotScheduled > 0 ? (totalScheduled / (totalScheduled + totalNotScheduled)) * 100 : 0 };
+  }, [reportRangeData]);
 
   return (
     <div className="min-h-screen bg-background p-4">
@@ -415,15 +519,84 @@ const SchedulingDashboard = () => {
         </div>
       </div>
 
+      {/* Management Buttons */}
+      <div className="flex items-center gap-3 mb-6">
+        <Dialog open={showExecutiveDialog} onOpenChange={setShowExecutiveDialog}>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="sm">
+              <Plus className="h-4 w-4 mr-2" />
+              Adicionar Executivo
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Adicionar Executivo</DialogTitle>
+            </DialogHeader>
+            <Input
+              placeholder="Nome do executivo"
+              value={newExecutiveName}
+              onChange={(e) => setNewExecutiveName(e.target.value)}
+            />
+            <DialogFooter>
+              <Button onClick={addExecutive}>Adicionar</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={showAssociateDialog} onOpenChange={setShowAssociateDialog}>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="sm">
+              <Plus className="h-4 w-4 mr-2" />
+              Adicionar Associado
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Adicionar Associado</DialogTitle>
+            </DialogHeader>
+            <Select value={selectedExecutive} onValueChange={setSelectedExecutive}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o executivo" />
+              </SelectTrigger>
+              <SelectContent>
+                {teamStructure.map((team) => (
+                  <SelectItem key={team.executive} value={team.executive}>
+                    {team.executive}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Input
+              placeholder="Nome do associado"
+              value={newAssociateName}
+              onChange={(e) => setNewAssociateName(e.target.value)}
+            />
+            <DialogFooter>
+              <Button onClick={addAssociate}>Adicionar</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+
       {/* PDF Report Export Section */}
       <Card className="mb-6">
         <CardContent className="py-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <FileText className="h-5 w-5 text-primary" />
-              <span className="font-medium">Relatório Diário de Agendamentos</span>
+              <span className="font-medium">Relatório de Agendamentos</span>
             </div>
             <div className="flex items-center gap-3">
+              <Select value={reportType} onValueChange={(v: 'daily' | 'weekly' | 'monthly') => setReportType(v)}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="daily">Diário</SelectItem>
+                  <SelectItem value="weekly">Últimos 7 dias</SelectItem>
+                  <SelectItem value="monthly">Mês completo</SelectItem>
+                </SelectContent>
+              </Select>
               <Input
                 type="date"
                 value={format(reportDate, 'yyyy-MM-dd')}
@@ -595,12 +768,7 @@ const SchedulingDashboard = () => {
             <table className="w-full text-xs">
               <thead>
                 <tr>
-                  <th className="sticky left-0 bg-background z-10 text-left p-2 min-w-[180px]">
-                    <div className="flex items-center gap-1">
-                      <span>Membro</span>
-                      <span className="text-[10px] text-muted-foreground ml-1">(atalhos)</span>
-                    </div>
-                  </th>
+                  <th className="sticky left-0 bg-background z-10 text-left p-2 min-w-[180px]">Membro</th>
                   {days.map((day) => (
                     <th key={day.toISOString()} className="p-1 text-center min-w-[28px]">
                       {format(day, 'dd')}
@@ -610,12 +778,21 @@ const SchedulingDashboard = () => {
                 </tr>
               </thead>
               <tbody>
-                {TEAM_STRUCTURE.map((team) => (
+                {teamStructure.map((team) => (
                   <React.Fragment key={team.executive}>
                     {/* Executive Header */}
-                    <tr className="bg-foreground/90">
-                      <td colSpan={days.length + 2} className="p-2 font-bold text-background text-center">
+                    <tr className="bg-foreground/90 group">
+                      <td colSpan={days.length + 1} className="p-2 font-bold text-background text-center">
                         {team.executive}
+                      </td>
+                      <td className="p-1 bg-foreground/90">
+                        <button
+                          onClick={() => removeExecutive(team.executive)}
+                          className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-500/30 text-red-400 transition-opacity"
+                          title="Remover executivo"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
                       </td>
                     </tr>
                     {/* Team Members */}
@@ -630,16 +807,23 @@ const SchedulingDashboard = () => {
                                 <button
                                   onClick={() => markAllScheduled(member)}
                                   className="p-1 rounded hover:bg-emerald-500/20 text-emerald-500"
-                                  title="Marcar todos como agendado (G)"
+                                  title="Marcar todos como agendado"
                                 >
                                   <CheckCircle2 className="h-3.5 w-3.5" />
                                 </button>
                                 <button
                                   onClick={() => markAllNotScheduled(member)}
                                   className="p-1 rounded hover:bg-red-500/20 text-red-500"
-                                  title="Marcar todos como não agendado (R)"
+                                  title="Marcar todos como não agendado"
                                 >
                                   <XCircle className="h-3.5 w-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => removeAssociate(team.executive, member)}
+                                  className="p-1 rounded hover:bg-red-500/20 text-red-400"
+                                  title="Remover associado"
+                                >
+                                  <Trash2 className="h-3 w-3" />
                                 </button>
                               </div>
                             </div>
@@ -653,23 +837,14 @@ const SchedulingDashboard = () => {
                                 className="p-0.5 border-b border-border"
                               >
                                 <button
-                                  onClick={(e) => {
-                                    if (e.shiftKey) {
-                                      // Shift+click = mark as scheduled (green)
-                                      setSchedule(member, day, true);
-                                    } else if (e.ctrlKey || e.metaKey) {
-                                      // Ctrl+click = mark as not scheduled (red)
-                                      setSchedule(member, day, false);
-                                    } else {
-                                      toggleSchedule(member, day);
-                                    }
-                                  }}
+                                  onClick={() => handleSingleClick(member, day)}
+                                  onDoubleClick={() => handleDoubleClick(member, day)}
                                   className={`w-full h-6 rounded-sm transition-all ${
                                     isScheduled
                                       ? 'bg-emerald-500 hover:bg-emerald-600'
-                                      : 'bg-red-500/30 hover:bg-red-500/50'
+                                      : 'bg-red-500 hover:bg-red-600'
                                   }`}
-                                  title="Clique: alternar | Shift+clique: agendar | Ctrl+clique: remover"
+                                  title="1 clique: SIM (verde) | 2 cliques: NÃO (vermelho)"
                                 />
                               </td>
                             );
@@ -693,17 +868,17 @@ const SchedulingDashboard = () => {
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded-sm bg-emerald-500" />
-            <span className="text-sm text-muted-foreground">Agendado</span>
+            <span className="text-sm text-muted-foreground">SIM - Agendou</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded-sm bg-red-500/30" />
-            <span className="text-sm text-muted-foreground">Não Agendado</span>
+            <div className="w-4 h-4 rounded-sm bg-red-500" />
+            <span className="text-sm text-muted-foreground">NÃO - Não Agendou</span>
           </div>
         </div>
         <div className="flex items-center gap-4 text-xs text-muted-foreground bg-muted/50 px-4 py-2 rounded-lg">
-          <span><kbd className="px-1.5 py-0.5 bg-background rounded border text-[10px]">Shift</kbd> + Clique = Agendar</span>
-          <span><kbd className="px-1.5 py-0.5 bg-background rounded border text-[10px]">Ctrl</kbd> + Clique = Remover</span>
-          <span>Ícones na linha = Marcar toda linha</span>
+          <span><strong>1 clique</strong> = SIM (verde)</span>
+          <span><strong>2 cliques</strong> = NÃO (vermelho)</span>
+          <span>Ícones na linha = Ações rápidas</span>
         </div>
       </div>
 
@@ -718,77 +893,73 @@ const SchedulingDashboard = () => {
           <img src={curliLogo} alt="Curli Logo" className="h-16 object-contain" />
           <div className="text-right">
             <h1 className="text-2xl font-bold text-gray-800">Relatório de Agendamentos</h1>
-            <p className="text-lg text-gray-600">{format(reportDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</p>
+            <p className="text-lg text-gray-600">
+              {reportType === 'daily' && format(reportDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+              {reportType === 'weekly' && `${format(reportDateRange.start, "dd/MM")} a ${format(reportDateRange.end, "dd/MM/yyyy")}`}
+              {reportType === 'monthly' && `${format(reportDateRange.start, "dd/MM")} a ${format(reportDateRange.end, "dd/MM/yyyy")}`}
+            </p>
+            <p className="text-sm text-gray-500">
+              {reportType === 'daily' ? 'Relatório Diário' : reportType === 'weekly' ? 'Últimos 7 Dias' : 'Relatório Mensal'}
+            </p>
           </div>
         </div>
 
-        {/* Metrics Summary */}
+        {/* Summary Metrics */}
         <div className="grid grid-cols-3 gap-4 mb-6">
           <div className="bg-emerald-100 p-4 rounded-lg text-center">
-            <div className="text-3xl font-bold text-emerald-700">{reportData.scheduled.length}</div>
-            <div className="text-sm text-emerald-600">Agendados</div>
+            <div className="text-3xl font-bold text-emerald-700">{reportTotals.totalScheduled}</div>
+            <div className="text-sm text-emerald-600">Total Agendados</div>
           </div>
           <div className="bg-red-100 p-4 rounded-lg text-center">
-            <div className="text-3xl font-bold text-red-700">{reportData.notScheduled.length}</div>
-            <div className="text-sm text-red-600">Não Agendados</div>
+            <div className="text-3xl font-bold text-red-700">{reportTotals.totalNotScheduled}</div>
+            <div className="text-sm text-red-600">Total Não Agendados</div>
           </div>
           <div className="bg-purple-100 p-4 rounded-lg text-center">
-            <div className="text-3xl font-bold text-purple-700">
-              {allMembers.length > 0 ? ((reportData.scheduled.length / allMembers.length) * 100).toFixed(0) : 0}%
-            </div>
-            <div className="text-sm text-purple-600">Taxa do Dia</div>
+            <div className="text-3xl font-bold text-purple-700">{reportTotals.rate.toFixed(0)}%</div>
+            <div className="text-sm text-purple-600">Taxa de Agendamento</div>
           </div>
         </div>
 
-        {/* Monthly Metrics */}
-        <div className="bg-gray-100 p-4 rounded-lg mb-6">
-          <h3 className="font-bold text-gray-800 mb-3">Métricas do Mês</h3>
-          <div className="text-sm">
-            <span className="text-gray-600">Taxa Mensal de Agendamentos:</span>
-            <span className="font-bold ml-2">{metrics.scheduledRate.toFixed(1)}%</span>
-          </div>
-        </div>
-
-        {/* Lists */}
-        <div className="grid grid-cols-2 gap-6">
-          {/* Scheduled */}
-          <div>
-            <h3 className="font-bold text-emerald-700 mb-3 flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-emerald-500" />
-              Agendaram Live ({reportData.scheduled.length})
-            </h3>
-            <div className="space-y-1">
-              {reportData.scheduled.length === 0 ? (
-                <p className="text-gray-500 italic">Nenhum agendamento</p>
-              ) : (
-                reportData.scheduled.map((member, idx) => (
-                  <div key={idx} className="flex items-center gap-2 text-sm py-1 border-b border-gray-200">
-                    <span className="font-medium text-gray-800">{member.name}</span>
-                  </div>
-                ))
-              )}
+        {/* Daily breakdown */}
+        {reportRangeData.map((dayData) => (
+          <div key={dayData.date} className="mb-6 border border-gray-200 rounded-lg overflow-hidden">
+            <div className="bg-gray-800 text-white p-3 font-bold">
+              {format(new Date(dayData.date + 'T12:00:00'), "EEEE, dd 'de' MMMM", { locale: ptBR })}
+            </div>
+            <div className="grid grid-cols-2 gap-4 p-4">
+              <div>
+                <h4 className="font-bold text-emerald-700 mb-2 flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-emerald-500" />
+                  Agendaram ({dayData.scheduled.length})
+                </h4>
+                <div className="space-y-1">
+                  {dayData.scheduled.length === 0 ? (
+                    <p className="text-gray-500 italic text-sm">Nenhum</p>
+                  ) : (
+                    dayData.scheduled.map((name, idx) => (
+                      <div key={idx} className="text-sm text-gray-700">{name}</div>
+                    ))
+                  )}
+                </div>
+              </div>
+              <div>
+                <h4 className="font-bold text-red-700 mb-2 flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-red-500" />
+                  Não Agendaram ({dayData.notScheduled.length})
+                </h4>
+                <div className="space-y-1">
+                  {dayData.notScheduled.length === 0 ? (
+                    <p className="text-gray-500 italic text-sm">Todos agendaram!</p>
+                  ) : (
+                    dayData.notScheduled.map((name, idx) => (
+                      <div key={idx} className="text-sm text-gray-700">{name}</div>
+                    ))
+                  )}
+                </div>
+              </div>
             </div>
           </div>
-
-          {/* Not Scheduled */}
-          <div>
-            <h3 className="font-bold text-red-700 mb-3 flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-red-500" />
-              Não Agendaram ({reportData.notScheduled.length})
-            </h3>
-            <div className="space-y-1">
-              {reportData.notScheduled.length === 0 ? (
-                <p className="text-gray-500 italic">Todos agendaram!</p>
-              ) : (
-                reportData.notScheduled.map((member, idx) => (
-                  <div key={idx} className="flex items-center gap-2 text-sm py-1 border-b border-gray-200">
-                    <span className="font-medium text-gray-800">{member.name}</span>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
+        ))}
 
         {/* Footer */}
         <div className="mt-8 pt-4 border-t border-gray-300 text-center text-xs text-gray-500">
