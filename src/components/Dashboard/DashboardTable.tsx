@@ -3,7 +3,7 @@ import { Column, Row, ColumnGroup, DashboardSettings, Cell } from '@/types/dashb
 import { EditableCell } from './EditableCell';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Info, ChevronDown, ChevronRight, Plus, Trash2, ChevronUp } from 'lucide-react';
+import { Info, ChevronDown, ChevronRight, Plus, Trash2, ChevronUp, Pencil } from 'lucide-react';
 import { FormulaEngine } from '@/lib/formulaEngine';
 import { Button } from '@/components/ui/button';
 
@@ -27,6 +27,7 @@ interface DashboardTableProps {
   onDeleteMember: (rowId: string) => void;
   onIncrement: (rowId: string, columnId: string, delta: number) => void;
   onEditExecutiveName?: (rowId: string, newName: string) => void;
+  onDeleteExecutive?: (sectionId: string) => void;
 }
 
 export const DashboardTable: React.FC<DashboardTableProps> = ({
@@ -49,6 +50,7 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({
   onDeleteMember,
   onIncrement,
   onEditExecutiveName,
+  onDeleteExecutive,
 }) => {
   const [editingExecutive, setEditingExecutive] = useState<string | null>(null);
   const [executiveNameInput, setExecutiveNameInput] = useState('');
@@ -377,18 +379,47 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({
                           </span>
                         )}
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="opacity-0 group-hover:opacity-50 hover:!opacity-100 h-6 w-6 p-0 transition-opacity absolute right-2"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onAddMember(sectionId);
-                        }}
-                        title="Adicionar membro"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                      </Button>
+                      <div className="flex items-center gap-1 absolute right-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="opacity-0 group-hover:opacity-50 hover:!opacity-100 h-6 w-6 p-0 transition-opacity"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setExecutiveNameInput(String(firstCell?.value.raw || ''));
+                            setEditingExecutive(row.id);
+                          }}
+                          title="Editar executivo"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="opacity-0 group-hover:opacity-50 hover:!opacity-100 h-6 w-6 p-0 transition-opacity"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onAddMember(sectionId);
+                          }}
+                          title="Adicionar membro"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="opacity-0 group-hover:opacity-50 hover:!opacity-100 h-6 w-6 p-0 transition-opacity text-destructive hover:text-destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (onDeleteExecutive && confirm('Tem certeza que deseja excluir este executivo e todos os seus membros?')) {
+                              onDeleteExecutive(sectionId);
+                            }
+                          }}
+                          title="Excluir executivo"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
                     </div>
                   </td>
                 </tr>
