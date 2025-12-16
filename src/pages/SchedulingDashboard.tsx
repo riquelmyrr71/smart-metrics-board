@@ -1025,23 +1025,23 @@ const SchedulingDashboard = () => {
               <div className="bg-background rounded-lg p-4 border">
                 <div className="flex items-center gap-2 mb-2">
                   <TrendingDown className="h-4 w-4 text-red-500" />
-                  <span className="text-xs text-muted-foreground">Dias com Queda + Falta</span>
+                  <span className="text-xs text-muted-foreground">Quedas</span>
                 </div>
                 <div className="text-2xl font-bold text-red-500">{impactAnalysis.daysWithDropAndMissing}</div>
-                <p className="text-xs text-muted-foreground">queda com associados faltando</p>
+                <p className="text-xs text-muted-foreground">💎 queda + faltas</p>
               </div>
               
               <div className="bg-background rounded-lg p-4 border">
                 <div className="flex items-center gap-2 mb-2">
                   <AlertTriangle className="h-4 w-4 text-orange-500" />
-                  <span className="text-xs text-muted-foreground">Perda Estimada Total</span>
+                  <span className="text-xs text-muted-foreground">Perda Total</span>
                 </div>
                 <div className="text-2xl font-bold text-orange-500">
                   {impactAnalysis.totalEstimatedLoss > 0 
                     ? (impactAnalysis.totalEstimatedLoss / 1000000).toFixed(2) + 'M'
                     : '-'}
                 </div>
-                <p className="text-xs text-muted-foreground">atribuída a não agendamentos</p>
+                <p className="text-xs text-muted-foreground">por faltas</p>
               </div>
               
               <div className="bg-background rounded-lg p-4 border">
@@ -1054,39 +1054,39 @@ const SchedulingDashboard = () => {
                     ? (impactAnalysis.avgLossPerMissing / 1000).toFixed(0) + 'K'
                     : '-'}
                 </div>
-                <p className="text-xs text-muted-foreground">média por associado ausente</p>
+                <p className="text-xs text-muted-foreground">média</p>
               </div>
               
               <div className="bg-background rounded-lg p-4 border">
                 <div className="flex items-center gap-2 mb-2">
                   <BarChart3 className="h-4 w-4 text-blue-500" />
-                  <span className="text-xs text-muted-foreground">Média (Alta Taxa ≥70%)</span>
+                  <span className="text-xs text-muted-foreground">💎 ≥70%</span>
                 </div>
                 <div className="text-2xl font-bold text-blue-500">
                   {impactAnalysis.avgDiamondsHighScheduling > 0 
                     ? (impactAnalysis.avgDiamondsHighScheduling / 1000000).toFixed(2) + 'M'
                     : '-'}
                 </div>
-                <p className="text-xs text-muted-foreground">diamantes/dia</p>
+                <p className="text-xs text-muted-foreground">média/dia</p>
               </div>
               
               <div className="bg-background rounded-lg p-4 border">
                 <div className="flex items-center gap-2 mb-2">
                   <TrendingUp className="h-4 w-4 text-emerald-500" />
-                  <span className="text-xs text-muted-foreground">Média (Taxa &lt;70%)</span>
+                  <span className="text-xs text-muted-foreground">💎 &lt;70%</span>
                 </div>
                 <div className="text-2xl font-bold text-emerald-500">
                   {impactAnalysis.avgDiamondsLowScheduling > 0 
                     ? (impactAnalysis.avgDiamondsLowScheduling / 1000000).toFixed(2) + 'M'
                     : '-'}
                 </div>
-                <p className="text-xs text-muted-foreground">diamantes/dia</p>
+                <p className="text-xs text-muted-foreground">média/dia</p>
               </div>
             </div>
 
             {/* Correlation Chart */}
             <div className="mb-6">
-              <h4 className="text-xs font-medium text-muted-foreground mb-3">Correlação: Taxa de Agendamento vs Variação de Diamantes</h4>
+              <h4 className="text-xs font-medium text-muted-foreground mb-3">Taxa x Diamantes</h4>
               <ResponsiveContainer width="100%" height={250}>
                 <ComposedChart data={impactAnalysis.correlationData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -1140,7 +1140,7 @@ const SchedulingDashboard = () => {
               <div className="mb-6">
                 <h4 className="text-xs font-medium text-muted-foreground mb-3 flex items-center gap-2">
                   <AlertTriangle className="h-4 w-4 text-red-500" />
-                  Dias com Queda de Diamantes e Associados Ausentes
+                  Dias Problemáticos
                 </h4>
                 <div className="space-y-2">
                   {impactAnalysis.problematicDays.map((day) => (
@@ -1152,31 +1152,31 @@ const SchedulingDashboard = () => {
                         <div className="flex items-center gap-3">
                           <div className="text-sm font-medium">{day.dateLabel}</div>
                           <span className="px-2 py-0.5 bg-red-500/20 text-red-400 rounded text-xs">
-                            {day.schedulingRate.toFixed(0)}% agendamento
+                            {day.schedulingRate.toFixed(0)}%
                           </span>
                           <span className="px-2 py-0.5 bg-yellow-500/20 text-yellow-400 rounded text-xs">
-                            {day.notScheduledCount} ausentes
+                            {day.notScheduledCount} faltas
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
                           <TrendingDown className="h-4 w-4 text-red-500" />
                           <span className="text-sm text-red-400 font-medium">
-                            {(day.diamondChange / 1000000).toFixed(2)}M queda
+                            {(day.diamondChange / 1000000).toFixed(2)}M
                           </span>
                           <span className="text-xs text-orange-400 font-medium">
-                            (~{(day.estimatedLoss / 1000000).toFixed(2)}M atribuído)
+                            (~{(day.estimatedLoss / 1000000).toFixed(2)}M perda)
                           </span>
                         </div>
                       </div>
                       <div className="flex flex-wrap gap-1">
-                        <span className="text-xs text-muted-foreground mr-1">Ausentes:</span>
+                        <span className="text-xs text-muted-foreground mr-1">Faltas:</span>
                         {day.notScheduledNames.slice(0, 5).map((name, idx) => (
                           <span key={idx} className="px-1.5 py-0.5 bg-red-500/10 text-red-300 rounded text-xs">
                             {name}
                           </span>
                         ))}
                         {day.notScheduledNames.length > 5 && (
-                          <span className="text-xs text-muted-foreground">+{day.notScheduledNames.length - 5} mais</span>
+                          <span className="text-xs text-muted-foreground">+{day.notScheduledNames.length - 5}</span>
                         )}
                       </div>
                     </div>
@@ -1190,15 +1190,15 @@ const SchedulingDashboard = () => {
               <div className="mb-6">
                 <h4 className="text-xs font-medium text-muted-foreground mb-3 flex items-center gap-2">
                   <Users className="h-4 w-4 text-yellow-500" />
-                  Associados com Maior Impacto Negativo
+                  Maior Impacto
                 </h4>
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
                   {impactAnalysis.frequentMissers.map((member, idx) => (
                     <div key={member.name} className="bg-yellow-500/10 rounded-lg p-3 border border-yellow-500/20 text-center">
                       <div className="text-xs text-muted-foreground">#{idx + 1}</div>
                       <div className="text-sm font-medium truncate">{member.name}</div>
-                      <div className="text-xs text-yellow-400">{member.count}x ausente</div>
-                      <div className="text-xs text-orange-400">~{(member.totalLoss / 1000000).toFixed(2)}M perda</div>
+                      <div className="text-xs text-yellow-400">{member.count}x</div>
+                      <div className="text-xs text-orange-400">~{(member.totalLoss / 1000000).toFixed(2)}M</div>
                     </div>
                   ))}
                 </div>
@@ -1208,13 +1208,13 @@ const SchedulingDashboard = () => {
             {/* Difference indicator */}
             {impactAnalysis.differencePercent !== 0 && (
               <div className="mt-4 p-4 bg-background rounded-lg border">
-                <div className="text-xs text-muted-foreground mb-1">Diferença de Performance</div>
+                <div className="text-xs text-muted-foreground mb-1">Impacto</div>
                 <div className="text-lg font-bold">
-                  Dias com alta taxa de agendamento (≥70%) têm{' '}
+                  Taxa ≥70% = {' '}
                   <span className={impactAnalysis.differencePercent > 0 ? 'text-emerald-500' : 'text-red-500'}>
                     {impactAnalysis.differencePercent > 0 ? '+' : ''}{impactAnalysis.differencePercent.toFixed(1)}%
                   </span>{' '}
-                  mais diamantes em média
+                  💎
                 </div>
               </div>
             )}
@@ -1378,23 +1378,23 @@ const SchedulingDashboard = () => {
         <div className="p-6">
           {/* Monthly Summary */}
           <div className="bg-white rounded-lg shadow-sm p-4 mb-6 border border-gray-200">
-            <div className="text-xs text-gray-500 uppercase tracking-wide mb-3">Resumo do Mês</div>
+            <div className="text-xs text-gray-500 uppercase tracking-wide mb-3">Resumo</div>
             <div className="grid grid-cols-4 gap-4">
               <div className="text-center">
                 <div className="text-2xl font-bold text-gray-900">{activeCreators}</div>
-                <div className="text-xs text-gray-500">Criadores Ativos</div>
+                <div className="text-xs text-gray-500">Ativos</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-red-600">{metrics.worstDays[0]?.dayName || '-'}</div>
-                <div className="text-xs text-gray-500">Dia Mais Problemático</div>
+                <div className="text-xs text-gray-500">Pior Dia</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-orange-600">{impactAnalysis.daysWithDropAndMissing}</div>
-                <div className="text-xs text-gray-500">Dias Queda + Falta</div>
+                <div className="text-xs text-gray-500">Quedas</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-blue-600">{metrics.scheduledRate.toFixed(0)}%</div>
-                <div className="text-xs text-gray-500">Taxa Mensal</div>
+                <div className="text-xs text-gray-500">Taxa</div>
               </div>
             </div>
           </div>
@@ -1404,17 +1404,17 @@ const SchedulingDashboard = () => {
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-emerald-500" />
-                <span className="text-gray-600 text-sm">Agendados:</span>
-                <span className="font-bold text-gray-900">{reportTotals.totalScheduled}</span>
+                <span className="font-bold text-emerald-700">{reportTotals.totalScheduled}</span>
+                <span className="text-gray-500 text-sm">✓</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-red-500" />
-                <span className="text-gray-600 text-sm">Não Agendados:</span>
-                <span className="font-bold text-gray-900">{reportTotals.totalNotScheduled}</span>
+                <span className="font-bold text-red-700">{reportTotals.totalNotScheduled}</span>
+                <span className="text-gray-500 text-sm">✗</span>
               </div>
             </div>
             <div className="text-sm text-gray-600">
-              {reportRangeData.length} dia{reportRangeData.length > 1 ? 's' : ''} no período
+              {reportRangeData.length} dia{reportRangeData.length > 1 ? 's' : ''}
             </div>
           </div>
 
@@ -1444,12 +1444,12 @@ const SchedulingDashboard = () => {
                     <div className={`px-4 py-2 text-xs ${dayImpact.diamondChange < 0 ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700'}`}>
                       <div className="flex items-center justify-between">
                         <span>
-                          <strong>Diamantes:</strong> {(dayImpact.diamonds / 1000000).toFixed(2)}M 
+                          💎 {(dayImpact.diamonds / 1000000).toFixed(2)}M 
                           ({dayImpact.diamondChange > 0 ? '+' : ''}{(dayImpact.diamondChange / 1000000).toFixed(2)}M)
                         </span>
                         {dayImpact.estimatedLoss > 0 && (
                           <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded">
-                            Perda estimada: ~{(dayImpact.estimatedLoss / 1000000).toFixed(2)}M por {dayData.notScheduled.length} ausência(s)
+                            Perda: ~{(dayImpact.estimatedLoss / 1000000).toFixed(2)}M ({dayData.notScheduled.length} faltas)
                           </span>
                         )}
                       </div>
@@ -1459,12 +1459,11 @@ const SchedulingDashboard = () => {
                   <div className="grid grid-cols-2 gap-4 p-4">
                     <div>
                       <div className="text-xs text-emerald-600 font-medium mb-2 flex items-center justify-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                        Agendaram ({dayData.scheduled.length})
+                        ✓ Live ({dayData.scheduled.length})
                       </div>
                       <div className="flex flex-wrap justify-center gap-1">
                         {dayData.scheduled.length === 0 ? (
-                          <span className="text-gray-400 text-xs italic">Nenhum</span>
+                          <span className="text-gray-400 text-xs italic">-</span>
                         ) : (
                           dayData.scheduled.map((name, idx) => (
                             <span key={idx} className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded text-xs border border-emerald-200">
@@ -1476,12 +1475,11 @@ const SchedulingDashboard = () => {
                     </div>
                     <div>
                       <div className="text-xs text-red-600 font-medium mb-2 flex items-center justify-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-red-500" />
-                        Não Agendaram ({dayData.notScheduled.length})
+                        ✗ Falta ({dayData.notScheduled.length})
                       </div>
                       <div className="flex flex-wrap justify-center gap-1">
                         {dayData.notScheduled.length === 0 ? (
-                          <span className="text-emerald-500 text-xs font-medium">✓ Todos agendaram!</span>
+                          <span className="text-emerald-500 text-xs font-medium">100%</span>
                         ) : (
                           dayData.notScheduled.map((name, idx) => (
                             <span key={idx} className="bg-red-50 text-red-700 px-2 py-0.5 rounded text-xs border border-red-200">
@@ -1526,11 +1524,11 @@ const SchedulingDashboard = () => {
         <div className="p-6">
           {/* Summary Section */}
           <div className="bg-white rounded-lg shadow-sm p-4 mb-6 border border-gray-200">
-            <div className="text-xs text-gray-500 uppercase tracking-wide mb-3">Resumo do Período</div>
+            <div className="text-xs text-gray-500 uppercase tracking-wide mb-3">Resumo</div>
             <div className="grid grid-cols-5 gap-3">
               <div className="text-center">
                 <div className="text-2xl font-bold text-red-600">{impactAnalysis.daysWithDropAndMissing}</div>
-                <div className="text-xs text-gray-500">Dias com Queda + Falta</div>
+                <div className="text-xs text-gray-500">Quedas</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-orange-600">
@@ -1538,7 +1536,7 @@ const SchedulingDashboard = () => {
                     ? (impactAnalysis.totalEstimatedLoss / 1000000).toFixed(2) + 'M'
                     : '-'}
                 </div>
-                <div className="text-xs text-gray-500">Perda Estimada Total</div>
+                <div className="text-xs text-gray-500">Perda Total</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-yellow-600">
@@ -1546,7 +1544,7 @@ const SchedulingDashboard = () => {
                     ? (impactAnalysis.avgLossPerMissing / 1000).toFixed(0) + 'K'
                     : '-'}
                 </div>
-                <div className="text-xs text-gray-500">Perda/Ausência</div>
+                <div className="text-xs text-gray-500">Perda/Falta</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-blue-600">
@@ -1554,7 +1552,7 @@ const SchedulingDashboard = () => {
                     ? (impactAnalysis.avgDiamondsHighScheduling / 1000000).toFixed(2) + 'M'
                     : '-'}
                 </div>
-                <div className="text-xs text-gray-500">Média (≥70%)</div>
+                <div className="text-xs text-gray-500">💎 ≥70%</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-gray-600">
@@ -1562,7 +1560,7 @@ const SchedulingDashboard = () => {
                     ? (impactAnalysis.avgDiamondsLowScheduling / 1000000).toFixed(2) + 'M'
                     : '-'}
                 </div>
-                <div className="text-xs text-gray-500">Média (&lt;70%)</div>
+                <div className="text-xs text-gray-500">💎 &lt;70%</div>
               </div>
             </div>
           </div>
@@ -1571,13 +1569,13 @@ const SchedulingDashboard = () => {
           {impactAnalysis.differencePercent !== 0 && (
             <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
               <div className="text-center">
-                <div className="text-sm text-orange-800 font-medium mb-1">Diferença de Performance</div>
+                <div className="text-sm text-orange-800 font-medium mb-1">Impacto</div>
                 <div className="text-lg font-bold text-gray-900">
-                  Dias com alta taxa de agendamento (≥70%) geram{' '}
+                  Taxa ≥70% = {' '}
                   <span className={impactAnalysis.differencePercent > 0 ? 'text-emerald-600' : 'text-red-600'}>
                     {impactAnalysis.differencePercent > 0 ? '+' : ''}{impactAnalysis.differencePercent.toFixed(1)}%
                   </span>{' '}
-                  mais diamantes
+                  diamantes
                 </div>
               </div>
             </div>
@@ -1586,16 +1584,16 @@ const SchedulingDashboard = () => {
           {/* Daily Correlation Table */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
             <div className="bg-gray-900 text-white px-4 py-2">
-              <span className="font-medium text-sm">Correlação Diária: Taxa de Agendamento vs Diamantes</span>
+              <span className="font-medium text-sm">Taxa x Diamantes</span>
             </div>
             <table className="w-full text-sm">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Data</th>
-                  <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">Taxa Agendamento</th>
-                  <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">Diamantes</th>
-                  <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">Variação</th>
-                  <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">Impacto</th>
+                  <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">Taxa</th>
+                  <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">💎</th>
+                  <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">+/-</th>
+                  <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -1636,10 +1634,10 @@ const SchedulingDashboard = () => {
           {impactAnalysis.problematicDays.length > 0 && (
             <div className="bg-white rounded-lg shadow-sm border border-red-200 overflow-hidden mb-6">
               <div className="bg-red-600 text-white px-4 py-2">
-                <span className="font-medium text-sm">⚠ Dias com Queda de Diamantes e Ausências</span>
+                <span className="font-medium text-sm">⚠ Dias Problemáticos</span>
               </div>
               <div className="p-4">
-                <p className="text-xs text-gray-500 mb-3">Qualquer queda de diamantes com associados que não agendaram</p>
+                <p className="text-xs text-gray-500 mb-3">Queda de 💎 + faltas</p>
                 <div className="space-y-2">
                   {impactAnalysis.problematicDays.map((day) => (
                     <div key={day.date} className="bg-red-50 rounded-lg p-3 border border-red-100">
@@ -1650,17 +1648,17 @@ const SchedulingDashboard = () => {
                             {day.schedulingRate.toFixed(0)}%
                           </span>
                           <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded text-xs">
-                            {day.notScheduledCount} ausente(s)
+                            {day.notScheduledCount} faltas
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-red-600 font-bold">{(day.diamondChange / 1000000).toFixed(2)}M queda</span>
-                          <span className="text-orange-600 font-medium text-xs">~{(day.estimatedLoss / 1000000).toFixed(2)}M atribuído</span>
+                          <span className="text-red-600 font-bold">{(day.diamondChange / 1000000).toFixed(2)}M</span>
+                          <span className="text-orange-600 font-medium text-xs">~{(day.estimatedLoss / 1000000).toFixed(2)}M perda</span>
                         </div>
                       </div>
                       <div className="text-xs text-gray-600">
-                        <strong>Ausentes:</strong> {day.notScheduledNames.slice(0, 6).join(', ')}
-                        {day.notScheduledNames.length > 6 && ` +${day.notScheduledNames.length - 6} mais`}
+                        <strong>Faltas:</strong> {day.notScheduledNames.slice(0, 6).join(', ')}
+                        {day.notScheduledNames.length > 6 && ` +${day.notScheduledNames.length - 6}`}
                       </div>
                     </div>
                   ))}
@@ -1673,16 +1671,16 @@ const SchedulingDashboard = () => {
           {impactAnalysis.frequentMissers.length > 0 && (
             <div className="bg-white rounded-lg shadow-sm border border-yellow-200 overflow-hidden">
               <div className="bg-yellow-500 text-white px-4 py-2">
-                <span className="font-medium text-sm">👥 Associados com Maior Impacto Negativo</span>
+                <span className="font-medium text-sm">👥 Maior Impacto</span>
               </div>
               <div className="p-4">
-                <p className="text-xs text-gray-500 mb-3">Associados mais frequentes em dias com queda de diamantes</p>
+                <p className="text-xs text-gray-500 mb-3">Mais frequentes em dias de queda</p>
                 <div className="grid grid-cols-5 gap-2">
                   {impactAnalysis.frequentMissers.map((member, idx) => (
                     <div key={member.name} className="bg-yellow-50 rounded-lg p-3 border border-yellow-100 text-center">
                       <div className="text-xs text-gray-400 mb-1">#{idx + 1}</div>
                       <div className="text-sm font-medium text-gray-900 truncate">{member.name}</div>
-                      <div className="text-xs text-yellow-600">{member.count}x ausente</div>
+                      <div className="text-xs text-yellow-600">{member.count}x</div>
                       <div className="text-xs text-orange-600">~{(member.totalLoss / 1000000).toFixed(2)}M</div>
                     </div>
                   ))}
