@@ -35,6 +35,36 @@ export type Database = {
         }
         Relationships: []
       }
+      live_schedules: {
+        Row: {
+          created_at: string
+          executive_name: string
+          id: string
+          is_scheduled: boolean
+          member_name: string
+          schedule_date: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          executive_name: string
+          id?: string
+          is_scheduled?: boolean
+          member_name: string
+          schedule_date: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          executive_name?: string
+          id?: string
+          is_scheduled?: boolean
+          member_name?: string
+          schedule_date?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notes: {
         Row: {
           content: string | null
@@ -62,6 +92,33 @@ export type Database = {
           note_date?: string
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      scheduling_goals: {
+        Row: {
+          created_at: string
+          days_goal: number
+          id: string
+          month: number
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          days_goal?: number
+          id?: string
+          month: number
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          days_goal?: number
+          id?: string
+          month?: number
+          updated_at?: string
+          year?: number
         }
         Relationships: []
       }

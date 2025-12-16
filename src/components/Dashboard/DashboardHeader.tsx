@@ -21,6 +21,7 @@ import {
   RotateCcw,
   BarChart3,
   StickyNote,
+  CalendarDays,
 } from 'lucide-react';
 import { DashboardSettings } from '@/types/dashboard';
 import {
@@ -128,6 +129,19 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               </Link>
             </TooltipTrigger>
             <TooltipContent>Página de Anotações</TooltipContent>
+          </Tooltip>
+
+          {/* Scheduling Dashboard Link */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link to="/agendamentos">
+                <Button variant="outline" size="sm" className="gap-2">
+                  <CalendarDays className="w-4 h-4" />
+                  <span className="hidden sm:inline">Agendamentos</span>
+                </Button>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent>Agendamento de Lives</TooltipContent>
           </Tooltip>
 
           {/* Toggle increment controls */}
