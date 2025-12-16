@@ -72,8 +72,14 @@ export const generatePDFContent = (
   columns: Column[],
   columnGroups: ColumnGroup[],
   settings: DashboardSettings,
-  title: string = 'Dashboard Report'
+  title: string = 'Dashboard Report',
+  updateTime?: string
 ): string => {
+  const currentDate = new Date().toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
   // Exact colors from the design system (light mode)
   const colors = {
     primary: '#8B1538',
@@ -367,6 +373,40 @@ export const generatePDFContent = (
   
   tableContent += '</table></div>';
   
+  const headerSection = `
+    <div class="report-header">
+      <div class="report-title">PAINEL DE PERFORMANCE</div>
+      <div class="report-datetime">
+        <span>Data: ${currentDate}</span>
+        ${updateTime ? `<span>Hora: ${updateTime}</span>` : ''}
+      </div>
+    </div>
+  `;
+
+  const headerStyles = `
+    .report-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      margin-bottom: 10px;
+      background: ${colors.primary};
+      color: white;
+      border-radius: 6px;
+    }
+    .report-title {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+    .report-datetime {
+      display: flex;
+      gap: 16px;
+      font-size: 9px;
+      font-weight: 500;
+    }
+  `;
+
   return `
     <!DOCTYPE html>
     <html>
@@ -374,8 +414,10 @@ export const generatePDFContent = (
       <meta charset="UTF-8">
       <title>${title}</title>
       ${styles}
+      <style>${headerStyles}</style>
     </head>
     <body>
+      ${headerSection}
       ${tableContent}
     </body>
     </html>
@@ -387,9 +429,10 @@ export const downloadPDF = async (
   columns: Column[],
   columnGroups: ColumnGroup[],
   settings: DashboardSettings,
-  title: string = 'Dashboard Report'
+  title: string = 'Dashboard Report',
+  updateTime?: string
 ) => {
-  const htmlContent = generatePDFContent(rows, columns, columnGroups, settings, title);
+  const htmlContent = generatePDFContent(rows, columns, columnGroups, settings, title, updateTime);
   
   // Open in new window for printing
   const printWindow = window.open('', '_blank');

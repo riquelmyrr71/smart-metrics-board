@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Copy, Check, UserPlus } from 'lucide-react';
+import { Copy, Check, UserPlus, Clock } from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
   const {
@@ -45,6 +45,8 @@ export const Dashboard: React.FC = () => {
   
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
+  const [pdfTime, setPdfTime] = useState('');
   const [sharePermission, setSharePermission] = useState<'view' | 'edit'>('view');
   const [copied, setCopied] = useState(false);
   const [initialized, setInitialized] = useState(false);
@@ -199,9 +201,15 @@ export const Dashboard: React.FC = () => {
   }, [rows, columns, columnGroups, settings]);
   
   const handleExportPDF = useCallback(() => {
-    downloadPDF(rows, columns, columnGroups, settings, 'Painel de Performance');
+    setPdfDialogOpen(true);
+  }, []);
+
+  const handleConfirmPDF = useCallback(() => {
+    downloadPDF(rows, columns, columnGroups, settings, 'Painel de Performance', pdfTime || undefined);
     toast.success('PDF gerado - use Ctrl+P para salvar');
-  }, [rows, columns, columnGroups, settings]);
+    setPdfDialogOpen(false);
+    setPdfTime('');
+  }, [rows, columns, columnGroups, settings, pdfTime]);
   
   const handleShare = useCallback(() => {
     setShareDialogOpen(true);
@@ -447,6 +455,38 @@ export const Dashboard: React.FC = () => {
                 </Button>
               </div>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* PDF Export Dialog */}
+      <Dialog open={pdfDialogOpen} onOpenChange={setPdfDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Exportar PDF</DialogTitle>
+            <DialogDescription>
+              Insira a hora da atualização (opcional)
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="pdf-time">Hora da atualização</Label>
+              <div className="flex gap-2 items-center">
+                <Clock className="w-4 h-4 text-muted-foreground" />
+                <Input
+                  id="pdf-time"
+                  type="time"
+                  value={pdfTime}
+                  onChange={(e) => setPdfTime(e.target.value)}
+                  className="flex-1"
+                />
+              </div>
+            </div>
+            
+            <Button onClick={handleConfirmPDF} className="w-full">
+              Gerar PDF
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
