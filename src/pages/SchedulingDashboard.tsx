@@ -1,13 +1,19 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { format, getDaysInMonth, startOfMonth, addDays, getDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Calendar, BarChart3, Target, TrendingUp, Users, ChevronLeft, ChevronRight, Save, Home, CheckCircle2, XCircle } from 'lucide-react';
+import { Calendar as CalendarIcon, BarChart3, Target, TrendingUp, Users, ChevronLeft, ChevronRight, Save, Home, CheckCircle2, XCircle, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+import { cn } from '@/lib/utils';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import curliLogo from '@/assets/logo-curli.png';
 import {
   LineChart,
   Line,
@@ -65,6 +71,9 @@ const SchedulingDashboard = () => {
   const [daysGoal, setDaysGoal] = useState(20);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [reportDate, setReportDate] = useState<Date>(new Date());
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
+  const reportRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -325,6 +334,57 @@ const SchedulingDashboard = () => {
   const prevMonth = () => setCurrentMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
   const nextMonth = () => setCurrentMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
 
+  // Get report data for specific date
+  const getReportData = (date: Date) => {
+    const dateStr = format(date, 'yyyy-MM-dd');
+    const scheduled: { name: string; executive: string }[] = [];
+    const notScheduled: { name: string; executive: string }[] = [];
+
+    TEAM_STRUCTURE.forEach((team) => {
+      team.members.forEach((member) => {
+        const isScheduled = scheduleData[member]?.[dateStr] || false;
+        if (isScheduled) {
+          scheduled.push({ name: member, executive: team.executive });
+        } else {
+          notScheduled.push({ name: member, executive: team.executive });
+        }
+      });
+    });
+
+    return { scheduled, notScheduled, date: dateStr };
+  };
+
+  // Export PDF report
+  const handleExportPDF = async () => {
+    if (!reportRef.current) return;
+    setIsExportingPDF(true);
+
+    try {
+      const canvas = await html2canvas(reportRef.current, {
+        scale: 2,
+        backgroundColor: '#fafafa',
+        useCORS: true,
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 210;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      pdf.save(`relatorio-agendamentos-${format(reportDate, 'dd-MM-yyyy')}.pdf`);
+
+      toast({ title: 'PDF exportado com sucesso!' });
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      toast({ title: 'Erro ao exportar PDF', variant: 'destructive' });
+    } finally {
+      setIsExportingPDF(false);
+    }
+  };
+
+  const reportData = getReportData(reportDate);
+
   return (
     <div className="min-h-screen bg-background p-4">
       {/* Header */}
@@ -356,6 +416,41 @@ const SchedulingDashboard = () => {
           </Button>
         </div>
       </div>
+
+      {/* PDF Report Export Section */}
+      <Card className="mb-6">
+        <CardContent className="py-4">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <FileText className="h-5 w-5 text-primary" />
+              <span className="font-medium">Relatório Diário de Agendamentos</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={cn("w-[200px] justify-start text-left font-normal")}>
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {format(reportDate, "dd 'de' MMMM, yyyy", { locale: ptBR })}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <Calendar
+                    mode="single"
+                    selected={reportDate}
+                    onSelect={(date) => date && setReportDate(date)}
+                    initialFocus
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+              <Button onClick={handleExportPDF} disabled={isExportingPDF}>
+                <FileText className="h-4 w-4 mr-2" />
+                {isExportingPDF ? 'Gerando...' : 'Exportar PDF'}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Metrics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
@@ -622,6 +717,109 @@ const SchedulingDashboard = () => {
           <span><kbd className="px-1.5 py-0.5 bg-background rounded border text-[10px]">Shift</kbd> + Clique = Agendar</span>
           <span><kbd className="px-1.5 py-0.5 bg-background rounded border text-[10px]">Ctrl</kbd> + Clique = Remover</span>
           <span>Ícones na linha = Marcar toda linha</span>
+        </div>
+      </div>
+
+      {/* Hidden PDF Report */}
+      <div
+        ref={reportRef}
+        className={cn("absolute left-[-9999px] top-0 w-[800px] bg-[#fafafa] p-8", isExportingPDF && "left-0")}
+        style={{ fontFamily: 'Arial, sans-serif' }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6 pb-4 border-b-2 border-gray-300">
+          <img src={curliLogo} alt="Curli Logo" className="h-16 object-contain" />
+          <div className="text-right">
+            <h1 className="text-2xl font-bold text-gray-800">Relatório de Agendamentos</h1>
+            <p className="text-lg text-gray-600">{format(reportDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</p>
+          </div>
+        </div>
+
+        {/* Metrics Summary */}
+        <div className="grid grid-cols-4 gap-4 mb-6">
+          <div className="bg-emerald-100 p-4 rounded-lg text-center">
+            <div className="text-3xl font-bold text-emerald-700">{reportData.scheduled.length}</div>
+            <div className="text-sm text-emerald-600">Agendados</div>
+          </div>
+          <div className="bg-red-100 p-4 rounded-lg text-center">
+            <div className="text-3xl font-bold text-red-700">{reportData.notScheduled.length}</div>
+            <div className="text-sm text-red-600">Não Agendados</div>
+          </div>
+          <div className="bg-blue-100 p-4 rounded-lg text-center">
+            <div className="text-3xl font-bold text-blue-700">{allMembers.length}</div>
+            <div className="text-sm text-blue-600">Total Membros</div>
+          </div>
+          <div className="bg-purple-100 p-4 rounded-lg text-center">
+            <div className="text-3xl font-bold text-purple-700">
+              {allMembers.length > 0 ? ((reportData.scheduled.length / allMembers.length) * 100).toFixed(0) : 0}%
+            </div>
+            <div className="text-sm text-purple-600">Taxa do Dia</div>
+          </div>
+        </div>
+
+        {/* Monthly Metrics */}
+        <div className="bg-gray-100 p-4 rounded-lg mb-6">
+          <h3 className="font-bold text-gray-800 mb-3">Métricas do Mês</h3>
+          <div className="grid grid-cols-3 gap-4 text-sm">
+            <div>
+              <span className="text-gray-600">Taxa Mensal:</span>
+              <span className="font-bold ml-2">{metrics.scheduledRate.toFixed(1)}%</span>
+            </div>
+            <div>
+              <span className="text-gray-600">Meta:</span>
+              <span className="font-bold ml-2">{daysGoal} dias</span>
+            </div>
+            <div>
+              <span className="text-gray-600">Melhor Membro:</span>
+              <span className="font-bold ml-2">{metrics.ranking[0]?.name || '-'}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Lists */}
+        <div className="grid grid-cols-2 gap-6">
+          {/* Scheduled */}
+          <div>
+            <h3 className="font-bold text-emerald-700 mb-3 flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-emerald-500" />
+              Agendaram Live ({reportData.scheduled.length})
+            </h3>
+            <div className="space-y-1">
+              {reportData.scheduled.length === 0 ? (
+                <p className="text-gray-500 italic">Nenhum agendamento</p>
+              ) : (
+                reportData.scheduled.map((member, idx) => (
+                  <div key={idx} className="flex items-center gap-2 text-sm py-1 border-b border-gray-200">
+                    <span className="font-medium text-gray-800">{member.name}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Not Scheduled */}
+          <div>
+            <h3 className="font-bold text-red-700 mb-3 flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-red-500" />
+              Não Agendaram ({reportData.notScheduled.length})
+            </h3>
+            <div className="space-y-1">
+              {reportData.notScheduled.length === 0 ? (
+                <p className="text-gray-500 italic">Todos agendaram!</p>
+              ) : (
+                reportData.notScheduled.map((member, idx) => (
+                  <div key={idx} className="flex items-center gap-2 text-sm py-1 border-b border-gray-200">
+                    <span className="font-medium text-gray-800">{member.name}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="mt-8 pt-4 border-t border-gray-300 text-center text-xs text-gray-500">
+          Relatório gerado em {format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
         </div>
       </div>
     </div>
