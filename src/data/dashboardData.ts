@@ -477,98 +477,6 @@ const section4Rows: Row[] = [
   },
 ];
 
-// Section 5: EXECUTIVO DE PARCERIAS - BIANCA FOSCHINI
-const section5Rows: Row[] = [
-  {
-    id: 'section5-header',
-    type: 'section-header',
-    order: 40,
-    sectionId: 'section5',
-    cells: {
-      team: createCell('section5-header', 'team', 'EXECUTIVO DE PARCERIAS - BIANCA FOSCHINI'),
-    },
-  },
-  {
-    id: 'row16',
-    type: 'data',
-    order: 41,
-    sectionId: 'section5',
-    cells: {
-      streamers: createCell('row16', 'streamers', 35, 'number'),
-      team: createCell('row16', 'team', 'EQUIPE NORTE', 'text'),
-      rec_atual: createCell('row16', 'rec_atual', 45, 'number'),
-      meta_rec: createCell('row16', 'meta_rec', 75, 'number'),
-      atg_percent: createCell('row16', 'atg_percent', 0.60, 'percentage'),
-      proj_rec: createCell('row16', 'proj_rec', 45, 'number'),
-      atg_proj_rec: createCell('row16', 'atg_proj_rec', 0.60, 'percentage'),
-      diamantes_atuais: createCell('row16', 'diamantes_atuais', 250000, 'currency'),
-      meta_diamantes: createCell('row16', 'meta_diamantes', 400000, 'currency'),
-      atg_dima: createCell('row16', 'atg_dima', 0.63, 'percentage'),
-      proj_dima: createCell('row16', 'proj_dima', 250000, 'currency'),
-      atg_proj_dima: createCell('row16', 'atg_proj_dima', 0.63, 'percentage'),
-    },
-  },
-  {
-    id: 'row17',
-    type: 'data',
-    order: 42,
-    sectionId: 'section5',
-    cells: {
-      streamers: createCell('row17', 'streamers', 28, 'number'),
-      team: createCell('row17', 'team', 'EQUIPE SUL', 'text'),
-      rec_atual: createCell('row17', 'rec_atual', 32, 'number'),
-      meta_rec: createCell('row17', 'meta_rec', 75, 'number'),
-      atg_percent: createCell('row17', 'atg_percent', 0.43, 'percentage'),
-      proj_rec: createCell('row17', 'proj_rec', 32, 'number'),
-      atg_proj_rec: createCell('row17', 'atg_proj_rec', 0.43, 'percentage'),
-      diamantes_atuais: createCell('row17', 'diamantes_atuais', 180000, 'currency'),
-      meta_diamantes: createCell('row17', 'meta_diamantes', 350000, 'currency'),
-      atg_dima: createCell('row17', 'atg_dima', 0.51, 'percentage'),
-      proj_dima: createCell('row17', 'proj_dima', 180000, 'currency'),
-      atg_proj_dima: createCell('row17', 'atg_proj_dima', 0.51, 'percentage'),
-    },
-  },
-  {
-    id: 'row18',
-    type: 'data',
-    order: 43,
-    sectionId: 'section5',
-    cells: {
-      streamers: createCell('row18', 'streamers', 42, 'number'),
-      team: createCell('row18', 'team', 'EQUIPE CENTRO-OESTE', 'text'),
-      rec_atual: createCell('row18', 'rec_atual', 55, 'number'),
-      meta_rec: createCell('row18', 'meta_rec', 75, 'number'),
-      atg_percent: createCell('row18', 'atg_percent', 0.73, 'percentage'),
-      proj_rec: createCell('row18', 'proj_rec', 55, 'number'),
-      atg_proj_rec: createCell('row18', 'atg_proj_rec', 0.73, 'percentage'),
-      diamantes_atuais: createCell('row18', 'diamantes_atuais', 320000, 'currency'),
-      meta_diamantes: createCell('row18', 'meta_diamantes', 450000, 'currency'),
-      atg_dima: createCell('row18', 'atg_dima', 0.71, 'percentage'),
-      proj_dima: createCell('row18', 'proj_dima', 320000, 'currency'),
-      atg_proj_dima: createCell('row18', 'atg_proj_dima', 0.71, 'percentage'),
-    },
-  },
-  {
-    id: 'subtotal5',
-    type: 'subtotal',
-    order: 49,
-    sectionId: 'section5',
-    cells: {
-      streamers: createCell('subtotal5', 'streamers', 105, 'number'),
-      team: createCell('subtotal5', 'team', 'SUBTOTAL BIANCA FOSCHINI', 'text'),
-      rec_atual: createCell('subtotal5', 'rec_atual', 132, 'number'),
-      meta_rec: createCell('subtotal5', 'meta_rec', 225, 'number'),
-      atg_percent: createCell('subtotal5', 'atg_percent', 0.59, 'percentage'),
-      proj_rec: createCell('subtotal5', 'proj_rec', 132, 'number'),
-      atg_proj_rec: createCell('subtotal5', 'atg_proj_rec', 0.59, 'percentage'),
-      diamantes_atuais: createCell('subtotal5', 'diamantes_atuais', 750000, 'currency'),
-      meta_diamantes: createCell('subtotal5', 'meta_diamantes', 1200000, 'currency'),
-      atg_dima: createCell('subtotal5', 'atg_dima', 0.63, 'percentage'),
-      proj_dima: createCell('subtotal5', 'proj_dima', 750000, 'currency'),
-      atg_proj_dima: createCell('subtotal5', 'atg_proj_dima', 0.63, 'percentage'),
-    },
-  },
-];
 
 // Section 6: EXECUTIVO INTERNO - DANILO GARCIA
 const section6Rows: Row[] = [
@@ -720,5 +628,5 @@ const totalRow: Row = {
 export const initialDashboardData = {
   columns,
   columnGroups,
-  rows: [...section1Rows, ...section2Rows, ...section3Rows, ...section4Rows, ...section5Rows, ...section7Rows, ...section6Rows, totalRow],
+  rows: [...section1Rows, ...section2Rows, ...section3Rows, ...section4Rows, ...section7Rows, ...section6Rows, totalRow],
 };

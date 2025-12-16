@@ -26,6 +26,7 @@ interface DashboardTableProps {
   onAddMember: (sectionId: string) => void;
   onDeleteMember: (rowId: string) => void;
   onIncrement: (rowId: string, columnId: string, delta: number) => void;
+  onEditExecutiveName?: (rowId: string, newName: string) => void;
 }
 
 export const DashboardTable: React.FC<DashboardTableProps> = ({
@@ -47,7 +48,10 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({
   onAddMember,
   onDeleteMember,
   onIncrement,
+  onEditExecutiveName,
 }) => {
+  const [editingExecutive, setEditingExecutive] = useState<string | null>(null);
+  const [executiveNameInput, setExecutiveNameInput] = useState('');
   const tableRef = useRef<HTMLTableElement>(null);
   const [focusedCell, setFocusedCell] = useState<{ rowIndex: number; colIndex: number } | null>(null);
   
@@ -317,22 +321,61 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({
               const firstCell = Object.values(row.cells)[0];
               const sectionId = row.sectionId || row.id;
               const isCollapsed = collapsedSections.has(sectionId);
+              const isEditing = editingExecutive === row.id;
               
               return (
                 <tr key={row.id} className="bg-secondary group">
                   <td
                     colSpan={columns.length}
                     className="px-0.5 py-0.5 font-bold text-secondary-foreground cursor-pointer hover:bg-secondary/80 transition-colors"
-                    onClick={() => onToggleSection(sectionId)}
+                    onClick={() => !isEditing && onToggleSection(sectionId)}
                   >
-                    <div className="flex items-center justify-center gap-2">
+                    <div className="flex items-center justify-center gap-2 relative">
                       <div className="flex items-center gap-2">
                         {isCollapsed ? (
                           <ChevronRight className="w-3.5 h-3.5" />
                         ) : (
                           <ChevronDown className="w-3.5 h-3.5" />
                         )}
-                        <span className="text-base tracking-wide">{firstCell?.value.raw || 'Seção'}</span>
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={executiveNameInput}
+                            onChange={(e) => setExecutiveNameInput(e.target.value)}
+                            onBlur={() => {
+                              if (onEditExecutiveName && executiveNameInput.trim()) {
+                                onEditExecutiveName(row.id, executiveNameInput.trim());
+                              }
+                              setEditingExecutive(null);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                if (onEditExecutiveName && executiveNameInput.trim()) {
+                                  onEditExecutiveName(row.id, executiveNameInput.trim());
+                                }
+                                setEditingExecutive(null);
+                              }
+                              if (e.key === 'Escape') {
+                                setEditingExecutive(null);
+                              }
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                            autoFocus
+                            className="bg-background text-foreground px-2 py-1 rounded border border-border text-base tracking-wide text-center min-w-[300px]"
+                          />
+                        ) : (
+                          <span 
+                            className="text-base tracking-wide cursor-text hover:bg-secondary/60 px-2 py-1 rounded"
+                            onDoubleClick={(e) => {
+                              e.stopPropagation();
+                              setExecutiveNameInput(String(firstCell?.value.raw || ''));
+                              setEditingExecutive(row.id);
+                            }}
+                            title="Duplo clique para editar"
+                          >
+                            {firstCell?.value.raw || 'Seção'}
+                          </span>
+                        )}
                       </div>
                       <Button
                         variant="ghost"
