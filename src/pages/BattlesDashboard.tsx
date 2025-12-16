@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { format, getDaysInMonth, startOfMonth, addDays, getDay } from 'date-fns';
+import { format, getDaysInMonth, startOfMonth, addDays, eachDayOfInterval, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { 
-  Calendar as CalendarIcon, 
   Swords, 
   Target, 
   TrendingUp, 
@@ -16,13 +15,16 @@ import {
   Plus, 
   Trash2, 
   AlertTriangle,
-  Loader2
+  Loader2,
+  Settings2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -47,6 +49,20 @@ interface DiamondEntry {
   date: string;
   diamonds: number;
   creators: number;
+}
+
+interface ReportConfig {
+  startDate: string;
+  endDate: string;
+  selectedMembers: string[];
+  metrics: {
+    totalBattles: boolean;
+    dailyBreakdown: boolean;
+    memberTotals: boolean;
+    impactAnalysis: boolean;
+    topPerformers: boolean;
+    lowPerformers: boolean;
+  };
 }
 
 const BATTLES_DATA_ID = '00000000-0000-0000-0000-000000000003';
@@ -90,7 +106,23 @@ const BattlesDashboard = () => {
   const [editValue, setEditValue] = useState('');
   const [diamondEntries, setDiamondEntries] = useState<DiamondEntry[]>([]);
   const [isExportingPDF, setIsExportingPDF] = useState(false);
+  const [showReportDialog, setShowReportDialog] = useState(false);
+  const [reportConfig, setReportConfig] = useState<ReportConfig>({
+    startDate: format(startOfMonth(new Date()), 'yyyy-MM-dd'),
+    endDate: format(new Date(), 'yyyy-MM-dd'),
+    selectedMembers: [],
+    metrics: {
+      totalBattles: true,
+      dailyBreakdown: true,
+      memberTotals: true,
+      impactAnalysis: true,
+      topPerformers: true,
+      lowPerformers: false,
+    },
+  });
+  
   const reportRef = useRef<HTMLDivElement>(null);
+  const customReportRef = useRef<HTMLDivElement>(null);
   
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -99,46 +131,44 @@ const BattlesDashboard = () => {
   const monthStart = startOfMonth(currentMonth);
   const days = Array.from({ length: daysInMonth }, (_, i) => addDays(monthStart, i));
 
+  // Get all members
+  const allMembers = useMemo(() => {
+    return teamStructure.flatMap(exec => exec.members);
+  }, [teamStructure]);
+
+  // Initialize selected members when team structure changes
+  useEffect(() => {
+    if (reportConfig.selectedMembers.length === 0 && allMembers.length > 0) {
+      setReportConfig(prev => ({ ...prev, selectedMembers: [...allMembers] }));
+    }
+  }, [allMembers, reportConfig.selectedMembers.length]);
+
   // Load data
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
       try {
-        // Load battle data
-        const { data: battlesData, error: battlesError } = await supabase
-          .from('dashboard_data')
-          .select('*')
-          .eq('id', BATTLES_DATA_ID)
-          .maybeSingle();
+        const [battlesResult, chartResult] = await Promise.all([
+          supabase.from('dashboard_data').select('*').eq('id', BATTLES_DATA_ID).maybeSingle(),
+          supabase.from('dashboard_data').select('*').eq('id', CHART_DATA_ID).maybeSingle(),
+        ]);
 
-        if (battlesError) throw battlesError;
+        if (battlesResult.error) throw battlesResult.error;
+        if (chartResult.error) throw chartResult.error;
 
-        if (battlesData?.data) {
-          const parsed = battlesData.data as { battleData?: BattleData; teamStructure?: TeamStructure[] };
+        if (battlesResult.data?.data) {
+          const parsed = battlesResult.data.data as { battleData?: BattleData; teamStructure?: TeamStructure[] };
           if (parsed.battleData) setBattleData(parsed.battleData);
           if (parsed.teamStructure) setTeamStructure(parsed.teamStructure);
         }
 
-        // Load diamond data for impact analysis
-        const { data: chartData, error: chartError } = await supabase
-          .from('dashboard_data')
-          .select('*')
-          .eq('id', CHART_DATA_ID)
-          .maybeSingle();
-
-        if (chartError) throw chartError;
-
-        if (chartData?.data) {
-          const parsed = chartData.data as { entries?: DiamondEntry[] };
+        if (chartResult.data?.data) {
+          const parsed = chartResult.data.data as { entries?: DiamondEntry[] };
           if (parsed.entries) setDiamondEntries(parsed.entries);
         }
       } catch (error) {
         console.error('Erro ao carregar dados:', error);
-        toast({
-          title: 'Erro',
-          description: 'Falha ao carregar dados',
-          variant: 'destructive',
-        });
+        toast({ title: 'Erro', description: 'Falha ao carregar dados', variant: 'destructive' });
       } finally {
         setIsLoading(false);
       }
@@ -157,20 +187,11 @@ const BattlesDashboard = () => {
         updated_at: new Date().toISOString(),
       };
       const { error } = await supabase.from('dashboard_data').upsert(payload);
-
       if (error) throw error;
-
-      toast({
-        title: 'Salvo!',
-        description: 'Dados salvos com sucesso',
-      });
+      toast({ title: 'Salvo!', description: 'Dados salvos com sucesso' });
     } catch (error) {
       console.error('Erro ao salvar:', error);
-      toast({
-        title: 'Erro',
-        description: 'Falha ao salvar dados',
-        variant: 'destructive',
-      });
+      toast({ title: 'Erro', description: 'Falha ao salvar dados', variant: 'destructive' });
     } finally {
       setIsSaving(false);
     }
@@ -187,10 +208,7 @@ const BattlesDashboard = () => {
     const dateStr = format(date, 'yyyy-MM-dd');
     setBattleData(prev => ({
       ...prev,
-      [member]: {
-        ...(prev[member] || {}),
-        [dateStr]: count,
-      },
+      [member]: { ...(prev[member] || {}), [dateStr]: count },
     }));
   };
 
@@ -200,6 +218,14 @@ const BattlesDashboard = () => {
     if (!battleData[member]) return 0;
     return Object.entries(battleData[member])
       .filter(([date]) => date.startsWith(monthStr))
+      .reduce((sum, [, count]) => sum + count, 0);
+  };
+
+  // Calculate member total for date range
+  const getMemberTotalForRange = (member: string, startDate: string, endDate: string): number => {
+    if (!battleData[member]) return 0;
+    return Object.entries(battleData[member])
+      .filter(([date]) => date >= startDate && date <= endDate)
       .reduce((sum, [, count]) => sum + count, 0);
   };
 
@@ -219,13 +245,11 @@ const BattlesDashboard = () => {
     const currentMonthDiamonds = diamondEntries.filter(e => e.date.startsWith(monthStr));
     
     if (currentMonthDiamonds.length === 0) {
-      return { hasData: false, correlationData: [], problematicDays: [], daysWithLowBattles: 0 };
+      return { hasData: false, correlationData: [], problematicDays: [], daysWithLowBattles: 0, avgDiamondsHighBattles: 0, avgDiamondsLowBattles: 0, differencePercent: 0 };
     }
 
-    // Sort by date
     const sortedDiamonds = [...currentMonthDiamonds].sort((a, b) => a.date.localeCompare(b.date));
     
-    // Get daily battle totals
     const dailyBattleTotals: { [date: string]: number } = {};
     days.forEach(day => {
       const dateStr = format(day, 'yyyy-MM-dd');
@@ -238,7 +262,6 @@ const BattlesDashboard = () => {
       dailyBattleTotals[dateStr] = total;
     });
 
-    // Calculate correlation data
     const correlationData = sortedDiamonds.map((entry, idx) => {
       const prevEntry = sortedDiamonds[idx - 1];
       const diamondChange = prevEntry ? entry.diamonds - prevEntry.diamonds : 0;
@@ -255,11 +278,9 @@ const BattlesDashboard = () => {
       };
     });
 
-    // Find problematic days (low battles + diamond drop)
     const problematicDays = correlationData.filter(d => d.battles < 10 && d.diamondChange < 0);
     const daysWithLowBattles = correlationData.filter(d => d.battles < 10).length;
 
-    // Calculate averages
     const highBattleDays = correlationData.filter(d => d.battles >= 20);
     const lowBattleDays = correlationData.filter(d => d.battles < 10);
     
@@ -274,15 +295,7 @@ const BattlesDashboard = () => {
       ? ((avgDiamondsHighBattles - avgDiamondsLowBattles) / avgDiamondsLowBattles) * 100 
       : 0;
 
-    return {
-      hasData: true,
-      correlationData,
-      problematicDays,
-      daysWithLowBattles,
-      avgDiamondsHighBattles,
-      avgDiamondsLowBattles,
-      differencePercent,
-    };
+    return { hasData: true, correlationData, problematicDays, daysWithLowBattles, avgDiamondsHighBattles, avgDiamondsLowBattles, differencePercent };
   }, [battleData, diamondEntries, currentMonth, days, teamStructure]);
 
   // Metrics
@@ -291,7 +304,6 @@ const BattlesDashboard = () => {
     const totalMembers = teamStructure.reduce((sum, exec) => sum + exec.members.length, 0);
     const avgPerMember = totalMembers > 0 ? totalBattles / totalMembers : 0;
     
-    // Best performers
     const memberTotals = teamStructure.flatMap(exec => 
       exec.members.map(member => ({ name: member, total: getMemberTotal(member) }))
     ).sort((a, b) => b.total - a.total);
@@ -351,31 +363,70 @@ const BattlesDashboard = () => {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleCellBlur();
-    } else if (e.key === 'Escape') {
-      setEditingCell(null);
-      setEditValue('');
-    }
+    if (e.key === 'Enter') handleCellBlur();
+    else if (e.key === 'Escape') { setEditingCell(null); setEditValue(''); }
   };
 
-  // Export PDF
-  const handleExportPDF = async () => {
-    if (!reportRef.current) return;
+  // Toggle member selection
+  const toggleMemberSelection = (member: string) => {
+    setReportConfig(prev => ({
+      ...prev,
+      selectedMembers: prev.selectedMembers.includes(member)
+        ? prev.selectedMembers.filter(m => m !== member)
+        : [...prev.selectedMembers, member],
+    }));
+  };
+
+  // Select all members
+  const selectAllMembers = () => {
+    setReportConfig(prev => ({ ...prev, selectedMembers: [...allMembers] }));
+  };
+
+  // Deselect all members
+  const deselectAllMembers = () => {
+    setReportConfig(prev => ({ ...prev, selectedMembers: [] }));
+  };
+
+  // Toggle metric
+  const toggleMetric = (metric: keyof ReportConfig['metrics']) => {
+    setReportConfig(prev => ({
+      ...prev,
+      metrics: { ...prev.metrics, [metric]: !prev.metrics[metric] },
+    }));
+  };
+
+  // Export Custom PDF
+  const handleExportCustomPDF = async () => {
+    if (!customReportRef.current) return;
     setIsExportingPDF(true);
     try {
-      toast({ title: 'Gerando PDF...', description: 'Aguarde' });
-      const canvas = await html2canvas(reportRef.current, { scale: 2, backgroundColor: '#fafafa' });
+      toast({ title: 'Gerando relatório...', description: 'Aguarde' });
+      
+      const canvas = await html2canvas(customReportRef.current, { 
+        scale: 2, 
+        backgroundColor: '#fafafa',
+        logging: false,
+      });
+      
       const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       const imgWidth = canvas.width;
       const imgHeight = canvas.height;
       const ratio = Math.min((pdfWidth - 20) / imgWidth, (pdfHeight - 20) / imgHeight);
-      pdf.addImage(imgData, 'PNG', 10, 10, imgWidth * ratio, imgHeight * ratio);
-      pdf.save(`painel-batalhas-${format(currentMonth, 'MM-yyyy')}.pdf`);
-      toast({ title: 'PDF exportado!' });
+      
+      const totalPages = Math.ceil((imgHeight * ratio) / (pdfHeight - 20));
+      
+      for (let page = 0; page < totalPages; page++) {
+        if (page > 0) pdf.addPage();
+        const yOffset = -page * (pdfHeight - 20);
+        pdf.addImage(imgData, 'PNG', 10, 10 + yOffset, imgWidth * ratio, imgHeight * ratio);
+      }
+      
+      pdf.save(`relatorio-batalhas-${reportConfig.startDate}-${reportConfig.endDate}.pdf`);
+      toast({ title: 'Relatório exportado!' });
+      setShowReportDialog(false);
     } catch (error) {
       console.error('Erro ao exportar PDF:', error);
       toast({ title: 'Erro', description: 'Falha ao exportar PDF', variant: 'destructive' });
@@ -383,6 +434,45 @@ const BattlesDashboard = () => {
       setIsExportingPDF(false);
     }
   };
+
+  // Get report data based on config
+  const reportData = useMemo(() => {
+    const { startDate, endDate, selectedMembers } = reportConfig;
+    
+    let reportDays: Date[] = [];
+    try {
+      reportDays = eachDayOfInterval({
+        start: parseISO(startDate),
+        end: parseISO(endDate),
+      });
+    } catch {
+      reportDays = [];
+    }
+
+    const memberData = selectedMembers.map(member => {
+      const dailyData = reportDays.map(day => ({
+        date: format(day, 'yyyy-MM-dd'),
+        dateLabel: format(day, 'dd/MM'),
+        count: battleData[member]?.[format(day, 'yyyy-MM-dd')] || 0,
+      }));
+      const total = getMemberTotalForRange(member, startDate, endDate);
+      return { name: member, dailyData, total };
+    }).sort((a, b) => b.total - a.total);
+
+    const grandTotal = memberData.reduce((sum, m) => sum + m.total, 0);
+    const avgPerMember = memberData.length > 0 ? grandTotal / memberData.length : 0;
+    const topPerformers = memberData.slice(0, 5);
+    const lowPerformers = memberData.filter(m => m.total < 10);
+
+    // Daily totals
+    const dailyTotals = reportDays.map(day => {
+      const dateStr = format(day, 'yyyy-MM-dd');
+      const total = selectedMembers.reduce((sum, member) => sum + (battleData[member]?.[dateStr] || 0), 0);
+      return { date: dateStr, dateLabel: format(day, 'dd/MM'), total };
+    });
+
+    return { memberData, grandTotal, avgPerMember, topPerformers, lowPerformers, dailyTotals, reportDays };
+  }, [reportConfig, battleData]);
 
   if (isLoading) {
     return (
@@ -399,7 +489,7 @@ const BattlesDashboard = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="bg-card border-b border-border px-4 py-3 sticky top-0 z-20">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
               <Home className="h-5 w-5" />
@@ -408,9 +498,9 @@ const BattlesDashboard = () => {
             <h1 className="text-xl font-bold">Painel de Batalhas</h1>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {/* Month Navigation */}
-            <div className="flex items-center gap-2 border rounded-lg px-2 py-1">
+            <div className="flex items-center gap-2 border rounded-lg px-2 py-1 bg-background">
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1))}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
@@ -422,10 +512,112 @@ const BattlesDashboard = () => {
               </Button>
             </div>
 
-            <Button variant="outline" size="sm" onClick={handleExportPDF} disabled={isExportingPDF}>
-              <FileText className="h-4 w-4 mr-2" />
-              PDF
-            </Button>
+            {/* Custom Report Button */}
+            <Dialog open={showReportDialog} onOpenChange={setShowReportDialog}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Settings2 className="h-4 w-4 mr-2" />
+                  Gerar Relatório
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Configurar Relatório Personalizado</DialogTitle>
+                </DialogHeader>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
+                  {/* Period Selection */}
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-sm flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      Período
+                    </h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="startDate">Data Início</Label>
+                        <Input
+                          id="startDate"
+                          type="date"
+                          value={reportConfig.startDate}
+                          onChange={(e) => setReportConfig(prev => ({ ...prev, startDate: e.target.value }))}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="endDate">Data Fim</Label>
+                        <Input
+                          id="endDate"
+                          type="date"
+                          value={reportConfig.endDate}
+                          onChange={(e) => setReportConfig(prev => ({ ...prev, endDate: e.target.value }))}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Metrics Selection */}
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-sm flex items-center gap-2">
+                      <Target className="h-4 w-4" />
+                      Métricas
+                    </h3>
+                    <div className="space-y-2">
+                      {[
+                        { key: 'totalBattles', label: 'Total de Batalhas' },
+                        { key: 'dailyBreakdown', label: 'Detalhamento Diário' },
+                        { key: 'memberTotals', label: 'Totais por Membro' },
+                        { key: 'impactAnalysis', label: 'Análise de Impacto' },
+                        { key: 'topPerformers', label: 'Top Performers' },
+                        { key: 'lowPerformers', label: 'Baixo Desempenho' },
+                      ].map(({ key, label }) => (
+                        <div key={key} className="flex items-center gap-2">
+                          <Checkbox
+                            id={key}
+                            checked={reportConfig.metrics[key as keyof ReportConfig['metrics']]}
+                            onCheckedChange={() => toggleMetric(key as keyof ReportConfig['metrics'])}
+                          />
+                          <Label htmlFor={key} className="text-sm cursor-pointer">{label}</Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Associates Selection */}
+                <div className="space-y-4 border-t pt-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-sm flex items-center gap-2">
+                      <Users className="h-4 w-4" />
+                      Associados ({reportConfig.selectedMembers.length}/{allMembers.length})
+                    </h3>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={selectAllMembers}>Todos</Button>
+                      <Button variant="outline" size="sm" onClick={deselectAllMembers}>Nenhum</Button>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 max-h-[200px] overflow-y-auto p-2 border rounded-lg bg-muted/30">
+                    {allMembers.map(member => (
+                      <div key={member} className="flex items-center gap-2">
+                        <Checkbox
+                          id={`member-${member}`}
+                          checked={reportConfig.selectedMembers.includes(member)}
+                          onCheckedChange={() => toggleMemberSelection(member)}
+                        />
+                        <Label htmlFor={`member-${member}`} className="text-xs cursor-pointer truncate">{member}</Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <DialogFooter className="mt-4">
+                  <Button variant="outline" onClick={() => setShowReportDialog(false)}>Cancelar</Button>
+                  <Button onClick={handleExportCustomPDF} disabled={isExportingPDF || reportConfig.selectedMembers.length === 0}>
+                    {isExportingPDF ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <FileText className="h-4 w-4 mr-2" />}
+                    Gerar PDF
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
             
             <Button onClick={handleSave} disabled={isSaving}>
               {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
@@ -482,7 +674,7 @@ const BattlesDashboard = () => {
         </div>
 
         {/* Management Buttons */}
-        <div className="flex gap-2 mb-4">
+        <div className="flex gap-2 mb-4 flex-wrap">
           <Dialog open={showExecutiveDialog} onOpenChange={setShowExecutiveDialog}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm">
@@ -490,7 +682,7 @@ const BattlesDashboard = () => {
                 Adicionar Executivo
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="bg-card">
               <DialogHeader>
                 <DialogTitle>Adicionar Executivo</DialogTitle>
               </DialogHeader>
@@ -512,15 +704,15 @@ const BattlesDashboard = () => {
                 Adicionar Associado
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="bg-card">
               <DialogHeader>
                 <DialogTitle>Adicionar Associado</DialogTitle>
               </DialogHeader>
               <Select value={selectedExecutive} onValueChange={setSelectedExecutive}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-background">
                   <SelectValue placeholder="Selecione o executivo" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-card border z-50">
                   {teamStructure.map(exec => (
                     <SelectItem key={exec.executive} value={exec.executive}>
                       {exec.executive}
@@ -557,14 +749,12 @@ const BattlesDashboard = () => {
             <tbody>
               {teamStructure.map((exec) => (
                 <React.Fragment key={exec.executive}>
-                  {/* Executive Header */}
                   <tr className="bg-gray-900 text-white">
                     <td colSpan={days.length + 2} className="px-3 py-2 font-bold text-center">
                       {exec.executive}
                     </td>
                   </tr>
                   
-                  {/* Members */}
                   {exec.members.map(member => (
                     <tr key={member} className="hover:bg-muted/30 border-b border-border/50">
                       <td className="sticky left-0 bg-card px-3 py-1 font-medium z-10">
@@ -619,43 +809,27 @@ const BattlesDashboard = () => {
                     </tr>
                   ))}
                   
-                  {/* Executive Subtotal */}
                   <tr className="bg-muted/30 border-b-2 border-border">
-                    <td className="sticky left-0 bg-muted/30 px-3 py-1 font-bold text-xs z-10">
-                      SUBTOTAL
-                    </td>
+                    <td className="sticky left-0 bg-muted/30 px-3 py-1 font-bold text-xs z-10">SUBTOTAL</td>
                     {days.map(day => {
                       const dateStr = format(day, 'yyyy-MM-dd');
                       const dayTotal = exec.members.reduce((sum, m) => sum + (battleData[m]?.[dateStr] || 0), 0);
                       return (
-                        <td key={dateStr} className="px-1 py-1 text-center font-bold text-xs">
-                          {dayTotal}
-                        </td>
+                        <td key={dateStr} className="px-1 py-1 text-center font-bold text-xs">{dayTotal}</td>
                       );
                     })}
-                    <td className="px-3 py-1 text-center font-bold bg-muted">
-                      {getExecutiveTotal(exec.members)}
-                    </td>
+                    <td className="px-3 py-1 text-center font-bold bg-muted">{getExecutiveTotal(exec.members)}</td>
                   </tr>
                 </React.Fragment>
               ))}
               
-              {/* Grand Total */}
               <tr className="bg-gray-900 text-white font-bold">
                 <td className="sticky left-0 bg-gray-900 px-3 py-2 z-10">TOTAL GERAL</td>
                 {days.map(day => {
                   const dateStr = format(day, 'yyyy-MM-dd');
                   let dayTotal = 0;
-                  teamStructure.forEach(exec => {
-                    exec.members.forEach(m => {
-                      dayTotal += battleData[m]?.[dateStr] || 0;
-                    });
-                  });
-                  return (
-                    <td key={dateStr} className="px-1 py-2 text-center text-xs">
-                      {dayTotal}
-                    </td>
-                  );
+                  teamStructure.forEach(exec => exec.members.forEach(m => { dayTotal += battleData[m]?.[dateStr] || 0; }));
+                  return <td key={dateStr} className="px-1 py-2 text-center text-xs">{dayTotal}</td>;
                 })}
                 <td className="px-3 py-2 text-center text-lg">{getGrandTotal()}</td>
               </tr>
@@ -683,18 +857,14 @@ const BattlesDashboard = () => {
                 <div className="bg-background rounded-lg p-3 border">
                   <div className="text-xs text-muted-foreground mb-1">💎 Alta (&gt;20)</div>
                   <div className="text-xl font-bold text-blue-500">
-                    {impactAnalysis.avgDiamondsHighBattles 
-                      ? (impactAnalysis.avgDiamondsHighBattles / 1000000).toFixed(2) + 'M' 
-                      : '-'}
+                    {impactAnalysis.avgDiamondsHighBattles ? (impactAnalysis.avgDiamondsHighBattles / 1000000).toFixed(2) + 'M' : '-'}
                   </div>
                 </div>
                 
                 <div className="bg-background rounded-lg p-3 border">
                   <div className="text-xs text-muted-foreground mb-1">💎 Baixa (&lt;10)</div>
                   <div className="text-xl font-bold text-gray-500">
-                    {impactAnalysis.avgDiamondsLowBattles 
-                      ? (impactAnalysis.avgDiamondsLowBattles / 1000000).toFixed(2) + 'M' 
-                      : '-'}
+                    {impactAnalysis.avgDiamondsLowBattles ? (impactAnalysis.avgDiamondsLowBattles / 1000000).toFixed(2) + 'M' : '-'}
                   </div>
                 </div>
               </div>
@@ -705,8 +875,7 @@ const BattlesDashboard = () => {
                     Dias com alta batalha (&gt;20) = {' '}
                     <span className={impactAnalysis.differencePercent > 0 ? 'text-emerald-500 font-bold' : 'text-red-500 font-bold'}>
                       {impactAnalysis.differencePercent > 0 ? '+' : ''}{impactAnalysis.differencePercent.toFixed(1)}%
-                    </span>{' '}
-                    💎
+                    </span>{' '} 💎
                   </div>
                 </div>
               )}
@@ -753,6 +922,154 @@ const BattlesDashboard = () => {
           </Card>
         )}
       </main>
+
+      {/* Hidden Custom Report for PDF Export */}
+      <div className="fixed left-[-9999px] top-0">
+        <div ref={customReportRef} className="p-8 w-[800px]" style={{ backgroundColor: '#fafafa' }}>
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6 pb-4 border-b-2 border-gray-300">
+            <div className="flex items-center gap-4">
+              <img src={curliLogo} alt="Curli" className="h-12 w-auto" />
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Relatório de Batalhas</h1>
+                <p className="text-sm text-gray-600">
+                  {format(parseISO(reportConfig.startDate), "dd/MM/yyyy")} - {format(parseISO(reportConfig.endDate), "dd/MM/yyyy")}
+                </p>
+              </div>
+            </div>
+            <div className="text-right text-xs text-gray-500">
+              Gerado em {format(new Date(), "dd/MM/yyyy 'às' HH:mm")}
+            </div>
+          </div>
+
+          {/* Total Battles */}
+          {reportConfig.metrics.totalBattles && (
+            <div className="mb-6 bg-white rounded-lg p-4 border border-gray-200">
+              <h2 className="text-lg font-bold text-gray-900 mb-3">Resumo Geral</h2>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-red-600">{reportData.grandTotal}</div>
+                  <div className="text-xs text-gray-500">Total Batalhas</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-blue-600">{reportData.avgPerMember.toFixed(1)}</div>
+                  <div className="text-xs text-gray-500">Média/Membro</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-gray-900">{reportConfig.selectedMembers.length}</div>
+                  <div className="text-xs text-gray-500">Associados</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Member Totals */}
+          {reportConfig.metrics.memberTotals && (
+            <div className="mb-6 bg-white rounded-lg p-4 border border-gray-200">
+              <h2 className="text-lg font-bold text-gray-900 mb-3">Totais por Associado</h2>
+              <div className="grid grid-cols-4 gap-2">
+                {reportData.memberData.map(member => (
+                  <div key={member.name} className="bg-gray-50 rounded p-2 text-center">
+                    <div className="text-xs text-gray-600 truncate">{member.name}</div>
+                    <div className="text-lg font-bold text-gray-900">{member.total}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Daily Breakdown */}
+          {reportConfig.metrics.dailyBreakdown && reportData.dailyTotals.length <= 31 && (
+            <div className="mb-6 bg-white rounded-lg p-4 border border-gray-200">
+              <h2 className="text-lg font-bold text-gray-900 mb-3">Detalhamento Diário</h2>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="bg-gray-100">
+                      <th className="px-2 py-1 text-left">Data</th>
+                      <th className="px-2 py-1 text-center">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {reportData.dailyTotals.map(day => (
+                      <tr key={day.date} className="border-b">
+                        <td className="px-2 py-1">{day.dateLabel}</td>
+                        <td className={cn("px-2 py-1 text-center font-bold", day.total < 10 ? "text-red-600" : day.total >= 20 ? "text-emerald-600" : "text-gray-900")}>
+                          {day.total}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Top Performers */}
+          {reportConfig.metrics.topPerformers && (
+            <div className="mb-6 bg-white rounded-lg p-4 border border-gray-200">
+              <h2 className="text-lg font-bold text-gray-900 mb-3">🏆 Top Performers</h2>
+              <div className="space-y-2">
+                {reportData.topPerformers.map((member, idx) => (
+                  <div key={member.name} className="flex items-center justify-between bg-emerald-50 rounded p-2">
+                    <span className="font-medium">#{idx + 1} {member.name}</span>
+                    <span className="font-bold text-emerald-600">{member.total} batalhas</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Low Performers */}
+          {reportConfig.metrics.lowPerformers && reportData.lowPerformers.length > 0 && (
+            <div className="mb-6 bg-white rounded-lg p-4 border border-gray-200">
+              <h2 className="text-lg font-bold text-gray-900 mb-3">⚠️ Baixo Desempenho (&lt;10)</h2>
+              <div className="grid grid-cols-3 gap-2">
+                {reportData.lowPerformers.map(member => (
+                  <div key={member.name} className="bg-yellow-50 rounded p-2 text-center border border-yellow-200">
+                    <div className="text-xs text-gray-600 truncate">{member.name}</div>
+                    <div className="text-lg font-bold text-yellow-600">{member.total}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Impact Analysis */}
+          {reportConfig.metrics.impactAnalysis && impactAnalysis.hasData && (
+            <div className="bg-white rounded-lg p-4 border border-gray-200">
+              <h2 className="text-lg font-bold text-gray-900 mb-3">📊 Análise de Impacto</h2>
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div className="text-center bg-red-50 rounded p-3">
+                  <div className="text-2xl font-bold text-red-600">{impactAnalysis.daysWithLowBattles}</div>
+                  <div className="text-xs text-gray-600">Dias com Baixa</div>
+                </div>
+                <div className="text-center bg-blue-50 rounded p-3">
+                  <div className="text-xl font-bold text-blue-600">
+                    {impactAnalysis.avgDiamondsHighBattles ? (impactAnalysis.avgDiamondsHighBattles / 1000000).toFixed(2) + 'M' : '-'}
+                  </div>
+                  <div className="text-xs text-gray-600">💎 Alta Batalha</div>
+                </div>
+                <div className="text-center bg-gray-50 rounded p-3">
+                  <div className="text-xl font-bold text-gray-600">
+                    {impactAnalysis.avgDiamondsLowBattles ? (impactAnalysis.avgDiamondsLowBattles / 1000000).toFixed(2) + 'M' : '-'}
+                  </div>
+                  <div className="text-xs text-gray-600">💎 Baixa Batalha</div>
+                </div>
+              </div>
+              {impactAnalysis.differencePercent !== 0 && (
+                <div className="bg-orange-50 rounded p-3 text-center border border-orange-200">
+                  <span className="text-sm">Alta batalha = </span>
+                  <span className={cn("text-lg font-bold", impactAnalysis.differencePercent > 0 ? "text-emerald-600" : "text-red-600")}>
+                    {impactAnalysis.differencePercent > 0 ? '+' : ''}{impactAnalysis.differencePercent.toFixed(1)}%
+                  </span>
+                  <span className="text-sm"> 💎</span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
