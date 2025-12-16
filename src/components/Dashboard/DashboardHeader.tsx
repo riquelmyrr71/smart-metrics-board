@@ -22,6 +22,7 @@ import {
   BarChart3,
   StickyNote,
   CalendarDays,
+  Swords,
 } from 'lucide-react';
 import { DashboardSettings } from '@/types/dashboard';
 import {
@@ -142,6 +143,19 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               </Link>
             </TooltipTrigger>
             <TooltipContent>Agendamento de Lives</TooltipContent>
+          </Tooltip>
+
+          {/* Battles Dashboard Link */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link to="/batalhas">
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Swords className="w-4 h-4" />
+                  <span className="hidden sm:inline">Batalhas</span>
+                </Button>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent>Painel de Batalhas</TooltipContent>
           </Tooltip>
 
           {/* Toggle increment controls */}
