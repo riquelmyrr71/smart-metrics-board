@@ -98,7 +98,9 @@ const SchedulingDashboard = () => {
   const [showAssociateDialog, setShowAssociateDialog] = useState(false);
   const [reportType, setReportType] = useState<'daily' | 'weekly' | 'monthly'>('daily');
   const [diamondEntries, setDiamondEntries] = useState<DiamondEntry[]>([]);
+  const [isExportingImpactPDF, setIsExportingImpactPDF] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
+  const impactReportRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -587,6 +589,50 @@ const SchedulingDashboard = () => {
     }
   };
 
+  // Export Impact Analysis PDF
+  const handleExportImpactPDF = async () => {
+    if (!impactReportRef.current) return;
+    setIsExportingImpactPDF(true);
+
+    try {
+      const canvas = await html2canvas(impactReportRef.current, {
+        scale: 2,
+        backgroundColor: '#fafafa',
+        useCORS: true,
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 210;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      if (imgHeight > 297) {
+        let heightLeft = imgHeight;
+        let position = 0;
+
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= 297;
+
+        while (heightLeft > 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+          heightLeft -= 297;
+        }
+      } else {
+        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      }
+
+      pdf.save(`relatorio-impacto-agendamentos-${format(currentMonth, 'MM-yyyy')}.pdf`);
+      toast({ title: 'Relatório de impacto exportado!' });
+    } catch (error) {
+      console.error('Error exporting Impact PDF:', error);
+      toast({ title: 'Erro ao exportar PDF', variant: 'destructive' });
+    } finally {
+      setIsExportingImpactPDF(false);
+    }
+  };
+
   // Get date range based on report type
   const getReportDateRange = () => {
     if (reportType === 'daily') {
@@ -900,11 +946,21 @@ const SchedulingDashboard = () => {
       {/* Impact Analysis Section */}
       {impactAnalysis.hasData && (
         <Card className="mb-6 border-orange-500/30 bg-orange-500/5">
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-sm flex items-center gap-2">
               <Activity className="h-4 w-4 text-orange-500" />
               Análise de Impacto: Agendamentos × Diamantes
             </CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportImpactPDF}
+              disabled={isExportingImpactPDF}
+              className="text-orange-500 border-orange-500/50 hover:bg-orange-500/10"
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              {isExportingImpactPDF ? 'Exportando...' : 'Exportar PDF'}
+            </Button>
           </CardHeader>
           <CardContent>
             {/* Summary Cards */}
@@ -1312,6 +1368,157 @@ const SchedulingDashboard = () => {
               );
             })}
           </div>
+        </div>
+
+        {/* Footer */}
+        <div className="bg-gray-100 px-6 py-3 text-center text-xs text-gray-500 border-t border-gray-200">
+          Gerado em {format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+        </div>
+      </div>
+
+      {/* Hidden Impact Analysis PDF Report */}
+      <div
+        ref={impactReportRef}
+        className={cn("absolute left-[-9999px] top-0 w-[800px] bg-[#fafafa]", isExportingImpactPDF && "left-0")}
+        style={{ fontFamily: 'Arial, sans-serif' }}
+      >
+        {/* Header */}
+        <div className="bg-gradient-to-r from-orange-600 to-orange-500 text-white p-6">
+          <div className="flex items-center justify-between">
+            <img src={curliLogo} alt="Curli Logo" className="h-14 object-contain brightness-0 invert" />
+            <div className="text-right">
+              <h1 className="text-xl font-bold tracking-wide">ANÁLISE DE IMPACTO</h1>
+              <p className="text-orange-100 text-sm mt-1">
+                Agendamentos × Diamantes - {format(currentMonth, "MMMM yyyy", { locale: ptBR })}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-6">
+          {/* Summary Section */}
+          <div className="bg-white rounded-lg shadow-sm p-4 mb-6 border border-gray-200">
+            <div className="text-xs text-gray-500 uppercase tracking-wide mb-3">Resumo do Período</div>
+            <div className="grid grid-cols-4 gap-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-red-600">{impactAnalysis.negativeDays}</div>
+                <div className="text-xs text-gray-500">Dias Impacto Negativo</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-emerald-600">{impactAnalysis.positiveDays}</div>
+                <div className="text-xs text-gray-500">Dias Impacto Positivo</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-600">
+                  {impactAnalysis.avgDiamondsHighScheduling > 0 
+                    ? (impactAnalysis.avgDiamondsHighScheduling / 1000000).toFixed(2) + 'M'
+                    : '-'}
+                </div>
+                <div className="text-xs text-gray-500">Média Alta Taxa (≥70%)</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-yellow-600">
+                  {impactAnalysis.avgDiamondsLowScheduling > 0 
+                    ? (impactAnalysis.avgDiamondsLowScheduling / 1000000).toFixed(2) + 'M'
+                    : '-'}
+                </div>
+                <div className="text-xs text-gray-500">Média Baixa Taxa (&lt;50%)</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Difference Highlight */}
+          {impactAnalysis.differencePercent !== 0 && (
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
+              <div className="text-center">
+                <div className="text-sm text-orange-800 font-medium mb-1">Diferença de Performance</div>
+                <div className="text-lg font-bold text-gray-900">
+                  Dias com alta taxa de agendamento (≥70%) geram{' '}
+                  <span className={impactAnalysis.differencePercent > 0 ? 'text-emerald-600' : 'text-red-600'}>
+                    {impactAnalysis.differencePercent > 0 ? '+' : ''}{impactAnalysis.differencePercent.toFixed(1)}%
+                  </span>{' '}
+                  mais diamantes
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Daily Correlation Table */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
+            <div className="bg-gray-900 text-white px-4 py-2">
+              <span className="font-medium text-sm">Correlação Diária: Taxa de Agendamento vs Diamantes</span>
+            </div>
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Data</th>
+                  <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">Taxa Agendamento</th>
+                  <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">Diamantes</th>
+                  <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">Variação</th>
+                  <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">Impacto</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {impactAnalysis.correlationData.map((day) => (
+                  <tr key={day.date} className={day.impact === 'negative' ? 'bg-red-50' : day.impact === 'positive' ? 'bg-emerald-50' : ''}>
+                    <td className="px-3 py-2 text-gray-900">{day.dateLabel}</td>
+                    <td className="px-3 py-2 text-center">
+                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                        day.schedulingRate >= 70 ? 'bg-emerald-100 text-emerald-700' :
+                        day.schedulingRate < 50 ? 'bg-red-100 text-red-700' :
+                        'bg-gray-100 text-gray-700'
+                      }`}>
+                        {day.schedulingRate.toFixed(0)}%
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 text-center text-gray-900">{(day.diamonds / 1000000).toFixed(2)}M</td>
+                    <td className="px-3 py-2 text-center">
+                      <span className={`font-medium ${day.diamondChange > 0 ? 'text-emerald-600' : day.diamondChange < 0 ? 'text-red-600' : 'text-gray-500'}`}>
+                        {day.diamondChange > 0 ? '+' : ''}{(day.diamondChange / 1000000).toFixed(2)}M
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 text-center">
+                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                        day.impact === 'negative' ? 'bg-red-100 text-red-700' :
+                        day.impact === 'positive' ? 'bg-emerald-100 text-emerald-700' :
+                        'bg-gray-100 text-gray-500'
+                      }`}>
+                        {day.impact === 'negative' ? 'NEGATIVO' : day.impact === 'positive' ? 'POSITIVO' : 'NEUTRO'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Problematic Days Section */}
+          {impactAnalysis.problematicDays.length > 0 && (
+            <div className="bg-white rounded-lg shadow-sm border border-red-200 overflow-hidden">
+              <div className="bg-red-600 text-white px-4 py-2">
+                <span className="font-medium text-sm">⚠ Dias Mais Problemáticos</span>
+              </div>
+              <div className="p-4">
+                <p className="text-xs text-gray-500 mb-3">Dias com baixa taxa de agendamento que resultaram em queda de diamantes</p>
+                <div className="space-y-2">
+                  {impactAnalysis.problematicDays.map((day) => (
+                    <div key={day.date} className="flex items-center justify-between bg-red-50 rounded-lg p-3 border border-red-100">
+                      <div className="flex items-center gap-3">
+                        <span className="font-medium text-gray-900">{day.dateLabel}</span>
+                        <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs">
+                          {day.schedulingRate.toFixed(0)}% agendamento
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-red-600 font-bold">{(day.diamondChange / 1000000).toFixed(2)}M</span>
+                        <span className="text-xs text-gray-500">({day.diamondChangePercent.toFixed(1)}%)</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
