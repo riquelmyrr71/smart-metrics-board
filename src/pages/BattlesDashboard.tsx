@@ -411,6 +411,11 @@ const BattlesDashboard = () => {
     ));
   };
 
+  // Remove executive
+  const handleRemoveExecutive = (executive: string) => {
+    setTeamStructure(prev => prev.filter(exec => exec.executive !== executive));
+  };
+
   // Cell editing
   const handleCellClick = (member: string, date: string) => {
     setEditingCell({ member, date });
@@ -895,8 +900,20 @@ const BattlesDashboard = () => {
                     return (
                       <React.Fragment key={exec.executive}>
                         {/* Executive Header */}
-                        <tr className="bg-gray-900 text-white">
-                          <td className="px-3 py-2 font-bold">{exec.executive.split('(')[0].trim()}</td>
+                        <tr className="bg-gray-900 text-white group">
+                          <td className="px-3 py-2 font-bold">
+                            <div className="flex items-center justify-between">
+                              <span>{exec.executive.split('(')[0].trim()}</span>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 hover:bg-red-900/30"
+                                onClick={() => handleRemoveExecutive(exec.executive)}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </td>
                           <td className="text-center font-bold">{execBattleTotal}</td>
                           {CATEGORY_CONFIG.map(cat => (
                             <td key={cat.key} className="text-center font-bold">
@@ -922,8 +939,20 @@ const BattlesDashboard = () => {
                           const isValid = memberBattleTotal === memberCategorySum;
                           
                           return (
-                            <tr key={member} className="border-b border-border/50 hover:bg-muted/30">
-                              <td className="px-3 py-2 text-sm">{member}</td>
+                            <tr key={member} className="border-b border-border/50 hover:bg-muted/30 group">
+                              <td className="px-3 py-2 text-sm">
+                                <div className="flex items-center justify-between">
+                                  <span>{member}</span>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 opacity-0 group-hover:opacity-100 text-destructive"
+                                    onClick={() => handleRemoveAssociate(exec.executive, member)}
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </td>
                               <td className="text-center font-bold">{memberBattleTotal}</td>
                               {CATEGORY_CONFIG.map(cat => (
                                 <td key={cat.key} className="text-center px-1">
