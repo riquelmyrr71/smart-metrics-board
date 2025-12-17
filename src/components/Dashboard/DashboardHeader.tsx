@@ -23,6 +23,7 @@ import {
   StickyNote,
   CalendarDays,
   Swords,
+  UserSearch,
 } from 'lucide-react';
 import { DashboardSettings } from '@/types/dashboard';
 import {
@@ -156,6 +157,19 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               </Link>
             </TooltipTrigger>
             <TooltipContent>Painel de Batalhas</TooltipContent>
+          </Tooltip>
+
+          {/* Creators Analysis Link */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link to="/criadores-analise">
+                <Button variant="outline" size="sm" className="gap-2">
+                  <UserSearch className="w-4 h-4" />
+                  <span className="hidden sm:inline">Análise</span>
+                </Button>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent>Criadores em Análise</TooltipContent>
           </Tooltip>
 
           {/* Toggle increment controls */}
