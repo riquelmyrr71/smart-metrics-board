@@ -576,8 +576,7 @@ const BattlesDashboard = () => {
         members: exec.members.filter(m => selectedMembers.includes(m)).map(member => {
           const dailyData = reportDays.map(day => ({
             date: format(day, 'yyyy-MM-dd'),
-            dateLabel: format(day, 'd'),
-            dayOfWeek: format(day, 'EEE', { locale: ptBR }).replace('.', ''),
+            dateLabel: format(day, 'dd/MM'),
             count: battleData[member]?.[format(day, 'yyyy-MM-dd')] || 0,
           }));
           const total = getMemberTotalForRange(member, startDate, endDate);
@@ -589,8 +588,7 @@ const BattlesDashboard = () => {
     const memberData = selectedMembers.map(member => {
       const dailyData = reportDays.map(day => ({
         date: format(day, 'yyyy-MM-dd'),
-        dateLabel: format(day, 'd'),
-        dayOfWeek: format(day, 'EEE', { locale: ptBR }).replace('.', ''),
+        dateLabel: format(day, 'dd/MM'),
         count: battleData[member]?.[format(day, 'yyyy-MM-dd')] || 0,
       }));
       const total = getMemberTotalForRange(member, startDate, endDate);
@@ -610,8 +608,7 @@ const BattlesDashboard = () => {
       const total = selectedMembers.reduce((sum, member) => sum + (battleData[member]?.[dateStr] || 0), 0);
       return { 
         date: dateStr, 
-        dateLabel: format(day, 'd'), 
-        dayOfWeek: format(day, 'EEE', { locale: ptBR }).replace('.', ''),
+        dateLabel: format(day, 'dd/MM'),
         total 
       };
     });
@@ -1264,41 +1261,38 @@ const BattlesDashboard = () => {
 
       {/* Hidden Custom Report for PDF Export */}
       <div className="fixed left-[-9999px] top-0">
-        <div ref={customReportRef} className="p-8" style={{ backgroundColor: '#fff', width: `${Math.max(900, 220 + reportData.dailyTotals.length * 48)}px` }}>
+        <div ref={customReportRef} className="p-4" style={{ backgroundColor: '#fff', width: `${Math.max(800, 140 + reportData.dailyTotals.length * 40)}px` }}>
           {/* Header */}
-          <div className="flex items-center justify-between mb-6 pb-4" style={{ borderBottom: '3px solid #dc2626' }}>
-            <div className="flex items-center gap-4">
-              <img src={curliLogo} alt="Curli" className="h-12 w-auto" />
+          <div className="flex items-center justify-between mb-4 pb-2" style={{ borderBottom: '2px solid #dc2626' }}>
+            <div className="flex items-center gap-3">
+              <img src={curliLogo} alt="Curli" className="h-10 w-auto" />
               <div>
-                <h1 className="text-2xl font-bold" style={{ color: '#1a1a1a' }}>Relatório de Batalhas</h1>
-                <p className="text-base" style={{ color: '#555' }}>
+                <h1 className="text-lg font-bold" style={{ color: '#1a1a1a' }}>Relatório de Batalhas</h1>
+                <p className="text-xs" style={{ color: '#555' }}>
                   {format(parseISO(reportConfig.startDate), "dd/MM/yyyy")} - {format(parseISO(reportConfig.endDate), "dd/MM/yyyy")}
                 </p>
               </div>
             </div>
-            <div className="text-right text-sm" style={{ color: '#666' }}>
+            <div className="text-right text-xs" style={{ color: '#666' }}>
               Gerado em {format(new Date(), "dd/MM/yyyy 'às' HH:mm")}
             </div>
           </div>
 
           {/* Main Spreadsheet Table - Grouped by Executive */}
           {reportConfig.metrics.dailyBreakdown && (
-            <div className="mb-6 rounded-lg overflow-hidden" style={{ border: '2px solid #333' }}>
+            <div className="mb-4 overflow-hidden" style={{ border: '1px solid #000' }}>
               <table className="w-full" style={{ borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr style={{ backgroundColor: '#1a1a1a' }}>
-                    <th className="px-4 py-3 text-left font-bold text-sm" style={{ color: '#fff', minWidth: '160px', borderRight: '2px solid #333' }}>
-                      ASSOCIADO
+                  <tr style={{ backgroundColor: '#fff' }}>
+                    <th className="px-2 py-1 text-left font-bold text-xs" style={{ color: '#000', minWidth: '120px', borderRight: '1px solid #000', borderBottom: '1px solid #000' }}>
+                      TIME
                     </th>
                     {reportData.dailyTotals.map(day => (
-                      <th key={day.date} className="py-2 text-center" style={{ color: '#fff', minWidth: '44px', borderRight: '1px solid #444' }}>
-                        <div className="flex flex-col items-center">
-                          <span className="text-lg font-bold">{day.dateLabel}</span>
-                          <span className="text-[10px] uppercase opacity-70">{day.dayOfWeek}</span>
-                        </div>
+                      <th key={day.date} className="px-1 py-1 text-center font-bold text-xs" style={{ color: '#dc2626', minWidth: '36px', borderRight: '1px solid #ccc', borderBottom: '1px solid #000' }}>
+                        {day.dateLabel}
                       </th>
                     ))}
-                    <th className="px-3 py-3 text-center font-bold text-sm" style={{ color: '#fff', backgroundColor: '#dc2626', minWidth: '60px' }}>
+                    <th className="px-2 py-1 text-center font-bold text-xs" style={{ color: '#fff', backgroundColor: '#dc2626', minWidth: '45px', borderBottom: '1px solid #000' }}>
                       TOTAL
                     </th>
                   </tr>
@@ -1306,105 +1300,59 @@ const BattlesDashboard = () => {
                 <tbody>
                   {reportData.groupedByExecutive.map((exec) => (
                     <React.Fragment key={exec.executive}>
-                      {/* Executive Header Row */}
-                      <tr style={{ backgroundColor: '#333' }}>
+                      {/* TIME label row */}
+                      <tr style={{ backgroundColor: '#fff' }}>
+                        <td className="px-2 py-0.5 font-bold text-[10px]" style={{ color: '#000', borderRight: '1px solid #000', borderBottom: '1px solid #ccc' }}>
+                          TIME
+                        </td>
                         <td 
-                          colSpan={reportData.dailyTotals.length + 2} 
-                          className="px-4 py-3 font-bold text-base text-center"
-                          style={{ color: '#fff', borderBottom: '2px solid #555' }}
+                          colSpan={reportData.dailyTotals.length + 1}
+                          className="px-2 py-0.5 font-bold text-[10px] text-center"
+                          style={{ color: '#fff', backgroundColor: '#1a1a1a', borderBottom: '1px solid #000' }}
                         >
                           {exec.executive}
                         </td>
                       </tr>
                       {/* Member Rows */}
-                      {exec.members.map((member, memberIdx) => (
-                        <tr key={member.name} style={{ backgroundColor: memberIdx % 2 === 0 ? '#fff' : '#f8f8f8' }}>
-                          <td className="px-4 py-2 font-medium text-sm" style={{ color: '#1a1a1a', borderRight: '2px solid #e5e5e5', borderBottom: '1px solid #e5e5e5' }}>
+                      {exec.members.map((member) => (
+                        <tr key={member.name} style={{ backgroundColor: '#fff' }}>
+                          <td className="px-2 py-0.5 font-medium text-[10px]" style={{ color: '#000', borderRight: '1px solid #000', borderBottom: '1px solid #ccc' }}>
                             {member.name}
                           </td>
                           {member.dailyData.map(day => {
-                            let bgColor = memberIdx % 2 === 0 ? '#fff' : '#f8f8f8';
-                            let textColor = '#1a1a1a';
+                            let bgColor = '#fff';
+                            let textColor = '#000';
                             
                             if (day.count === 0) {
-                              bgColor = '#ef4444';
+                              bgColor = '#dc2626';
                               textColor = '#fff';
                             } else if (day.count >= 3) {
-                              bgColor = '#22c55e';
+                              bgColor = '#16a34a';
                               textColor = '#fff';
                             }
                             
                             return (
                               <td 
                                 key={day.date} 
-                                className="py-2 text-center font-bold text-base"
+                                className="px-1 py-0.5 text-center font-bold text-xs"
                                 style={{ 
                                   backgroundColor: bgColor, 
                                   color: textColor,
-                                  borderRight: '1px solid #e5e5e5',
-                                  borderBottom: '1px solid #e5e5e5'
+                                  borderRight: '1px solid #ccc',
+                                  borderBottom: '1px solid #ccc'
                                 }}
                               >
                                 {day.count}
                               </td>
                             );
                           })}
-                          <td className="px-3 py-2 text-center font-bold text-base" style={{ backgroundColor: '#fecaca', color: '#991b1b', borderBottom: '1px solid #e5e5e5' }}>
+                          <td className="px-1 py-0.5 text-center font-bold text-xs" style={{ backgroundColor: '#fecaca', color: '#991b1b', borderBottom: '1px solid #ccc' }}>
                             {member.total}
                           </td>
                         </tr>
                       ))}
-                      {/* Executive Subtotal */}
-                      <tr style={{ backgroundColor: '#e5e5e5' }}>
-                        <td className="px-4 py-2 font-bold text-sm" style={{ color: '#333', borderRight: '2px solid #ccc', borderBottom: '2px solid #999' }}>
-                          SUBTOTAL
-                        </td>
-                        {reportData.dailyTotals.map(day => {
-                          const dayTotal = exec.members.reduce((sum, m) => {
-                            const dayData = m.dailyData.find(d => d.date === day.date);
-                            return sum + (dayData?.count || 0);
-                          }, 0);
-                          return (
-                            <td key={day.date} className="py-2 text-center font-bold text-sm" style={{ color: '#333', borderRight: '1px solid #ccc', borderBottom: '2px solid #999' }}>
-                              {dayTotal}
-                            </td>
-                          );
-                        })}
-                        <td className="px-3 py-2 text-center font-bold text-base" style={{ backgroundColor: '#fca5a5', color: '#991b1b', borderBottom: '2px solid #999' }}>
-                          {exec.members.reduce((sum, m) => sum + m.total, 0)}
-                        </td>
-                      </tr>
                     </React.Fragment>
                   ))}
-                  {/* Grand Total Row */}
-                  <tr style={{ backgroundColor: '#1a1a1a' }}>
-                    <td className="px-4 py-3 font-bold text-sm" style={{ color: '#fff', borderRight: '2px solid #333' }}>
-                      TOTAL GERAL
-                    </td>
-                    {reportData.dailyTotals.map(day => {
-                      let bgColor = '#1a1a1a';
-                      let textColor = '#fff';
-                      
-                      if (day.total === 0) {
-                        bgColor = '#dc2626';
-                      } else if (day.total >= reportConfig.selectedMembers.length * 3) {
-                        bgColor = '#16a34a';
-                      }
-                      
-                      return (
-                        <td 
-                          key={day.date} 
-                          className="py-3 text-center font-bold text-base"
-                          style={{ backgroundColor: bgColor, color: textColor, borderRight: '1px solid #444' }}
-                        >
-                          {day.total}
-                        </td>
-                      );
-                    })}
-                    <td className="px-3 py-3 text-center font-black text-xl" style={{ backgroundColor: '#dc2626', color: '#fff' }}>
-                      {reportData.grandTotal}
-                    </td>
-                  </tr>
                 </tbody>
               </table>
             </div>
@@ -1412,20 +1360,20 @@ const BattlesDashboard = () => {
 
           {/* Summary Metrics */}
           {reportConfig.metrics.totalBattles && (
-            <div className="mb-6 rounded-lg p-5" style={{ backgroundColor: '#fff', border: '2px solid #e5e5e5' }}>
-              <h2 className="text-base font-bold mb-4" style={{ color: '#333', borderBottom: '2px solid #eee', paddingBottom: '10px' }}>Resumo de Métricas</h2>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="text-center p-4 rounded-lg" style={{ backgroundColor: '#fef2f2', border: '2px solid #fca5a5' }}>
-                  <div className="text-3xl font-black" style={{ color: '#dc2626' }}>{reportData.grandTotal}</div>
-                  <div className="text-sm font-semibold mt-1" style={{ color: '#666' }}>Total Batalhas</div>
+            <div className="mb-4 p-3" style={{ backgroundColor: '#f5f5f5', border: '1px solid #ddd' }}>
+              <h2 className="text-xs font-bold mb-2" style={{ color: '#333' }}>Resumo</h2>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="text-center p-2" style={{ backgroundColor: '#fff', border: '1px solid #ddd' }}>
+                  <div className="text-lg font-black" style={{ color: '#dc2626' }}>{reportData.grandTotal}</div>
+                  <div className="text-[10px]" style={{ color: '#666' }}>Total</div>
                 </div>
-                <div className="text-center p-4 rounded-lg" style={{ backgroundColor: '#f5f5f5', border: '2px solid #e5e5e5' }}>
-                  <div className="text-3xl font-black" style={{ color: '#333' }}>{reportData.avgBattlesPerDay.toFixed(1)}</div>
-                  <div className="text-sm font-semibold mt-1" style={{ color: '#666' }}>Média/Dia</div>
+                <div className="text-center p-2" style={{ backgroundColor: '#fff', border: '1px solid #ddd' }}>
+                  <div className="text-lg font-black" style={{ color: '#333' }}>{reportData.avgBattlesPerDay.toFixed(1)}</div>
+                  <div className="text-[10px]" style={{ color: '#666' }}>Média/Dia</div>
                 </div>
-                <div className="text-center p-4 rounded-lg" style={{ backgroundColor: '#f5f5f5', border: '2px solid #e5e5e5' }}>
-                  <div className="text-3xl font-black" style={{ color: '#333' }}>{reportData.avgPerMember.toFixed(1)}</div>
-                  <div className="text-sm font-semibold mt-1" style={{ color: '#666' }}>Média/Associado</div>
+                <div className="text-center p-2" style={{ backgroundColor: '#fff', border: '1px solid #ddd' }}>
+                  <div className="text-lg font-black" style={{ color: '#333' }}>{reportData.avgPerMember.toFixed(1)}</div>
+                  <div className="text-[10px]" style={{ color: '#666' }}>Média/Associado</div>
                 </div>
               </div>
             </div>
