@@ -343,6 +343,10 @@ const OverviewDashboard: React.FC = () => {
     return num.toString();
   };
 
+  // Filter data to only show up to today
+  const todayStr = format(today, 'yyyy-MM-dd');
+  const filteredDailyData = monthlyData?.dailyData.filter(d => d.date <= todayStr) || [];
+
   const metrics: MetricSummary[] = monthlyData ? [
     { 
       label: 'Diamantes', 
@@ -476,7 +480,7 @@ const OverviewDashboard: React.FC = () => {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={200}>
-                <AreaChart data={monthlyData?.dailyData || []}>
+                <AreaChart data={filteredDailyData}>
                   <defs>
                     <linearGradient id="diamondsGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#9333ea" stopOpacity={0.3}/>
@@ -512,7 +516,7 @@ const OverviewDashboard: React.FC = () => {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={200}>
-                <AreaChart data={monthlyData?.dailyData || []}>
+                <AreaChart data={filteredDailyData}>
                   <defs>
                     <linearGradient id="creatorsGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#2563eb" stopOpacity={0.3}/>
@@ -548,7 +552,7 @@ const OverviewDashboard: React.FC = () => {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={200}>
-                <LineChart data={monthlyData?.dailyData || []}>
+                <LineChart data={filteredDailyData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                   <XAxis dataKey="day" tick={{ fontSize: 10 }} stroke="#6b7280" />
                   <YAxis tick={{ fontSize: 10 }} stroke="#6b7280" domain={[0, 100]} />
@@ -578,7 +582,7 @@ const OverviewDashboard: React.FC = () => {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={200}>
-                <ComposedChart data={monthlyData?.dailyData || []}>
+                <ComposedChart data={filteredDailyData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                   <XAxis dataKey="day" tick={{ fontSize: 10 }} stroke="#6b7280" />
                   <YAxis tick={{ fontSize: 10 }} stroke="#6b7280" />
