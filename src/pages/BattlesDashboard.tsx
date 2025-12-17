@@ -954,22 +954,28 @@ const BattlesDashboard = () => {
                                 </div>
                               </td>
                               <td className="text-center font-bold">{memberBattleTotal}</td>
-                              {CATEGORY_CONFIG.map(cat => (
-                                <td key={cat.key} className="text-center px-1">
-                                  <Input
-                                    type="number"
-                                    min={0}
-                                    value={categoryData[member]?.[cat.key] || 0}
-                                    onChange={(e) => updateMemberCategory(member, cat.key, parseInt(e.target.value) || 0)}
-                                    className={cn(
-                                      "h-8 w-16 mx-auto text-center text-sm",
-                                      cat.key === 'curliChallenge' && "border-red-500 focus:ring-red-500",
-                                      cat.key === 'rise' && "border-gray-400",
-                                      cat.key === 'oficial' && "border-blue-500 focus:ring-blue-500"
-                                    )}
-                                  />
-                                </td>
-                              ))}
+                              {CATEGORY_CONFIG.map(cat => {
+                                const catValue = categoryData[member]?.[cat.key];
+                                return (
+                                  <td key={cat.key} className="text-center px-1">
+                                    <Input
+                                      type="number"
+                                      min={0}
+                                      value={catValue !== undefined ? catValue : 0}
+                                      onChange={(e) => {
+                                        const val = e.target.value;
+                                        updateMemberCategory(member, cat.key, val === '' ? 0 : Math.max(0, parseInt(val) || 0));
+                                      }}
+                                      className={cn(
+                                        "h-8 w-16 mx-auto text-center text-sm",
+                                        cat.key === 'curliChallenge' && "border-red-500 focus:ring-red-500",
+                                        cat.key === 'rise' && "border-gray-400",
+                                        cat.key === 'oficial' && "border-blue-500 focus:ring-blue-500"
+                                      )}
+                                    />
+                                  </td>
+                                );
+                              })}
                               <td className="text-center font-medium">{memberCategorySum}</td>
                               <td className="text-center">
                                 {isValid ? (
