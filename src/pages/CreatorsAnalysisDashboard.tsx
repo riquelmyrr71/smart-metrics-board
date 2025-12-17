@@ -10,9 +10,7 @@ import {
   Trash2,
   Loader2,
   UserSearch,
-  Clock,
-  X,
-  UserPlus
+  Clock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -27,11 +25,7 @@ import jsPDF from 'jspdf';
 import curliLogo from '@/assets/logo-curli.png';
 
 interface CreatorsData {
-  [memberName: string]: string[];
-}
-
-interface CreatorsTodayData {
-  [memberName: string]: string[];
+  [memberName: string]: number;
 }
 
 interface TeamStructure {
@@ -52,7 +46,6 @@ const DEFAULT_TEAM_STRUCTURE: TeamStructure[] = [
 
 const CreatorsAnalysisDashboard = () => {
   const [creatorsData, setCreatorsData] = useState<CreatorsData>({});
-  const [creatorsTodayData, setCreatorsTodayData] = useState<CreatorsTodayData>({});
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -62,9 +55,6 @@ const CreatorsAnalysisDashboard = () => {
   const [selectedExecutive, setSelectedExecutive] = useState('');
   const [showExecutiveDialog, setShowExecutiveDialog] = useState(false);
   const [showAssociateDialog, setShowAssociateDialog] = useState(false);
-  const [showAddCreatorDialog, setShowAddCreatorDialog] = useState(false);
-  const [selectedMemberForCreator, setSelectedMemberForCreator] = useState('');
-  const [newCreatorName, setNewCreatorName] = useState('');
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   
   const reportRef = useRef<HTMLDivElement>(null);
@@ -86,12 +76,10 @@ const CreatorsAnalysisDashboard = () => {
         if (data?.data) {
           const parsed = data.data as { 
             creatorsData?: CreatorsData; 
-            creatorsTodayData?: CreatorsTodayData;
             teamStructure?: TeamStructure[];
             lastUpdated?: string;
           };
           if (parsed.creatorsData) setCreatorsData(parsed.creatorsData);
-          if (parsed.creatorsTodayData) setCreatorsTodayData(parsed.creatorsTodayData);
           if (parsed.teamStructure) setTeamStructure(parsed.teamStructure);
           if (parsed.lastUpdated) setLastUpdated(parsed.lastUpdated);
         }
@@ -111,7 +99,7 @@ const CreatorsAnalysisDashboard = () => {
     try {
       const payload = {
         id: CREATORS_DATA_ID,
-        data: { creatorsData, creatorsTodayData, teamStructure, lastUpdated: now } as unknown as import('@/integrations/supabase/types').Json,
+        data: { creatorsData, teamStructure, lastUpdated: now } as unknown as import('@/integrations/supabase/types').Json,
         updated_at: now,
       };
       const { error } = await supabase.from('dashboard_data').upsert(payload);
@@ -126,26 +114,17 @@ const CreatorsAnalysisDashboard = () => {
     }
   };
 
-  const getCreators = (member: string): string[] => creatorsData[member] || [];
-  const getCreatorsToday = (member: string): string[] => creatorsTodayData[member] || [];
+  const getCreatorCount = (member: string): number => creatorsData[member] || 0;
 
-  const addCreator = (member: string, creatorName: string) => {
-    if (!creatorName.trim()) return;
+  const setCreatorCount = (member: string, count: number) => {
     setCreatorsData(prev => ({
       ...prev,
-      [member]: [...(prev[member] || []), creatorName.trim()],
-    }));
-  };
-
-  const removeCreator = (member: string, creatorIndex: number) => {
-    setCreatorsData(prev => ({
-      ...prev,
-      [member]: (prev[member] || []).filter((_, i) => i !== creatorIndex),
+      [member]: Math.max(0, count),
     }));
   };
 
   const getExecutiveTotal = (members: string[]): number => {
-    return members.reduce((sum, member) => sum + getCreators(member).length, 0);
+    return members.reduce((sum, member) => sum + getCreatorCount(member), 0);
   };
 
   const getGrandTotal = (): number => {
@@ -181,15 +160,6 @@ const CreatorsAnalysisDashboard = () => {
   const handleRemoveExecutive = (executive: string) => {
     setTeamStructure(prev => prev.filter(exec => exec.executive !== executive));
   };
-
-  const handleAddCreator = () => {
-    if (!selectedMemberForCreator || !newCreatorName.trim()) return;
-    addCreator(selectedMemberForCreator, newCreatorName);
-    setNewCreatorName('');
-    setShowAddCreatorDialog(false);
-  };
-
-  const allMembers = teamStructure.flatMap(exec => exec.members);
 
   const handleExportPDF = async () => {
     if (!reportRef.current) return;
@@ -348,44 +318,9 @@ const CreatorsAnalysisDashboard = () => {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-
-          <Dialog open={showAddCreatorDialog} onOpenChange={setShowAddCreatorDialog}>
-            <DialogTrigger asChild>
-              <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
-                <UserPlus className="h-4 w-4 mr-1" />
-                Adicionar Criador
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="bg-card">
-              <DialogHeader>
-                <DialogTitle>Adicionar Criador em Análise</DialogTitle>
-              </DialogHeader>
-              <Select value={selectedMemberForCreator} onValueChange={setSelectedMemberForCreator}>
-                <SelectTrigger className="bg-background">
-                  <SelectValue placeholder="Selecione o associado" />
-                </SelectTrigger>
-                <SelectContent className="bg-card border z-50">
-                  {allMembers.map(member => (
-                    <SelectItem key={member} value={member}>
-                      {member}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Input
-                placeholder="Nome do criador"
-                value={newCreatorName}
-                onChange={(e) => setNewCreatorName(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleAddCreator()}
-              />
-              <DialogFooter>
-                <Button onClick={handleAddCreator}>Adicionar</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
         </div>
 
-        {/* Main Panel - Simple List */}
+        {/* Main Panel */}
         <Card>
           <CardContent className="p-0">
             {teamStructure.map((exec) => {
@@ -414,12 +349,19 @@ const CreatorsAnalysisDashboard = () => {
                   
                   {/* Members */}
                   {exec.members.map(member => {
-                    const creators = getCreators(member);
+                    const count = getCreatorCount(member);
                     
                     return (
-                      <div key={member} className="border-b border-border/50 px-4 py-2 hover:bg-muted/30 group">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="font-medium text-sm pl-4">{member}: {creators.length}</span>
+                      <div key={member} className="border-b border-border/50 px-4 py-2 hover:bg-muted/30 group flex items-center justify-between">
+                        <span className="font-medium text-sm pl-4">{member}</span>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="number"
+                            min="0"
+                            value={count}
+                            onChange={(e) => setCreatorCount(member, parseInt(e.target.value) || 0)}
+                            className="w-20 h-8 text-center font-bold"
+                          />
                           <Button
                             variant="ghost"
                             size="icon"
@@ -429,24 +371,6 @@ const CreatorsAnalysisDashboard = () => {
                             <Trash2 className="h-3 w-3" />
                           </Button>
                         </div>
-                        {creators.length > 0 && (
-                          <div className="flex flex-wrap gap-1 pl-8">
-                            {creators.map((creator, idx) => (
-                              <span 
-                                key={idx} 
-                                className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200 rounded text-xs group/tag"
-                              >
-                                {creator}
-                                <button 
-                                  onClick={() => removeCreator(member, idx)}
-                                  className="opacity-0 group-hover/tag:opacity-100 hover:text-red-500"
-                                >
-                                  <X className="h-3 w-3" />
-                                </button>
-                              </span>
-                            ))}
-                          </div>
-                        )}
                       </div>
                     );
                   })}
@@ -500,15 +424,10 @@ const CreatorsAnalysisDashboard = () => {
                     <p className="ml-6 text-sm text-gray-700 mb-1">Total: {execTotal} criadores</p>
                     <div className="ml-10 space-y-0.5">
                       {exec.members.map(member => {
-                        const creators = getCreators(member);
+                        const count = getCreatorCount(member);
                         return (
                           <div key={member} className="text-sm text-gray-600">
-                            <span className="font-medium">{member}:</span> {creators.length}
-                            {creators.length > 0 && (
-                              <div className="ml-4 text-xs text-gray-500">
-                                {creators.join(', ')}
-                              </div>
-                            )}
+                            <span className="font-medium">{member}:</span> {count}
                           </div>
                         );
                       })}
