@@ -3,15 +3,16 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { 
   Users, 
-  ChevronLeft, 
-  ChevronRight, 
   Save, 
   Home, 
   FileText, 
   Plus, 
   Trash2,
   Loader2,
-  UserSearch
+  UserSearch,
+  Clock,
+  X,
+  UserPlus
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,7 +28,11 @@ import jsPDF from 'jspdf';
 import curliLogo from '@/assets/logo-curli.png';
 
 interface CreatorsData {
-  [memberName: string]: number;
+  [memberName: string]: string[]; // Array of creator names
+}
+
+interface CreatorsTodayData {
+  [memberName: string]: string[]; // Array of creator names added today
 }
 
 interface TeamStructure {
@@ -66,6 +71,8 @@ const DEFAULT_TEAM_STRUCTURE: TeamStructure[] = [
 
 const CreatorsAnalysisDashboard = () => {
   const [creatorsData, setCreatorsData] = useState<CreatorsData>({});
+  const [creatorsTodayData, setCreatorsTodayData] = useState<CreatorsTodayData>({});
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [teamStructure, setTeamStructure] = useState<TeamStructure[]>(DEFAULT_TEAM_STRUCTURE);
@@ -74,6 +81,10 @@ const CreatorsAnalysisDashboard = () => {
   const [selectedExecutive, setSelectedExecutive] = useState('');
   const [showExecutiveDialog, setShowExecutiveDialog] = useState(false);
   const [showAssociateDialog, setShowAssociateDialog] = useState(false);
+  const [showAddCreatorDialog, setShowAddCreatorDialog] = useState(false);
+  const [showAddCreatorTodayDialog, setShowAddCreatorTodayDialog] = useState(false);
+  const [selectedMemberForCreator, setSelectedMemberForCreator] = useState('');
+  const [newCreatorName, setNewCreatorName] = useState('');
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   
   const reportRef = useRef<HTMLDivElement>(null);
@@ -95,9 +106,16 @@ const CreatorsAnalysisDashboard = () => {
         if (error) throw error;
 
         if (data?.data) {
-          const parsed = data.data as { creatorsData?: CreatorsData; teamStructure?: TeamStructure[] };
+          const parsed = data.data as { 
+            creatorsData?: CreatorsData; 
+            creatorsTodayData?: CreatorsTodayData;
+            teamStructure?: TeamStructure[];
+            lastUpdated?: string;
+          };
           if (parsed.creatorsData) setCreatorsData(parsed.creatorsData);
+          if (parsed.creatorsTodayData) setCreatorsTodayData(parsed.creatorsTodayData);
           if (parsed.teamStructure) setTeamStructure(parsed.teamStructure);
+          if (parsed.lastUpdated) setLastUpdated(parsed.lastUpdated);
         }
       } catch (error) {
         console.error('Erro ao carregar dados:', error);
@@ -113,14 +131,21 @@ const CreatorsAnalysisDashboard = () => {
   // Save data
   const handleSave = async () => {
     setIsSaving(true);
+    const now = new Date().toISOString();
     try {
       const payload = {
         id: CREATORS_DATA_ID,
-        data: { creatorsData, teamStructure } as unknown as import('@/integrations/supabase/types').Json,
-        updated_at: new Date().toISOString(),
+        data: { 
+          creatorsData, 
+          creatorsTodayData,
+          teamStructure,
+          lastUpdated: now 
+        } as unknown as import('@/integrations/supabase/types').Json,
+        updated_at: now,
       };
       const { error } = await supabase.from('dashboard_data').upsert(payload);
       if (error) throw error;
+      setLastUpdated(now);
       toast({ title: 'Salvo!', description: 'Dados salvos com sucesso' });
     } catch (error) {
       console.error('Erro ao salvar:', error);
@@ -130,27 +155,66 @@ const CreatorsAnalysisDashboard = () => {
     }
   };
 
-  // Get creator count for a member
-  const getCreatorCount = (member: string): number => {
-    return creatorsData[member] || 0;
+  // Get creators for a member
+  const getCreators = (member: string): string[] => {
+    return creatorsData[member] || [];
   };
 
-  // Set creator count
-  const setCreatorCount = (member: string, count: number) => {
-    setCreatorsData(prev => ({
-      ...prev,
-      [member]: Math.max(0, count),
-    }));
+  // Get creators today for a member
+  const getCreatorsToday = (member: string): string[] => {
+    return creatorsTodayData[member] || [];
+  };
+
+  // Add creator to member
+  const addCreator = (member: string, creatorName: string, isToday: boolean = false) => {
+    if (!creatorName.trim()) return;
+    
+    if (isToday) {
+      setCreatorsTodayData(prev => ({
+        ...prev,
+        [member]: [...(prev[member] || []), creatorName.trim()],
+      }));
+    } else {
+      setCreatorsData(prev => ({
+        ...prev,
+        [member]: [...(prev[member] || []), creatorName.trim()],
+      }));
+    }
+  };
+
+  // Remove creator from member
+  const removeCreator = (member: string, creatorIndex: number, isToday: boolean = false) => {
+    if (isToday) {
+      setCreatorsTodayData(prev => ({
+        ...prev,
+        [member]: (prev[member] || []).filter((_, i) => i !== creatorIndex),
+      }));
+    } else {
+      setCreatorsData(prev => ({
+        ...prev,
+        [member]: (prev[member] || []).filter((_, i) => i !== creatorIndex),
+      }));
+    }
   };
 
   // Calculate executive total
   const getExecutiveTotal = (members: string[]): number => {
-    return members.reduce((sum, member) => sum + getCreatorCount(member), 0);
+    return members.reduce((sum, member) => sum + getCreators(member).length, 0);
+  };
+
+  // Calculate executive today total
+  const getExecutiveTodayTotal = (members: string[]): number => {
+    return members.reduce((sum, member) => sum + getCreatorsToday(member).length, 0);
   };
 
   // Calculate grand total
   const getGrandTotal = (): number => {
     return teamStructure.reduce((sum, exec) => sum + getExecutiveTotal(exec.members), 0);
+  };
+
+  // Calculate grand today total
+  const getGrandTodayTotal = (): number => {
+    return teamStructure.reduce((sum, exec) => sum + getExecutiveTodayTotal(exec.members), 0);
   };
 
   // Add executive
@@ -186,6 +250,27 @@ const CreatorsAnalysisDashboard = () => {
   const handleRemoveExecutive = (executive: string) => {
     setTeamStructure(prev => prev.filter(exec => exec.executive !== executive));
   };
+
+  // Handle add creator
+  const handleAddCreator = () => {
+    if (!selectedMemberForCreator || !newCreatorName.trim()) return;
+    addCreator(selectedMemberForCreator, newCreatorName, false);
+    setNewCreatorName('');
+    setShowAddCreatorDialog(false);
+  };
+
+  // Handle add creator today
+  const handleAddCreatorToday = () => {
+    if (!selectedMemberForCreator || !newCreatorName.trim()) return;
+    addCreator(selectedMemberForCreator, newCreatorName, true);
+    setNewCreatorName('');
+    setShowAddCreatorTodayDialog(false);
+  };
+
+  // Get all members flat
+  const allMembers = useMemo(() => {
+    return teamStructure.flatMap(exec => exec.members);
+  }, [teamStructure]);
 
   // Export PDF
   const handleExportPDF = async () => {
@@ -265,18 +350,48 @@ const CreatorsAnalysisDashboard = () => {
       </header>
 
       <main className="p-4">
-        {/* Summary Card */}
-        <Card className="mb-6">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-center gap-4">
-              <Users className="h-10 w-10 text-purple-500" />
+        {/* Last Updated Banner */}
+        <Card className="mb-4 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-center gap-3">
+              <Clock className="h-5 w-5 text-amber-600" />
               <div className="text-center">
-                <p className="text-sm text-muted-foreground">Total de Criadores em Análise</p>
-                <p className="text-4xl font-bold">{getGrandTotal()}</p>
+                <span className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                  Última atualização: {lastUpdated 
+                    ? format(new Date(lastUpdated), "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR })
+                    : 'Nunca salvo'}
+                </span>
               </div>
             </div>
           </CardContent>
         </Card>
+
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-center gap-4">
+                <Users className="h-10 w-10 text-purple-500" />
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground">Total de Criadores em Análise</p>
+                  <p className="text-4xl font-bold">{getGrandTotal()}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-center gap-4">
+                <UserPlus className="h-10 w-10 text-emerald-500" />
+                <div className="text-center">
+                  <p className="text-sm text-emerald-700 dark:text-emerald-300">Criadores Hoje</p>
+                  <p className="text-4xl font-bold text-emerald-600">{getGrandTodayTotal()}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Management Buttons */}
         <div className="flex gap-2 mb-4 flex-wrap">
@@ -335,6 +450,78 @@ const CreatorsAnalysisDashboard = () => {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+
+          {/* Add Creator Dialog */}
+          <Dialog open={showAddCreatorDialog} onOpenChange={setShowAddCreatorDialog}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="bg-purple-100 hover:bg-purple-200 border-purple-300">
+                <UserPlus className="h-4 w-4 mr-2 text-purple-600" />
+                Adicionar Criador
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-card">
+              <DialogHeader>
+                <DialogTitle>Adicionar Criador em Análise</DialogTitle>
+              </DialogHeader>
+              <Select value={selectedMemberForCreator} onValueChange={setSelectedMemberForCreator}>
+                <SelectTrigger className="bg-background">
+                  <SelectValue placeholder="Selecione o associado" />
+                </SelectTrigger>
+                <SelectContent className="bg-card border z-50">
+                  {allMembers.map(member => (
+                    <SelectItem key={member} value={member}>
+                      {member}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input
+                placeholder="Nome do criador"
+                value={newCreatorName}
+                onChange={(e) => setNewCreatorName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAddCreator()}
+              />
+              <DialogFooter>
+                <Button onClick={handleAddCreator}>Adicionar</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Add Creator Today Dialog */}
+          <Dialog open={showAddCreatorTodayDialog} onOpenChange={setShowAddCreatorTodayDialog}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="bg-emerald-100 hover:bg-emerald-200 border-emerald-300">
+                <UserPlus className="h-4 w-4 mr-2 text-emerald-600" />
+                Adicionar Criador Hoje
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-card">
+              <DialogHeader>
+                <DialogTitle>Adicionar Criador de Hoje</DialogTitle>
+              </DialogHeader>
+              <Select value={selectedMemberForCreator} onValueChange={setSelectedMemberForCreator}>
+                <SelectTrigger className="bg-background">
+                  <SelectValue placeholder="Selecione o associado" />
+                </SelectTrigger>
+                <SelectContent className="bg-card border z-50">
+                  {allMembers.map(member => (
+                    <SelectItem key={member} value={member}>
+                      {member}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input
+                placeholder="Nome do criador"
+                value={newCreatorName}
+                onChange={(e) => setNewCreatorName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAddCreatorToday()}
+              />
+              <DialogFooter>
+                <Button onClick={handleAddCreatorToday} className="bg-emerald-600 hover:bg-emerald-700">Adicionar</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Main Panel */}
@@ -345,13 +532,17 @@ const CreatorsAnalysisDashboard = () => {
                 <thead>
                   <tr className="border-b bg-muted/50">
                     <th className="text-left px-4 py-3 font-medium">EXECUTIVO / ASSOCIADO</th>
-                    <th className="text-center px-4 py-3 font-medium w-40">CRIADORES</th>
-                    <th className="text-center px-4 py-3 font-medium w-20">AÇÕES</th>
+                    <th className="text-center px-4 py-3 font-medium w-24">TOTAL</th>
+                    <th className="text-center px-4 py-3 font-medium w-24 bg-emerald-100 dark:bg-emerald-900/30">HOJE</th>
+                    <th className="text-left px-4 py-3 font-medium">CRIADORES EM ANÁLISE</th>
+                    <th className="text-left px-4 py-3 font-medium bg-emerald-100 dark:bg-emerald-900/30">CRIADORES HOJE</th>
+                    <th className="text-center px-4 py-3 font-medium w-16">AÇÕES</th>
                   </tr>
                 </thead>
                 <tbody>
                   {teamStructure.map((exec) => {
                     const execTotal = getExecutiveTotal(exec.members);
+                    const execTodayTotal = getExecutiveTodayTotal(exec.members);
                     
                     return (
                       <React.Fragment key={exec.executive}>
@@ -364,6 +555,9 @@ const CreatorsAnalysisDashboard = () => {
                             </div>
                           </td>
                           <td className="text-center font-bold text-lg">{execTotal}</td>
+                          <td className="text-center font-bold text-lg bg-emerald-800">{execTodayTotal}</td>
+                          <td></td>
+                          <td className="bg-emerald-800"></td>
                           <td className="text-center">
                             <Button
                               variant="ghost"
@@ -378,19 +572,49 @@ const CreatorsAnalysisDashboard = () => {
                         
                         {/* Members */}
                         {exec.members.map(member => {
-                          const count = getCreatorCount(member);
+                          const creators = getCreators(member);
+                          const creatorsToday = getCreatorsToday(member);
                           
                           return (
                             <tr key={member} className="border-b border-border/50 hover:bg-muted/30 group">
-                              <td className="px-4 py-2 pl-10 text-sm">{member}</td>
-                              <td className="text-center px-2">
-                                <Input
-                                  type="number"
-                                  min={0}
-                                  value={count}
-                                  onChange={(e) => setCreatorCount(member, parseInt(e.target.value) || 0)}
-                                  className="h-8 w-20 mx-auto text-center text-sm font-medium"
-                                />
+                              <td className="px-4 py-2 pl-10 text-sm font-medium">{member}</td>
+                              <td className="text-center font-bold text-lg">{creators.length}</td>
+                              <td className="text-center font-bold text-lg text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20">{creatorsToday.length}</td>
+                              <td className="px-2 py-2">
+                                <div className="flex flex-wrap gap-1">
+                                  {creators.map((creator, idx) => (
+                                    <span 
+                                      key={idx} 
+                                      className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200 rounded text-xs group/tag"
+                                    >
+                                      {creator}
+                                      <button 
+                                        onClick={() => removeCreator(member, idx, false)}
+                                        className="opacity-0 group-hover/tag:opacity-100 hover:text-red-500"
+                                      >
+                                        <X className="h-3 w-3" />
+                                      </button>
+                                    </span>
+                                  ))}
+                                </div>
+                              </td>
+                              <td className="px-2 py-2 bg-emerald-50 dark:bg-emerald-900/20">
+                                <div className="flex flex-wrap gap-1">
+                                  {creatorsToday.map((creator, idx) => (
+                                    <span 
+                                      key={idx} 
+                                      className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-200 dark:bg-emerald-800 text-emerald-800 dark:text-emerald-200 rounded text-xs group/tag"
+                                    >
+                                      {creator}
+                                      <button 
+                                        onClick={() => removeCreator(member, idx, true)}
+                                        className="opacity-0 group-hover/tag:opacity-100 hover:text-red-500"
+                                      >
+                                        <X className="h-3 w-3" />
+                                      </button>
+                                    </span>
+                                  ))}
+                                </div>
                               </td>
                               <td className="text-center">
                                 <Button
@@ -413,6 +637,9 @@ const CreatorsAnalysisDashboard = () => {
                   <tr className="bg-muted font-bold border-t-2">
                     <td className="px-4 py-3">TOTAL GERAL</td>
                     <td className="text-center text-xl">{getGrandTotal()}</td>
+                    <td className="text-center text-xl text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30">{getGrandTodayTotal()}</td>
+                    <td></td>
+                    <td className="bg-emerald-100 dark:bg-emerald-900/30"></td>
                     <td></td>
                   </tr>
                 </tbody>
@@ -435,13 +662,28 @@ const CreatorsAnalysisDashboard = () => {
               </div>
             </div>
 
+            {/* Last Updated */}
+            <div className="mb-4 p-3 bg-amber-100 rounded-lg text-center">
+              <p className="text-sm font-medium text-amber-800">
+                ⏰ Última atualização: {lastUpdated 
+                  ? format(new Date(lastUpdated), "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR })
+                  : 'Nunca salvo'}
+              </p>
+            </div>
+
             {/* Divider */}
             <div className="border-b border-gray-400 mb-6"></div>
 
             {/* Summary */}
-            <div className="mb-6 p-4 bg-purple-100 rounded-lg">
-              <h2 className="text-lg font-bold text-gray-800 mb-2">📈 RESUMO GERAL:</h2>
-              <p className="text-2xl font-bold text-purple-800 ml-4">Total de Criadores: {getGrandTotal()}</p>
+            <div className="mb-6 grid grid-cols-2 gap-4">
+              <div className="p-4 bg-purple-100 rounded-lg">
+                <h2 className="text-lg font-bold text-gray-800 mb-2">📈 RESUMO GERAL:</h2>
+                <p className="text-2xl font-bold text-purple-800 ml-4">Total de Criadores: {getGrandTotal()}</p>
+              </div>
+              <div className="p-4 bg-emerald-100 rounded-lg">
+                <h2 className="text-lg font-bold text-gray-800 mb-2">🆕 CRIADORES HOJE:</h2>
+                <p className="text-2xl font-bold text-emerald-800 ml-4">Total Hoje: {getGrandTodayTotal()}</p>
+              </div>
             </div>
 
             {/* Divider */}
@@ -453,6 +695,7 @@ const CreatorsAnalysisDashboard = () => {
               
               {teamStructure.map((exec) => {
                 const execTotal = getExecutiveTotal(exec.members);
+                const execTodayTotal = getExecutiveTodayTotal(exec.members);
                 
                 return (
                   <div key={exec.executive} className="mb-4 ml-2">
@@ -460,13 +703,27 @@ const CreatorsAnalysisDashboard = () => {
                       <span className="text-red-500">🔴</span>
                       <span className="font-bold text-gray-800">{exec.executive}</span>
                     </div>
-                    <p className="ml-6 text-sm text-gray-700 mb-1">Total: {execTotal} criadores</p>
+                    <p className="ml-6 text-sm text-gray-700 mb-1">
+                      Total: {execTotal} criadores | Hoje: {execTodayTotal}
+                    </p>
                     <div className="ml-10 space-y-1">
-                      {exec.members.map(member => (
-                        <p key={member} className="text-sm text-gray-600">
-                          {member}: {getCreatorCount(member)}
-                        </p>
-                      ))}
+                      {exec.members.map(member => {
+                        const creators = getCreators(member);
+                        const creatorsToday = getCreatorsToday(member);
+                        return (
+                          <div key={member} className="text-sm text-gray-600">
+                            <span className="font-medium">{member}:</span> {creators.length}
+                            {creatorsToday.length > 0 && (
+                              <span className="text-emerald-600 ml-2">(+{creatorsToday.length} hoje)</span>
+                            )}
+                            {creators.length > 0 && (
+                              <div className="ml-4 text-xs text-gray-500">
+                                {creators.join(', ')}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 );
