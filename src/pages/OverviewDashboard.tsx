@@ -87,6 +87,8 @@ const OverviewDashboard: React.FC = () => {
   const [customDateRange, setCustomDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({ from: undefined, to: undefined });
   const [comparisonData, setComparisonData] = useState<ComparisonData[]>([]);
   const [showComparison, setShowComparison] = useState(false);
+  const [battlesReportRange, setBattlesReportRange] = useState<{ from: Date | undefined; to: Date | undefined }>({ from: undefined, to: undefined });
+  const [battlesReportOpen, setBattlesReportOpen] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
   const consolidatedReportRef = useRef<HTMLDivElement>(null);
 
@@ -541,6 +543,177 @@ const OverviewDashboard: React.FC = () => {
       pdf.save(`relatorio-consolidado-${format(currentMonth, 'MM-yyyy')}.pdf`);
     } catch (error) {
       console.error('Error exporting consolidated PDF:', error);
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleExportBattlesReport = async () => {
+    if (!battlesReportRange.from || !battlesReportRange.to) return;
+    setExporting(true);
+
+    try {
+      const startDate = format(battlesReportRange.from, 'yyyy-MM-dd');
+      const endDate = format(battlesReportRange.to, 'yyyy-MM-dd');
+      const daysRange = eachDayOfInterval({ start: battlesReportRange.from, end: battlesReportRange.to });
+      
+      // Filter battles data for the selected range
+      const filteredBattles = monthlyData?.dailyData.filter(d => 
+        d.date >= startDate && d.date <= endDate
+      ) || [];
+      
+      const totalBattles = filteredBattles.reduce((sum, d) => sum + d.battles, 0);
+      const avgBattles = filteredBattles.length > 0 ? Math.round(totalBattles / filteredBattles.length) : 0;
+      
+      // Create PDF
+      const pdf = new jsPDF('l', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      
+      // Header
+      pdf.setFillColor(250, 250, 250);
+      pdf.rect(0, 0, pageWidth, pageHeight, 'F');
+      
+      // Logo placeholder
+      try {
+        pdf.addImage(curliLogo, 'PNG', 10, 8, 25, 12);
+      } catch (e) {
+        pdf.setFontSize(14);
+        pdf.setTextColor(220, 38, 38);
+        pdf.text('CURLI', 10, 16);
+      }
+      
+      // Title
+      pdf.setFontSize(16);
+      pdf.setTextColor(26, 26, 26);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('RELATÓRIO DE BATALHAS', pageWidth / 2, 16, { align: 'center' });
+      
+      // Period
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(82, 82, 82);
+      pdf.text(`Período: ${format(battlesReportRange.from, 'dd/MM/yyyy')} - ${format(battlesReportRange.to, 'dd/MM/yyyy')}`, pageWidth / 2, 24, { align: 'center' });
+      
+      // Summary cards
+      const cardY = 32;
+      const cardWidth = 50;
+      const cardSpacing = 10;
+      const cardsStartX = (pageWidth - (cardWidth * 3 + cardSpacing * 2)) / 2;
+      
+      // Total Battles Card
+      pdf.setFillColor(254, 202, 202);
+      pdf.roundedRect(cardsStartX, cardY, cardWidth, 22, 3, 3, 'F');
+      pdf.setFontSize(9);
+      pdf.setTextColor(127, 29, 29);
+      pdf.text('Total de Batalhas', cardsStartX + cardWidth/2, cardY + 8, { align: 'center' });
+      pdf.setFontSize(16);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(formatNumber(totalBattles), cardsStartX + cardWidth/2, cardY + 17, { align: 'center' });
+      
+      // Average Card
+      pdf.setFillColor(229, 229, 229);
+      pdf.roundedRect(cardsStartX + cardWidth + cardSpacing, cardY, cardWidth, 22, 3, 3, 'F');
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(64, 64, 64);
+      pdf.text('Média por Dia', cardsStartX + cardWidth + cardSpacing + cardWidth/2, cardY + 8, { align: 'center' });
+      pdf.setFontSize(16);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(String(avgBattles), cardsStartX + cardWidth + cardSpacing + cardWidth/2, cardY + 17, { align: 'center' });
+      
+      // Days Count Card
+      pdf.setFillColor(220, 252, 231);
+      pdf.roundedRect(cardsStartX + (cardWidth + cardSpacing) * 2, cardY, cardWidth, 22, 3, 3, 'F');
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(22, 101, 52);
+      pdf.text('Dias no Período', cardsStartX + (cardWidth + cardSpacing) * 2 + cardWidth/2, cardY + 8, { align: 'center' });
+      pdf.setFontSize(16);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(String(daysRange.length), cardsStartX + (cardWidth + cardSpacing) * 2 + cardWidth/2, cardY + 17, { align: 'center' });
+      
+      // Table
+      const tableY = 62;
+      const colWidth = Math.min(20, (pageWidth - 60) / daysRange.length);
+      const tableStartX = (pageWidth - (colWidth * daysRange.length + 30)) / 2;
+      
+      // Table header
+      pdf.setFillColor(38, 38, 38);
+      pdf.rect(tableStartX, tableY, colWidth * daysRange.length + 30, 10, 'F');
+      
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(255, 255, 255);
+      pdf.text('DIA', tableStartX + 15, tableY + 6.5, { align: 'center' });
+      
+      daysRange.forEach((day, i) => {
+        const x = tableStartX + 30 + (i * colWidth) + colWidth/2;
+        pdf.text(format(day, 'dd/MM'), x, tableY + 6.5, { align: 'center' });
+      });
+      
+      // Data row
+      const rowY = tableY + 10;
+      pdf.setFillColor(255, 255, 255);
+      pdf.rect(tableStartX, rowY, colWidth * daysRange.length + 30, 12, 'F');
+      
+      pdf.setTextColor(26, 26, 26);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('BATALHAS', tableStartX + 15, rowY + 7, { align: 'center' });
+      
+      daysRange.forEach((day, i) => {
+        const dateStr = format(day, 'yyyy-MM-dd');
+        const dayData = filteredBattles.find(d => d.date === dateStr);
+        const battles = dayData?.battles || 0;
+        
+        const x = tableStartX + 30 + (i * colWidth);
+        
+        // Cell color based on battles
+        if (battles === 0) {
+          pdf.setFillColor(254, 202, 202);
+        } else if (battles >= 3) {
+          pdf.setFillColor(187, 247, 208);
+        } else {
+          pdf.setFillColor(255, 255, 255);
+        }
+        pdf.rect(x, rowY, colWidth, 12, 'F');
+        
+        // Border
+        pdf.setDrawColor(221, 221, 221);
+        pdf.rect(x, rowY, colWidth, 12, 'S');
+        
+        // Value
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(26, 26, 26);
+        pdf.text(String(battles), x + colWidth/2, rowY + 7.5, { align: 'center' });
+      });
+      
+      // Total column
+      const totalX = tableStartX + 30 + (daysRange.length * colWidth);
+      pdf.setFillColor(38, 38, 38);
+      pdf.rect(totalX - colWidth, tableY, colWidth, 10, 'F');
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(8);
+      pdf.text('TOTAL', totalX - colWidth/2, tableY + 6.5, { align: 'center' });
+      
+      pdf.setFillColor(254, 226, 226);
+      pdf.rect(totalX - colWidth, rowY, colWidth, 12, 'F');
+      pdf.setTextColor(127, 29, 29);
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(String(totalBattles), totalX - colWidth/2, rowY + 7.5, { align: 'center' });
+      
+      // Footer
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(163, 163, 163);
+      pdf.text(`Gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+      
+      pdf.save(`relatorio-batalhas-${format(battlesReportRange.from, 'dd-MM')}-a-${format(battlesReportRange.to, 'dd-MM-yyyy')}.pdf`);
+      setBattlesReportOpen(false);
+    } catch (error) {
+      console.error('Error exporting battles report:', error);
     } finally {
       setExporting(false);
     }
@@ -1037,9 +1210,75 @@ const OverviewDashboard: React.FC = () => {
           {/* Battles Daily Chart */}
           <Card className="border-border">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Swords className="h-4 w-4 text-red-600" />
-                Batalhas por Dia
+              <CardTitle className="text-sm flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Swords className="h-4 w-4 text-red-600" />
+                  Batalhas por Dia
+                </div>
+                <Popover open={battlesReportOpen} onOpenChange={setBattlesReportOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1 text-muted-foreground hover:text-foreground">
+                      <FileText className="h-3.5 w-3.5" />
+                      Relatório
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-4" align="end">
+                    <div className="space-y-4">
+                      <h4 className="font-medium text-sm">Selecione o período</h4>
+                      <div className="flex gap-2">
+                        <div className="space-y-1">
+                          <label className="text-xs text-muted-foreground">De</label>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button variant="outline" size="sm" className={cn("w-[120px] justify-start text-left font-normal", !battlesReportRange.from && "text-muted-foreground")}>
+                                <Calendar className="mr-2 h-4 w-4" />
+                                {battlesReportRange.from ? format(battlesReportRange.from, "dd/MM") : "Início"}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <CalendarComponent
+                                mode="single"
+                                selected={battlesReportRange.from}
+                                onSelect={(date) => setBattlesReportRange(prev => ({ ...prev, from: date }))}
+                                initialFocus
+                                className="p-3 pointer-events-auto"
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs text-muted-foreground">Até</label>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button variant="outline" size="sm" className={cn("w-[120px] justify-start text-left font-normal", !battlesReportRange.to && "text-muted-foreground")}>
+                                <Calendar className="mr-2 h-4 w-4" />
+                                {battlesReportRange.to ? format(battlesReportRange.to, "dd/MM") : "Fim"}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <CalendarComponent
+                                mode="single"
+                                selected={battlesReportRange.to}
+                                onSelect={(date) => setBattlesReportRange(prev => ({ ...prev, to: date }))}
+                                initialFocus
+                                className="p-3 pointer-events-auto"
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                      </div>
+                      <Button 
+                        size="sm" 
+                        className="w-full gap-2" 
+                        onClick={handleExportBattlesReport}
+                        disabled={!battlesReportRange.from || !battlesReportRange.to || exporting}
+                      >
+                        <Download className="h-4 w-4" />
+                        {exporting ? 'Gerando...' : 'Gerar PDF'}
+                      </Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
               </CardTitle>
             </CardHeader>
             <CardContent>
