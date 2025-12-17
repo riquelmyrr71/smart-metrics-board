@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Download, Calendar, Trophy, TrendingUp, Users, Gem, Swords, Radio, ChevronLeft, ChevronRight, Target, ArrowUpRight, Filter } from 'lucide-react';
+import { Download, Calendar, Trophy, TrendingUp, Users, Gem, Swords, Radio, ChevronLeft, ChevronRight, Target, ArrowUpRight, Filter, GitCompare, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
-import { format, startOfMonth, endOfMonth, getDaysInMonth, eachDayOfInterval, differenceInDays, subDays, parseISO } from 'date-fns';
+import { format, startOfMonth, endOfMonth, getDaysInMonth, eachDayOfInterval, differenceInDays, subDays, parseISO, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -13,6 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import curliLogo from '@/assets/logo-curli.png';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 // Data IDs from other dashboards
 const DASHBOARD_ID = '00000000-0000-0000-0000-000000000001';
@@ -63,6 +64,20 @@ interface MonthlyData {
   };
 }
 
+interface ComparisonData {
+  month: string;
+  diamonds: number;
+  diamondsChange?: number;
+  creators: number;
+  creatorsChange?: number;
+  schedulingRate: number;
+  schedulingChange?: number;
+  battles: number;
+  battlesChange?: number;
+  creatorsAnalysis: number;
+  creatorsAnalysisChange?: number;
+}
+
 const OverviewDashboard: React.FC = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [loading, setLoading] = useState(true);
@@ -70,7 +85,10 @@ const OverviewDashboard: React.FC = () => {
   const [exporting, setExporting] = useState(false);
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all');
   const [customDateRange, setCustomDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({ from: undefined, to: undefined });
+  const [comparisonData, setComparisonData] = useState<ComparisonData[]>([]);
+  const [showComparison, setShowComparison] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
+  const consolidatedReportRef = useRef<HTMLDivElement>(null);
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
@@ -83,6 +101,7 @@ const OverviewDashboard: React.FC = () => {
 
   useEffect(() => {
     loadMonthlyData();
+    loadComparisonData();
   }, [currentMonth]);
 
   const loadMonthlyData = async () => {
@@ -354,6 +373,108 @@ const OverviewDashboard: React.FC = () => {
     }
   };
 
+  // Load comparison data for last 6 months
+  const loadComparisonData = async () => {
+    const months: ComparisonData[] = [];
+    
+    for (let i = 0; i < 6; i++) {
+      const monthDate = subMonths(currentMonth, i);
+      const monthKey = format(monthDate, 'yyyy-MM');
+      const monthStartDate = startOfMonth(monthDate);
+      const monthEndDate = endOfMonth(monthDate);
+      
+      try {
+        const [chartsResult, schedulingResult, battlesResult, creatorsAnalysisResult] = await Promise.all([
+          supabase.from('dashboard_data').select('data').eq('id', CHART_DATA_ID).maybeSingle(),
+          supabase.from('live_schedules').select('*').gte('schedule_date', format(monthStartDate, 'yyyy-MM-dd')).lte('schedule_date', format(monthEndDate, 'yyyy-MM-dd')),
+          supabase.from('dashboard_data').select('data').eq('id', BATTLES_DATA_ID).maybeSingle(),
+          supabase.from('dashboard_data').select('data').eq('id', CREATORS_DATA_ID).maybeSingle()
+        ]);
+
+        // Process charts data
+        let diamondsTotal = 0;
+        let creatorsTotal = 0;
+        if (chartsResult.data?.data) {
+          const data = chartsResult.data.data as any;
+          (data.entries || []).forEach((entry: any) => {
+            if (entry.date?.startsWith(monthKey)) {
+              diamondsTotal += entry.diamonds || 0;
+              creatorsTotal += entry.creators || 0;
+            }
+          });
+        }
+
+        // Process scheduling
+        let scheduled = 0;
+        let total = 0;
+        if (schedulingResult.data) {
+          schedulingResult.data.forEach((s: any) => {
+            total++;
+            if (s.is_scheduled) scheduled++;
+          });
+        }
+        const schedulingRate = total > 0 ? Math.round((scheduled / total) * 100) : 0;
+
+        // Process battles
+        let battlesTotal = 0;
+        if (battlesResult.data?.data) {
+          const data = battlesResult.data.data as any;
+          const battleData = data.battleData || {};
+          Object.entries(battleData).forEach(([_, dates]: [string, any]) => {
+            Object.entries(dates).forEach(([dateStr, count]: [string, any]) => {
+              if (dateStr.startsWith(monthKey)) {
+                battlesTotal += Number(count) || 0;
+              }
+            });
+          });
+        }
+
+        // Process creators analysis (only for current month)
+        let creatorsAnalysisTotal = 0;
+        if (i === 0 && creatorsAnalysisResult.data?.data) {
+          const data = creatorsAnalysisResult.data.data as any;
+          if (data.creatorsData) {
+            Object.values(data.creatorsData).forEach((count: any) => {
+              creatorsAnalysisTotal += Number(count) || 0;
+            });
+          }
+        }
+
+        months.push({
+          month: format(monthDate, 'MMM yyyy', { locale: ptBR }),
+          diamonds: diamondsTotal,
+          creators: creatorsTotal,
+          schedulingRate,
+          battles: battlesTotal,
+          creatorsAnalysis: creatorsAnalysisTotal
+        });
+      } catch (error) {
+        console.error(`Error loading data for ${monthKey}:`, error);
+      }
+    }
+
+    // Calculate changes (compare to previous month)
+    for (let i = 0; i < months.length - 1; i++) {
+      const current = months[i];
+      const previous = months[i + 1];
+      
+      if (previous.diamonds > 0) {
+        current.diamondsChange = Math.round(((current.diamonds - previous.diamonds) / previous.diamonds) * 100);
+      }
+      if (previous.creators > 0) {
+        current.creatorsChange = Math.round(((current.creators - previous.creators) / previous.creators) * 100);
+      }
+      if (previous.schedulingRate > 0) {
+        current.schedulingChange = current.schedulingRate - previous.schedulingRate;
+      }
+      if (previous.battles > 0) {
+        current.battlesChange = Math.round(((current.battles - previous.battles) / previous.battles) * 100);
+      }
+    }
+
+    setComparisonData(months);
+  };
+
   const handlePreviousMonth = () => {
     setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
   };
@@ -382,6 +503,44 @@ const OverviewDashboard: React.FC = () => {
       pdf.save(`overview-${format(currentMonth, 'MM-yyyy')}.pdf`);
     } catch (error) {
       console.error('Error exporting PDF:', error);
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleExportConsolidatedPDF = async () => {
+    if (!consolidatedReportRef.current) return;
+    setExporting(true);
+
+    try {
+      const canvas = await html2canvas(consolidatedReportRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff'
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+      // Check if content fits on one page
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      if (pdfHeight > pageHeight) {
+        // Add multiple pages if needed
+        let yPosition = 0;
+        while (yPosition < pdfHeight) {
+          if (yPosition > 0) pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 0, -yPosition, pdfWidth, pdfHeight);
+          yPosition += pageHeight;
+        }
+      } else {
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      }
+
+      pdf.save(`relatorio-consolidado-${format(currentMonth, 'MM-yyyy')}.pdf`);
+    } catch (error) {
+      console.error('Error exporting consolidated PDF:', error);
     } finally {
       setExporting(false);
     }
@@ -612,10 +771,31 @@ const OverviewDashboard: React.FC = () => {
               </Button>
             </div>
 
-            <Button onClick={handleExportPDF} disabled={exporting} className="gap-2">
-              <Download className="h-4 w-4" />
-              {exporting ? 'Exportando...' : 'Exportar PDF'}
+            <Button variant="outline" onClick={() => setShowComparison(!showComparison)} className="gap-2">
+              <GitCompare className="h-4 w-4" />
+              Comparativo
             </Button>
+
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button disabled={exporting} className="gap-2">
+                  <Download className="h-4 w-4" />
+                  {exporting ? 'Exportando...' : 'Exportar PDF'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-56 p-2" align="end">
+                <div className="space-y-1">
+                  <Button variant="ghost" className="w-full justify-start gap-2" onClick={handleExportPDF}>
+                    <FileText className="h-4 w-4" />
+                    PDF Simples
+                  </Button>
+                  <Button variant="ghost" className="w-full justify-start gap-2" onClick={handleExportConsolidatedPDF}>
+                    <Download className="h-4 w-4" />
+                    Relatório Consolidado
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
       </header>
@@ -1042,6 +1222,78 @@ const OverviewDashboard: React.FC = () => {
           </Card>
         </div>
 
+        {/* Month Comparison Table */}
+        {showComparison && (
+          <div className="mb-8">
+            <h2 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+              <GitCompare className="h-5 w-5 text-primary" />
+              Comparativo Mensal (Últimos 6 Meses)
+            </h2>
+            <Card className="border-border overflow-hidden">
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      <TableHead className="font-bold">Mês</TableHead>
+                      <TableHead className="text-center font-bold">Diamantes</TableHead>
+                      <TableHead className="text-center font-bold">Criadores</TableHead>
+                      <TableHead className="text-center font-bold">Taxa Agend.</TableHead>
+                      <TableHead className="text-center font-bold">Batalhas</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {comparisonData.map((data, index) => (
+                      <TableRow key={data.month} className={index === 0 ? 'bg-primary/5' : ''}>
+                        <TableCell className="font-medium capitalize">{data.month}</TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex flex-col items-center">
+                            <span className="font-bold">{formatCompact(data.diamonds)}</span>
+                            {data.diamondsChange !== undefined && (
+                              <span className={`text-xs ${data.diamondsChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                {data.diamondsChange >= 0 ? '+' : ''}{data.diamondsChange}%
+                              </span>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex flex-col items-center">
+                            <span className="font-bold">{formatNumber(data.creators)}</span>
+                            {data.creatorsChange !== undefined && (
+                              <span className={`text-xs ${data.creatorsChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                {data.creatorsChange >= 0 ? '+' : ''}{data.creatorsChange}%
+                              </span>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex flex-col items-center">
+                            <span className="font-bold">{data.schedulingRate}%</span>
+                            {data.schedulingChange !== undefined && (
+                              <span className={`text-xs ${data.schedulingChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                {data.schedulingChange >= 0 ? '+' : ''}{data.schedulingChange}pp
+                              </span>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex flex-col items-center">
+                            <span className="font-bold">{formatNumber(data.battles)}</span>
+                            {data.battlesChange !== undefined && (
+                              <span className={`text-xs ${data.battlesChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                {data.battlesChange >= 0 ? '+' : ''}{data.battlesChange}%
+                              </span>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* Quick Links */}
         <h2 className="text-lg font-bold text-foreground mb-4">Acessar Dashboards</h2>
         <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
@@ -1173,6 +1425,236 @@ const OverviewDashboard: React.FC = () => {
             {/* Footer */}
             <div className="mt-8 pt-4 border-t border-gray-300 text-center text-xs text-gray-500">
               Gerado em {format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+            </div>
+          </div>
+
+          {/* Consolidated PDF Report */}
+          <div ref={consolidatedReportRef} className="bg-white p-8 w-[800px]" style={{ fontFamily: 'Arial, sans-serif' }}>
+            {/* PDF Header */}
+            <div className="flex items-center justify-between mb-6 pb-4 border-b-2 border-red-600">
+              <img src={curliLogo} alt="Curli" className="h-12 w-auto" />
+              <div className="text-right">
+                <h1 className="text-2xl font-bold text-gray-900">RELATÓRIO CONSOLIDADO</h1>
+                <p className="text-sm text-gray-600 capitalize">{format(currentMonth, 'MMMM yyyy', { locale: ptBR })}</p>
+                <p className="text-xs text-gray-500">Gerado em {format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
+              </div>
+            </div>
+
+            {/* Summary Section */}
+            <div className="bg-gray-100 rounded-lg p-4 mb-6">
+              <h2 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
+                📊 Resumo do Mês
+              </h2>
+              <div className="grid grid-cols-5 gap-3">
+                {metrics.map((metric, index) => (
+                  <div key={index} className="bg-white rounded-lg p-3 text-center shadow-sm">
+                    <p className="text-xs text-gray-600 mb-1 font-medium">{metric.label}</p>
+                    <p className="text-xl font-bold text-gray-900">{metric.value}</p>
+                    {metric.projection && (
+                      <p className="text-xs text-blue-600 mt-1">{metric.projection}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Projections */}
+            <div className="mb-6">
+              <h2 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
+                🎯 Projeções
+              </h2>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                  <p className="text-xs text-purple-700 mb-1 font-medium">Projeção Diamantes</p>
+                  <p className="text-2xl font-bold text-purple-900">{formatNumber(monthlyData?.diamonds.projection || 0)}</p>
+                  <p className="text-xs text-gray-500 mt-1">Baseado em {monthlyData?.diamonds.entries || 0} dias</p>
+                </div>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-xs text-blue-700 mb-1 font-medium">Projeção Criadores</p>
+                  <p className="text-2xl font-bold text-blue-900">{formatNumber(monthlyData?.creators.projection || 0)}</p>
+                  <p className="text-xs text-gray-500 mt-1">Baseado em {monthlyData?.creators.entries || 0} dias</p>
+                </div>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <p className="text-xs text-red-700 mb-1 font-medium">Média Batalhas/Dia</p>
+                  <p className="text-2xl font-bold text-red-900">{monthlyData?.battles.average || 0}</p>
+                  <p className="text-xs text-gray-500 mt-1">Total: {formatNumber(monthlyData?.battles.total || 0)}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Month Comparison */}
+            <div className="mb-6">
+              <h2 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
+                📈 Comparativo Mensal
+              </h2>
+              <div className="border border-gray-200 rounded-lg overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-100">
+                    <tr>
+                      <th className="text-left p-2 font-bold text-gray-700">Mês</th>
+                      <th className="text-center p-2 font-bold text-gray-700">Diamantes</th>
+                      <th className="text-center p-2 font-bold text-gray-700">Criadores</th>
+                      <th className="text-center p-2 font-bold text-gray-700">Agendamento</th>
+                      <th className="text-center p-2 font-bold text-gray-700">Batalhas</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {comparisonData.slice(0, 4).map((data, index) => (
+                      <tr key={data.month} className={index === 0 ? 'bg-yellow-50' : index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                        <td className="p-2 font-medium capitalize">{data.month}</td>
+                        <td className="p-2 text-center">
+                          <span className="font-bold">{formatCompact(data.diamonds)}</span>
+                          {data.diamondsChange !== undefined && (
+                            <span className={`ml-1 text-xs ${data.diamondsChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              ({data.diamondsChange >= 0 ? '+' : ''}{data.diamondsChange}%)
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-2 text-center">
+                          <span className="font-bold">{formatNumber(data.creators)}</span>
+                          {data.creatorsChange !== undefined && (
+                            <span className={`ml-1 text-xs ${data.creatorsChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              ({data.creatorsChange >= 0 ? '+' : ''}{data.creatorsChange}%)
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-2 text-center">
+                          <span className="font-bold">{data.schedulingRate}%</span>
+                          {data.schedulingChange !== undefined && (
+                            <span className={`ml-1 text-xs ${data.schedulingChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              ({data.schedulingChange >= 0 ? '+' : ''}{data.schedulingChange}pp)
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-2 text-center">
+                          <span className="font-bold">{formatNumber(data.battles)}</span>
+                          {data.battlesChange !== undefined && (
+                            <span className={`ml-1 text-xs ${data.battlesChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              ({data.battlesChange >= 0 ? '+' : ''}{data.battlesChange}%)
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Rankings */}
+            <div className="mb-6">
+              <h2 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
+                🏆 Rankings do Mês
+              </h2>
+              <div className="grid grid-cols-3 gap-4">
+                {/* Diamonds Ranking */}
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                  <h3 className="font-bold text-purple-800 mb-2 text-sm flex items-center gap-1">
+                    💎 Top Diamantes
+                  </h3>
+                  {monthlyData?.rankings.diamonds.slice(0, 5).map((item, index) => (
+                    <div key={item.name} className="flex justify-between py-1 text-xs border-b border-purple-200 last:border-0">
+                      <span className="truncate">
+                        <span className="font-bold mr-1">{index + 1}.</span>
+                        {item.name}
+                      </span>
+                      <span className="font-bold text-purple-700 ml-1">{formatCompact(item.value)}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Scheduling Ranking */}
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                  <h3 className="font-bold text-green-800 mb-2 text-sm flex items-center gap-1">
+                    📅 Top Agendamento
+                  </h3>
+                  {monthlyData?.rankings.scheduling.slice(0, 5).map((item, index) => (
+                    <div key={item.name} className="flex justify-between py-1 text-xs border-b border-green-200 last:border-0">
+                      <span className="truncate">
+                        <span className="font-bold mr-1">{index + 1}.</span>
+                        {item.name}
+                      </span>
+                      <span className="font-bold text-green-700 ml-1">{item.value}%</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Battles Ranking */}
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <h3 className="font-bold text-red-800 mb-2 text-sm flex items-center gap-1">
+                    ⚔️ Top Batalhas
+                  </h3>
+                  {monthlyData?.rankings.battles.slice(0, 5).map((item, index) => (
+                    <div key={item.name} className="flex justify-between py-1 text-xs border-b border-red-200 last:border-0">
+                      <span className="truncate">
+                        <span className="font-bold mr-1">{index + 1}.</span>
+                        {item.name}
+                      </span>
+                      <span className="font-bold text-red-700 ml-1">{item.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Scheduling Details */}
+            <div className="mb-6">
+              <h2 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
+                📋 Detalhes de Agendamento
+              </h2>
+              <div className="grid grid-cols-4 gap-3">
+                <div className="bg-gray-50 rounded-lg p-3 text-center">
+                  <p className="text-xs text-gray-600 mb-1">Agendados</p>
+                  <p className="text-lg font-bold text-green-700">{formatNumber(monthlyData?.scheduling.scheduled || 0)}</p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-3 text-center">
+                  <p className="text-xs text-gray-600 mb-1">Total Registros</p>
+                  <p className="text-lg font-bold text-gray-900">{formatNumber(monthlyData?.scheduling.total || 0)}</p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-3 text-center">
+                  <p className="text-xs text-gray-600 mb-1">Taxa Geral</p>
+                  <p className="text-lg font-bold text-blue-700">{monthlyData?.scheduling.rate || 0}%</p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-3 text-center">
+                  <p className="text-xs text-gray-600 mb-1">Dias com Agend.</p>
+                  <p className="text-lg font-bold text-purple-700">{monthlyData?.scheduling.daysWithScheduling || 0}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Battles Details */}
+            <div className="mb-6">
+              <h2 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
+                ⚔️ Detalhes de Batalhas
+              </h2>
+              <div className="grid grid-cols-4 gap-3">
+                <div className="bg-gray-50 rounded-lg p-3 text-center">
+                  <p className="text-xs text-gray-600 mb-1">Total Batalhas</p>
+                  <p className="text-lg font-bold text-red-700">{formatNumber(monthlyData?.battles.total || 0)}</p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-3 text-center">
+                  <p className="text-xs text-gray-600 mb-1">Média/Dia</p>
+                  <p className="text-lg font-bold text-gray-900">{monthlyData?.battles.average || 0}</p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-3 text-center">
+                  <p className="text-xs text-gray-600 mb-1">Taxa de Batalha</p>
+                  <p className="text-lg font-bold text-blue-700">{monthlyData?.battles.battleRate || 0}%</p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-3 text-center">
+                  <p className="text-xs text-gray-600 mb-1">Dias com Batalhas</p>
+                  <p className="text-lg font-bold text-purple-700">{monthlyData?.battles.daysWithBattles || 0}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="mt-6 pt-4 border-t-2 border-red-600 text-center">
+              <p className="text-xs text-gray-500">
+                Curli Agência - Relatório Consolidado Mensal
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                Este relatório foi gerado automaticamente pelo sistema de gestão.
+              </p>
             </div>
           </div>
         </div>
