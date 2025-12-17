@@ -10,7 +10,13 @@ import {
   Trash2,
   Loader2,
   UserSearch,
-  Clock
+  Clock,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  BarChart3,
+  ExternalLink,
+  Trophy
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -31,6 +37,11 @@ interface CreatorsData {
 interface TeamStructure {
   executive: string;
   members: string[];
+}
+
+interface ComparisonData {
+  yesterdayTotal: number;
+  yesterdayTime: string;
 }
 
 const CREATORS_DATA_ID = '00000000-0000-0000-0000-000000000004';
@@ -56,6 +67,7 @@ const CreatorsAnalysisDashboard = () => {
   const [showExecutiveDialog, setShowExecutiveDialog] = useState(false);
   const [showAssociateDialog, setShowAssociateDialog] = useState(false);
   const [isExportingPDF, setIsExportingPDF] = useState(false);
+  const [comparisonData, setComparisonData] = useState<ComparisonData>({ yesterdayTotal: 0, yesterdayTime: '' });
   
   const reportRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -78,10 +90,12 @@ const CreatorsAnalysisDashboard = () => {
             creatorsData?: CreatorsData; 
             teamStructure?: TeamStructure[];
             lastUpdated?: string;
+            comparisonData?: ComparisonData;
           };
           if (parsed.creatorsData) setCreatorsData(parsed.creatorsData);
           if (parsed.teamStructure) setTeamStructure(parsed.teamStructure);
           if (parsed.lastUpdated) setLastUpdated(parsed.lastUpdated);
+          if (parsed.comparisonData) setComparisonData(parsed.comparisonData);
         }
       } catch (error) {
         console.error('Erro ao carregar dados:', error);
@@ -99,7 +113,7 @@ const CreatorsAnalysisDashboard = () => {
     try {
       const payload = {
         id: CREATORS_DATA_ID,
-        data: { creatorsData, teamStructure, lastUpdated: now } as unknown as import('@/integrations/supabase/types').Json,
+        data: { creatorsData, teamStructure, lastUpdated: now, comparisonData } as unknown as import('@/integrations/supabase/types').Json,
         updated_at: now,
       };
       const { error } = await supabase.from('dashboard_data').upsert(payload);
@@ -129,6 +143,36 @@ const CreatorsAnalysisDashboard = () => {
 
   const getGrandTotal = (): number => {
     return teamStructure.reduce((sum, exec) => sum + getExecutiveTotal(exec.members), 0);
+  };
+
+  const getTotalAssociates = (): number => {
+    return teamStructure.reduce((sum, exec) => sum + exec.members.length, 0);
+  };
+
+  const getAveragePerAssociate = (): number => {
+    const total = getTotalAssociates();
+    return total > 0 ? Math.round((getGrandTotal() / total) * 10) / 10 : 0;
+  };
+
+  const getTopPerformer = (): { name: string; count: number; executive: string } | null => {
+    let top: { name: string; count: number; executive: string } | null = null;
+    teamStructure.forEach(exec => {
+      exec.members.forEach(member => {
+        const count = getCreatorCount(member);
+        if (!top || count > top.count) {
+          top = { name: member, count, executive: exec.executive };
+        }
+      });
+    });
+    return top;
+  };
+
+  const getComparisonDiff = (): { diff: number; percentage: number } => {
+    const current = getGrandTotal();
+    const yesterday = comparisonData.yesterdayTotal || 0;
+    const diff = current - yesterday;
+    const percentage = yesterday > 0 ? Math.round((diff / yesterday) * 100) : 0;
+    return { diff, percentage };
   };
 
   const handleAddExecutive = () => {
@@ -248,18 +292,106 @@ const CreatorsAnalysisDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Total Card */}
-        <Card className="mb-4">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-center gap-3">
-              <Users className="h-8 w-8 text-purple-500" />
-              <div className="text-center">
-                <p className="text-sm text-muted-foreground">Total de Criadores</p>
-                <p className="text-3xl font-bold">{getGrandTotal()}</p>
+        {/* Metrics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+          {/* Total Card */}
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <Users className="h-8 w-8 text-purple-500" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Total Atual</p>
+                  <p className="text-2xl font-bold">{getGrandTotal()}</p>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+
+          {/* Yesterday Comparison */}
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex flex-col gap-2">
+                <p className="text-xs text-muted-foreground">Ontem (mesmo horário)</p>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min="0"
+                    value={comparisonData.yesterdayTotal || ''}
+                    onChange={(e) => setComparisonData(prev => ({
+                      ...prev,
+                      yesterdayTotal: parseInt(e.target.value) || 0,
+                      yesterdayTime: format(new Date(), 'HH:mm')
+                    }))}
+                    className="w-20 h-8 text-center font-bold"
+                    placeholder="0"
+                  />
+                  {(() => {
+                    const { diff, percentage } = getComparisonDiff();
+                    if (diff === 0) return <Minus className="h-4 w-4 text-muted-foreground" />;
+                    if (diff > 0) return (
+                      <span className="flex items-center text-green-600 text-sm font-medium">
+                        <TrendingUp className="h-4 w-4 mr-1" />+{diff} ({percentage}%)
+                      </span>
+                    );
+                    return (
+                      <span className="flex items-center text-red-600 text-sm font-medium">
+                        <TrendingDown className="h-4 w-4 mr-1" />{diff} ({percentage}%)
+                      </span>
+                    );
+                  })()}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Average per Associate */}
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <BarChart3 className="h-8 w-8 text-blue-500" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Média por Associado</p>
+                  <p className="text-2xl font-bold">{getAveragePerAssociate()}</p>
+                  <p className="text-xs text-muted-foreground">{getTotalAssociates()} associados</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Top Performer */}
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <Trophy className="h-8 w-8 text-amber-500" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Top Performer</p>
+                  {(() => {
+                    const top = getTopPerformer();
+                    if (!top || top.count === 0) return <p className="text-sm text-muted-foreground">-</p>;
+                    return (
+                      <>
+                        <p className="text-sm font-bold">{top.name}</p>
+                        <p className="text-xs text-muted-foreground">{top.count} criadores</p>
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Quick Links */}
+        <div className="flex gap-2 mb-4 flex-wrap">
+          <Button variant="outline" size="sm" onClick={() => navigate('/graficos')}>
+            <ExternalLink className="h-4 w-4 mr-1" />
+            Ver Gráficos
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => navigate('/overview')}>
+            <ExternalLink className="h-4 w-4 mr-1" />
+            Overview
+          </Button>
+        </div>
 
         {/* Management Buttons */}
         <div className="flex gap-2 mb-4 flex-wrap">
@@ -391,22 +523,60 @@ const CreatorsAnalysisDashboard = () => {
 
         {/* Hidden Report for PDF Export */}
         <div className="fixed -left-[9999px] top-0">
-          <div ref={reportRef} className="bg-white p-6 w-[500px]" style={{ fontFamily: 'Arial, sans-serif' }}>
+          <div ref={reportRef} className="bg-white p-6 w-[550px]" style={{ fontFamily: 'Arial, sans-serif' }}>
             {/* Header */}
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-4">
               <img src={curliLogo} alt="Curli Logo" className="h-8 w-auto" />
               <div className="text-right">
                 <p className="text-xs text-gray-500">{format(new Date(), "dd/MM/yyyy HH:mm", { locale: ptBR })}</p>
               </div>
             </div>
 
-            {/* Title + Total */}
-            <div className="text-center mb-6">
-              <h1 className="text-xl font-bold text-gray-900 mb-1">CRIADORES EM ANÁLISE</h1>
-              <p className="text-3xl font-bold text-purple-700">{getGrandTotal()}</p>
+            {/* Title */}
+            <div className="text-center mb-4">
+              <h1 className="text-xl font-bold text-gray-900">CRIADORES EM ANÁLISE</h1>
             </div>
 
-            {/* Simple Table */}
+            {/* Metrics Summary */}
+            <div className="grid grid-cols-4 gap-2 mb-4">
+              <div className="bg-purple-50 p-2 rounded text-center">
+                <p className="text-xs text-gray-600">Total Atual</p>
+                <p className="text-xl font-bold text-purple-700">{getGrandTotal()}</p>
+              </div>
+              <div className="bg-gray-50 p-2 rounded text-center">
+                <p className="text-xs text-gray-600">Ontem</p>
+                <p className="text-xl font-bold text-gray-700">{comparisonData.yesterdayTotal || '-'}</p>
+              </div>
+              <div className={`p-2 rounded text-center ${getComparisonDiff().diff >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
+                <p className="text-xs text-gray-600">Variação</p>
+                <p className={`text-xl font-bold ${getComparisonDiff().diff >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                  {getComparisonDiff().diff >= 0 ? '+' : ''}{getComparisonDiff().diff}
+                </p>
+              </div>
+              <div className="bg-blue-50 p-2 rounded text-center">
+                <p className="text-xs text-gray-600">Média/Assoc.</p>
+                <p className="text-xl font-bold text-blue-700">{getAveragePerAssociate()}</p>
+              </div>
+            </div>
+
+            {/* Top Performer */}
+            {(() => {
+              const top = getTopPerformer();
+              if (top && top.count > 0) {
+                return (
+                  <div className="bg-amber-50 p-2 rounded mb-4 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-amber-500">🏆</span>
+                      <span className="text-sm font-bold text-amber-800">Top Performer: {top.name}</span>
+                    </div>
+                    <span className="text-sm font-bold text-amber-700">{top.count} criadores</span>
+                  </div>
+                );
+              }
+              return null;
+            })()}
+
+            {/* Table */}
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b-2 border-gray-300">
@@ -426,10 +596,14 @@ const CreatorsAnalysisDashboard = () => {
                       </tr>
                       {exec.members.map(member => {
                         const count = getCreatorCount(member);
+                        const isTop = getTopPerformer()?.name === member && count > 0;
                         return (
-                          <tr key={member} className="border-b border-gray-200">
-                            <td className="py-1 pl-4 text-gray-700">{member}</td>
-                            <td className="py-1 text-right text-gray-700">{count}</td>
+                          <tr key={member} className={`border-b border-gray-200 ${isTop ? 'bg-amber-50' : ''}`}>
+                            <td className="py-1 pl-4 text-gray-700">
+                              {isTop && <span className="mr-1">⭐</span>}
+                              {member}
+                            </td>
+                            <td className={`py-1 text-right ${isTop ? 'font-bold text-amber-700' : 'text-gray-700'}`}>{count}</td>
                           </tr>
                         );
                       })}
@@ -437,11 +611,18 @@ const CreatorsAnalysisDashboard = () => {
                   );
                 })}
                 <tr className="border-t-2 border-gray-400">
-                  <td className="py-2 font-bold text-gray-900">TOTAL</td>
+                  <td className="py-2 font-bold text-gray-900">TOTAL GERAL ({getTotalAssociates()} associados)</td>
                   <td className="py-2 text-right font-bold text-xl text-purple-700">{getGrandTotal()}</td>
                 </tr>
               </tbody>
             </table>
+
+            {/* Footer */}
+            <div className="mt-4 pt-2 border-t border-gray-200 text-center">
+              <p className="text-xs text-gray-400">
+                Relatório gerado automaticamente • {format(new Date(), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+              </p>
+            </div>
           </div>
         </div>
       </main>
