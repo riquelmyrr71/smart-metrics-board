@@ -12,6 +12,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import curliLogo from '@/assets/logo-curli.png';
 
 // Data IDs from other dashboards
+const DASHBOARD_ID = '00000000-0000-0000-0000-000000000001';
 const CHART_DATA_ID = '00000000-0000-0000-0000-000000000002';
 const BATTLES_DATA_ID = '00000000-0000-0000-0000-000000000003';
 const CREATORS_DATA_ID = '00000000-0000-0000-0000-000000000004';
@@ -81,13 +82,15 @@ const OverviewDashboard: React.FC = () => {
     setLoading(true);
     try {
       // Load all data in parallel with correct UUIDs
-      const [chartsResult, schedulingResult, battlesResult, creatorsAnalysisResult] = await Promise.all([
+      const [mainDashboardResult, chartsResult, schedulingResult, battlesResult, creatorsAnalysisResult] = await Promise.all([
+        supabase.from('dashboard_data').select('data, updated_at').eq('id', DASHBOARD_ID).maybeSingle(),
         supabase.from('dashboard_data').select('data, updated_at').eq('id', CHART_DATA_ID).maybeSingle(),
         supabase.from('live_schedules').select('*').gte('schedule_date', format(monthStart, 'yyyy-MM-dd')).lte('schedule_date', format(monthEnd, 'yyyy-MM-dd')),
         supabase.from('dashboard_data').select('data, updated_at').eq('id', BATTLES_DATA_ID).maybeSingle(),
         supabase.from('dashboard_data').select('data, updated_at').eq('id', CREATORS_DATA_ID).maybeSingle()
       ]);
 
+      const mainDashboardData = mainDashboardResult.data;
       const chartsData = chartsResult.data;
       const schedulingData = schedulingResult.data;
       const battlesData = battlesResult.data;
@@ -265,6 +268,50 @@ const OverviewDashboard: React.FC = () => {
         .sort((a, b) => b.value - a.value)
         .slice(0, 5);
 
+      // Build diamonds ranking from main dashboard
+      const diamondsRanking: RankingItem[] = [];
+      if (mainDashboardData?.data) {
+        const dashData = mainDashboardData.data as any;
+        const rows = dashData.rows || [];
+        
+        // Parse Brazilian number format
+        const parseNumber = (value: any): number => {
+          if (typeof value === 'number') return value;
+          if (typeof value === 'string') {
+            // Remove dots (thousand separators) and replace comma with dot (decimal separator)
+            return parseFloat(value.replace(/\./g, '').replace(',', '.')) || 0;
+          }
+          return 0;
+        };
+        
+        rows.forEach((row: any) => {
+          if (row.type === 'data' && row.cells?.diamantes_atuais?.value?.raw !== undefined) {
+            const name = String(row.cells?.team?.value?.raw || '');
+            const diamonds = parseNumber(row.cells?.diamantes_atuais?.value?.raw);
+            
+            // Find executive from section header
+            let executive = '';
+            const sectionId = row.sectionId;
+            if (sectionId) {
+              const sectionHeader = rows.find((r: any) => 
+                r.type === 'section-header' && r.sectionId === sectionId
+              );
+              if (sectionHeader?.cells?.team?.value?.raw) {
+                executive = String(sectionHeader.cells.team.value.raw);
+              }
+            }
+            
+            if (name && diamonds > 0) {
+              diamondsRanking.push({ name, value: diamonds, executive });
+            }
+          }
+        });
+        
+        // Sort by diamonds descending and take top 5
+        diamondsRanking.sort((a, b) => b.value - a.value);
+        diamondsRanking.splice(5);
+      }
+
       // Convert daily map to sorted array
       const dailyData = Object.values(dailyMap).sort((a, b) => a.date.localeCompare(b.date));
 
@@ -287,7 +334,7 @@ const OverviewDashboard: React.FC = () => {
         creatorsAnalysis: { total: creatorsAnalysisTotal, lastUpdated: creatorsLastUpdated },
         dailyData,
         rankings: {
-          diamonds: [],
+          diamonds: diamondsRanking,
           creators: [],
           scheduling: schedulingRanking,
           battles: battlesRanking
@@ -582,7 +629,7 @@ const OverviewDashboard: React.FC = () => {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={200}>
-                <ComposedChart data={filteredDailyData}>
+                <ComposedChart data={monthlyData?.dailyData || []}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                   <XAxis dataKey="day" tick={{ fontSize: 10 }} stroke="#6b7280" />
                   <YAxis tick={{ fontSize: 10 }} stroke="#6b7280" />
@@ -656,7 +703,41 @@ const OverviewDashboard: React.FC = () => {
           Rankings do Mês
         </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* Diamonds Ranking */}
+          <Card className="border-border">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Gem className="h-4 w-4 text-purple-600" />
+                Top Diamantes
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {monthlyData?.rankings.diamonds.length ? (
+                <div className="space-y-2">
+                  {monthlyData.rankings.diamonds.map((item, index) => (
+                    <div key={item.name} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                      <div className="flex items-center gap-3">
+                        <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                          index === 0 ? 'bg-yellow-100 text-yellow-700' :
+                          index === 1 ? 'bg-gray-100 text-gray-700' :
+                          index === 2 ? 'bg-orange-100 text-orange-700' :
+                          'bg-muted text-muted-foreground'
+                        }`}>
+                          {index + 1}
+                        </span>
+                        <span className="font-medium text-foreground text-sm">{item.name}</span>
+                      </div>
+                      <span className="font-bold text-purple-600 text-sm">{formatCompact(item.value)}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted-foreground text-sm">Sem dados disponíveis</p>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Scheduling Ranking */}
           <Card className="border-border">
             <CardHeader className="pb-3">
@@ -679,7 +760,7 @@ const OverviewDashboard: React.FC = () => {
                         }`}>
                           {index + 1}
                         </span>
-                        <span className="font-medium text-foreground">{item.name}</span>
+                        <span className="font-medium text-foreground text-sm">{item.name}</span>
                       </div>
                       <span className="font-bold text-green-600">{item.value}%</span>
                     </div>
@@ -713,7 +794,7 @@ const OverviewDashboard: React.FC = () => {
                         }`}>
                           {index + 1}
                         </span>
-                        <span className="font-medium text-foreground">{item.name}</span>
+                        <span className="font-medium text-foreground text-sm">{item.name}</span>
                       </div>
                       <span className="font-bold text-red-600">{item.value}</span>
                     </div>
