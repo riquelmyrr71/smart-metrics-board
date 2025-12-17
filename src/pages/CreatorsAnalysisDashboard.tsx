@@ -391,54 +391,57 @@ const CreatorsAnalysisDashboard = () => {
 
         {/* Hidden Report for PDF Export */}
         <div className="fixed -left-[9999px] top-0">
-          <div ref={reportRef} className="bg-[#fafafa] p-8 w-[600px]" style={{ fontFamily: 'Arial, sans-serif' }}>
+          <div ref={reportRef} className="bg-white p-6 w-[500px]" style={{ fontFamily: 'Arial, sans-serif' }}>
             {/* Header */}
-            <div className="flex items-center justify-between mb-4 pb-3 border-b-2 border-gray-300">
-              <img src={curliLogo} alt="Curli Logo" className="h-10 w-auto" />
+            <div className="flex items-center justify-between mb-6">
+              <img src={curliLogo} alt="Curli Logo" className="h-8 w-auto" />
               <div className="text-right">
-                <h1 className="text-lg font-bold text-gray-800">📊 PAINEL DE CRIADORES EM ANÁLISE</h1>
-                <p className="text-sm text-gray-600">{format(new Date(), "dd/MM/yyyy HH:mm", { locale: ptBR })}</p>
+                <p className="text-xs text-gray-500">{format(new Date(), "dd/MM/yyyy HH:mm", { locale: ptBR })}</p>
               </div>
             </div>
 
-            <div className="border-b border-gray-400 mb-4"></div>
-
-            {/* Summary */}
-            <div className="mb-4 p-3 bg-purple-100 rounded">
-              <p className="text-lg font-bold text-gray-800">📈 RESUMO GERAL:</p>
-              <p className="text-xl font-bold text-purple-800 ml-4">Total de Criadores: {getGrandTotal()}</p>
+            {/* Title + Total */}
+            <div className="text-center mb-6">
+              <h1 className="text-xl font-bold text-gray-900 mb-1">CRIADORES EM ANÁLISE</h1>
+              <p className="text-3xl font-bold text-purple-700">{getGrandTotal()}</p>
             </div>
 
-            <div className="border-b border-gray-400 mb-4"></div>
-
-            {/* Analysis by Executive */}
-            <div>
-              <h2 className="text-base font-bold text-gray-800 mb-3">👥 ANÁLISE POR EXECUTIVO:</h2>
-              
-              {teamStructure.map((exec) => {
-                const execTotal = getExecutiveTotal(exec.members);
-                
-                return (
-                  <div key={exec.executive} className="mb-3 ml-2">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-red-500">🔴</span>
-                      <span className="font-bold text-gray-800">{exec.executive}</span>
-                    </div>
-                    <p className="ml-6 text-sm text-gray-700 mb-1">Total: {execTotal} criadores</p>
-                    <div className="ml-10 space-y-0.5">
+            {/* Simple Table */}
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b-2 border-gray-300">
+                  <th className="text-left py-2 font-bold text-gray-800">Executivo / Associado</th>
+                  <th className="text-right py-2 font-bold text-gray-800 w-16">Qtd</th>
+                </tr>
+              </thead>
+              <tbody>
+                {teamStructure.map((exec) => {
+                  const execTotal = getExecutiveTotal(exec.members);
+                  
+                  return (
+                    <React.Fragment key={exec.executive}>
+                      <tr className="bg-gray-100">
+                        <td className="py-1.5 font-bold text-gray-900">{exec.executive}</td>
+                        <td className="py-1.5 text-right font-bold text-gray-900">{execTotal}</td>
+                      </tr>
                       {exec.members.map(member => {
                         const count = getCreatorCount(member);
                         return (
-                          <div key={member} className="text-sm text-gray-600">
-                            <span className="font-medium">{member}:</span> {count}
-                          </div>
+                          <tr key={member} className="border-b border-gray-200">
+                            <td className="py-1 pl-4 text-gray-700">{member}</td>
+                            <td className="py-1 text-right text-gray-700">{count}</td>
+                          </tr>
                         );
                       })}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                    </React.Fragment>
+                  );
+                })}
+                <tr className="border-t-2 border-gray-400">
+                  <td className="py-2 font-bold text-gray-900">TOTAL</td>
+                  <td className="py-2 text-right font-bold text-xl text-purple-700">{getGrandTotal()}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </main>
