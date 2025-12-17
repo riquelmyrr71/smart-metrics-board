@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Download, Calendar, Trophy, TrendingUp, Users, Gem, Swords, Radio, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Download, Calendar, Trophy, TrendingUp, Users, Gem, Swords, Radio, ChevronLeft, ChevronRight, Target, ArrowUpRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
-import { format, startOfMonth, endOfMonth, getDaysInMonth } from 'date-fns';
+import { format, startOfMonth, endOfMonth, getDaysInMonth, eachDayOfInterval, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, ComposedChart, Bar } from 'recharts';
 import curliLogo from '@/assets/logo-curli.png';
 
 interface MetricSummary {
@@ -15,6 +16,7 @@ interface MetricSummary {
   value: string | number;
   icon: React.ReactNode;
   color: string;
+  projection?: string;
 }
 
 interface RankingItem {
@@ -23,12 +25,24 @@ interface RankingItem {
   executive?: string;
 }
 
+interface DailyChartData {
+  date: string;
+  day: string;
+  diamonds: number;
+  creators: number;
+  scheduling: number;
+  battles: number;
+  diamondsAccum: number;
+  creatorsAccum: number;
+}
+
 interface MonthlyData {
-  diamonds: { total: number; entries: number };
-  creators: { total: number; entries: number };
+  diamonds: { total: number; entries: number; projection: number };
+  creators: { total: number; entries: number; projection: number };
   scheduling: { scheduled: number; total: number; rate: number };
-  battles: { total: number; entries: number };
+  battles: { total: number; entries: number; average: number };
   creatorsAnalysis: { total: number };
+  dailyData: DailyChartData[];
   rankings: {
     diamonds: RankingItem[];
     creators: RankingItem[];
@@ -46,6 +60,7 @@ const OverviewDashboard: React.FC = () => {
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
+  const totalDaysInMonth = getDaysInMonth(currentMonth);
 
   useEffect(() => {
     loadMonthlyData();
@@ -54,49 +69,52 @@ const OverviewDashboard: React.FC = () => {
   const loadMonthlyData = async () => {
     setLoading(true);
     try {
-      // Load charts data (diamonds and creators)
-      const { data: chartsData } = await supabase
-        .from('dashboard_data')
-        .select('data')
-        .eq('id', 'charts-daily-data')
-        .single();
+      // Load all data in parallel
+      const [chartsResult, schedulingResult, battlesResult, creatorsAnalysisResult] = await Promise.all([
+        supabase.from('dashboard_data').select('data').eq('id', 'charts-daily-data').single(),
+        supabase.from('live_schedules').select('*').gte('schedule_date', format(monthStart, 'yyyy-MM-dd')).lte('schedule_date', format(monthEnd, 'yyyy-MM-dd')),
+        supabase.from('dashboard_data').select('data').eq('id', 'battles-dashboard-data').single(),
+        supabase.from('dashboard_data').select('data').eq('id', 'creators-analysis-data').single()
+      ]);
 
-      // Load scheduling data
-      const { data: schedulingData } = await supabase
-        .from('live_schedules')
-        .select('*')
-        .gte('schedule_date', format(monthStart, 'yyyy-MM-dd'))
-        .lte('schedule_date', format(monthEnd, 'yyyy-MM-dd'));
+      const chartsData = chartsResult.data;
+      const schedulingData = schedulingResult.data;
+      const battlesData = battlesResult.data;
+      const creatorsAnalysisData = creatorsAnalysisResult.data;
 
-      // Load battles data
-      const { data: battlesData } = await supabase
-        .from('dashboard_data')
-        .select('data')
-        .eq('id', 'battles-dashboard-data')
-        .single();
+      // Initialize daily data map
+      const dailyMap: Record<string, DailyChartData> = {};
+      const monthKey = format(currentMonth, 'yyyy-MM');
+      
+      // Initialize all days of the month
+      eachDayOfInterval({ start: monthStart, end: monthEnd }).forEach(day => {
+        const dateStr = format(day, 'yyyy-MM-dd');
+        dailyMap[dateStr] = {
+          date: dateStr,
+          day: format(day, 'dd'),
+          diamonds: 0,
+          creators: 0,
+          scheduling: 0,
+          battles: 0,
+          diamondsAccum: 0,
+          creatorsAccum: 0
+        };
+      });
 
-      // Load creators analysis
-      const { data: creatorsAnalysisData } = await supabase
-        .from('dashboard_data')
-        .select('data')
-        .eq('id', 'creators-analysis-data')
-        .single();
-
-      // Process charts data
+      // Process charts data (diamonds and creators)
       let diamondsTotal = 0;
       let diamondsEntries = 0;
       let creatorsTotal = 0;
       let creatorsEntries = 0;
-      const diamondsByMember: Record<string, number> = {};
-      const creatorsByMember: Record<string, number> = {};
 
       if (chartsData?.data) {
         const data = chartsData.data as any;
         const entries = data.entries || [];
-        const monthKey = format(currentMonth, 'yyyy-MM');
         
         entries.forEach((entry: any) => {
-          if (entry.date?.startsWith(monthKey)) {
+          if (entry.date?.startsWith(monthKey) && dailyMap[entry.date]) {
+            dailyMap[entry.date].diamonds = entry.diamonds || 0;
+            dailyMap[entry.date].creators = entry.creators || 0;
             diamondsTotal += entry.diamonds || 0;
             creatorsTotal += entry.creators || 0;
             if (entry.diamonds > 0) diamondsEntries++;
@@ -105,22 +123,43 @@ const OverviewDashboard: React.FC = () => {
         });
       }
 
+      // Calculate accumulated values
+      let diamondsAccum = 0;
+      let creatorsAccum = 0;
+      Object.keys(dailyMap).sort().forEach(date => {
+        diamondsAccum += dailyMap[date].diamonds;
+        creatorsAccum += dailyMap[date].creators;
+        dailyMap[date].diamondsAccum = diamondsAccum;
+        dailyMap[date].creatorsAccum = creatorsAccum;
+      });
+
       // Process scheduling data
       let scheduledCount = 0;
       let totalSchedules = 0;
       const schedulingByMember: Record<string, { scheduled: number; total: number; executive: string }> = {};
+      const schedulingByDay: Record<string, number> = {};
 
       if (schedulingData) {
         schedulingData.forEach((schedule: any) => {
           const member = schedule.member_name;
+          const date = schedule.schedule_date;
+          
           if (!schedulingByMember[member]) {
             schedulingByMember[member] = { scheduled: 0, total: 0, executive: schedule.executive_name };
           }
           schedulingByMember[member].total++;
           totalSchedules++;
+          
           if (schedule.is_scheduled) {
             schedulingByMember[member].scheduled++;
             scheduledCount++;
+            schedulingByDay[date] = (schedulingByDay[date] || 0) + 1;
+          }
+          
+          if (dailyMap[date]) {
+            const totalForDay = schedulingData.filter((s: any) => s.schedule_date === date).length;
+            const scheduledForDay = schedulingData.filter((s: any) => s.schedule_date === date && s.is_scheduled).length;
+            dailyMap[date].scheduling = totalForDay > 0 ? Math.round((scheduledForDay / totalForDay) * 100) : 0;
           }
         });
       }
@@ -132,19 +171,24 @@ const OverviewDashboard: React.FC = () => {
 
       if (battlesData?.data) {
         const data = battlesData.data as any;
-        const monthKey = format(currentMonth, 'yyyy-MM');
         
         if (data.battleCounts) {
           Object.entries(data.battleCounts).forEach(([key, value]: [string, any]) => {
             if (key.startsWith(monthKey)) {
               const parts = key.split('_');
+              const dateStr = parts[0];
               const member = parts.slice(1).join('_');
+              
               if (!battlesByMember[member]) {
                 battlesByMember[member] = { total: 0, executive: '' };
               }
               battlesByMember[member].total += value as number;
               battlesTotal += value as number;
               if (value > 0) battlesEntries++;
+              
+              if (dailyMap[dateStr]) {
+                dailyMap[dateStr].battles += value as number;
+              }
             }
           });
         }
@@ -160,6 +204,17 @@ const OverviewDashboard: React.FC = () => {
           });
         }
       }
+
+      // Calculate projections
+      const diamondsProjection = diamondsEntries > 0 
+        ? Math.round((diamondsTotal / diamondsEntries) * totalDaysInMonth) 
+        : 0;
+      const creatorsProjection = creatorsEntries > 0 
+        ? Math.round((creatorsTotal / creatorsEntries) * totalDaysInMonth) 
+        : 0;
+      const battlesAverage = battlesEntries > 0 
+        ? Math.round(battlesTotal / battlesEntries) 
+        : 0;
 
       // Build rankings
       const schedulingRanking: RankingItem[] = Object.entries(schedulingByMember)
@@ -180,16 +235,20 @@ const OverviewDashboard: React.FC = () => {
         .sort((a, b) => b.value - a.value)
         .slice(0, 5);
 
+      // Convert daily map to sorted array
+      const dailyData = Object.values(dailyMap).sort((a, b) => a.date.localeCompare(b.date));
+
       setMonthlyData({
-        diamonds: { total: diamondsTotal, entries: diamondsEntries },
-        creators: { total: creatorsTotal, entries: creatorsEntries },
+        diamonds: { total: diamondsTotal, entries: diamondsEntries, projection: diamondsProjection },
+        creators: { total: creatorsTotal, entries: creatorsEntries, projection: creatorsProjection },
         scheduling: { 
           scheduled: scheduledCount, 
           total: totalSchedules, 
           rate: totalSchedules > 0 ? Math.round((scheduledCount / totalSchedules) * 100) : 0 
         },
-        battles: { total: battlesTotal, entries: battlesEntries },
+        battles: { total: battlesTotal, entries: battlesEntries, average: battlesAverage },
         creatorsAnalysis: { total: creatorsAnalysisTotal },
+        dailyData,
         rankings: {
           diamonds: [],
           creators: [],
@@ -241,18 +300,26 @@ const OverviewDashboard: React.FC = () => {
     return num.toLocaleString('pt-BR');
   };
 
+  const formatCompact = (num: number) => {
+    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+    if (num >= 1000) return `${(num / 1000).toFixed(0)}K`;
+    return num.toString();
+  };
+
   const metrics: MetricSummary[] = monthlyData ? [
     { 
       label: 'Diamantes', 
       value: formatNumber(monthlyData.diamonds.total), 
       icon: <Gem className="h-5 w-5" />,
-      color: 'bg-purple-100 text-purple-700'
+      color: 'bg-purple-100 text-purple-700',
+      projection: `Proj: ${formatCompact(monthlyData.diamonds.projection)}`
     },
     { 
       label: 'Criadores Entrada', 
       value: formatNumber(monthlyData.creators.total), 
       icon: <Users className="h-5 w-5" />,
-      color: 'bg-blue-100 text-blue-700'
+      color: 'bg-blue-100 text-blue-700',
+      projection: `Proj: ${formatNumber(monthlyData.creators.projection)}`
     },
     { 
       label: 'Taxa Agendamento', 
@@ -264,7 +331,8 @@ const OverviewDashboard: React.FC = () => {
       label: 'Batalhas', 
       value: formatNumber(monthlyData.battles.total), 
       icon: <Swords className="h-5 w-5" />,
-      color: 'bg-red-100 text-red-700'
+      color: 'bg-red-100 text-red-700',
+      projection: `Média: ${monthlyData.battles.average}/dia`
     },
     { 
       label: 'Criadores Análise', 
@@ -338,9 +406,202 @@ const OverviewDashboard: React.FC = () => {
                   <span className="text-xs font-medium">{metric.label}</span>
                 </div>
                 <p className="text-2xl font-bold text-foreground">{metric.value}</p>
+                {metric.projection && (
+                  <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                    <ArrowUpRight className="h-3 w-3" />
+                    {metric.projection}
+                  </p>
+                )}
               </CardContent>
             </Card>
           ))}
+        </div>
+
+        {/* Evolution Charts */}
+        <h2 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+          <TrendingUp className="h-5 w-5 text-primary" />
+          Evolução Mensal
+        </h2>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Diamonds Evolution Chart */}
+          <Card className="border-border">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Gem className="h-4 w-4 text-purple-600" />
+                Diamantes Acumulados
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={200}>
+                <AreaChart data={monthlyData?.dailyData || []}>
+                  <defs>
+                    <linearGradient id="diamondsGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#9333ea" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#9333ea" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="day" tick={{ fontSize: 10 }} stroke="#6b7280" />
+                  <YAxis tick={{ fontSize: 10 }} stroke="#6b7280" tickFormatter={formatCompact} />
+                  <Tooltip 
+                    formatter={(value: number) => [formatNumber(value), 'Diamantes']}
+                    labelFormatter={(label) => `Dia ${label}`}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="diamondsAccum" 
+                    stroke="#9333ea" 
+                    fill="url(#diamondsGradient)"
+                    strokeWidth={2}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Creators Evolution Chart */}
+          <Card className="border-border">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Users className="h-4 w-4 text-blue-600" />
+                Criadores Acumulados
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={200}>
+                <AreaChart data={monthlyData?.dailyData || []}>
+                  <defs>
+                    <linearGradient id="creatorsGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#2563eb" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="day" tick={{ fontSize: 10 }} stroke="#6b7280" />
+                  <YAxis tick={{ fontSize: 10 }} stroke="#6b7280" />
+                  <Tooltip 
+                    formatter={(value: number) => [formatNumber(value), 'Criadores']}
+                    labelFormatter={(label) => `Dia ${label}`}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="creatorsAccum" 
+                    stroke="#2563eb" 
+                    fill="url(#creatorsGradient)"
+                    strokeWidth={2}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Daily Metrics Combined Chart */}
+          <Card className="border-border">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Radio className="h-4 w-4 text-green-600" />
+                Taxa de Agendamento Diária (%)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={200}>
+                <LineChart data={monthlyData?.dailyData || []}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="day" tick={{ fontSize: 10 }} stroke="#6b7280" />
+                  <YAxis tick={{ fontSize: 10 }} stroke="#6b7280" domain={[0, 100]} />
+                  <Tooltip 
+                    formatter={(value: number) => [`${value}%`, 'Taxa']}
+                    labelFormatter={(label) => `Dia ${label}`}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="scheduling" 
+                    stroke="#16a34a" 
+                    strokeWidth={2}
+                    dot={{ fill: '#16a34a', r: 2 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Battles Daily Chart */}
+          <Card className="border-border">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Swords className="h-4 w-4 text-red-600" />
+                Batalhas por Dia
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={200}>
+                <ComposedChart data={monthlyData?.dailyData || []}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="day" tick={{ fontSize: 10 }} stroke="#6b7280" />
+                  <YAxis tick={{ fontSize: 10 }} stroke="#6b7280" />
+                  <Tooltip 
+                    formatter={(value: number) => [formatNumber(value), 'Batalhas']}
+                    labelFormatter={(label) => `Dia ${label}`}
+                  />
+                  <Bar dataKey="battles" fill="#dc2626" radius={[2, 2, 0, 0]} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Projections Section */}
+        <h2 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+          <Target className="h-5 w-5 text-primary" />
+          Projeções do Mês
+        </h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <Card className="border-border bg-gradient-to-br from-purple-50 to-white dark:from-purple-950/20 dark:to-card">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Gem className="h-4 w-4 text-purple-600" />
+                <span className="text-sm font-medium text-muted-foreground">Projeção Diamantes</span>
+              </div>
+              <p className="text-2xl font-bold text-purple-700 dark:text-purple-400">
+                {formatNumber(monthlyData?.diamonds.projection || 0)}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Baseado em {monthlyData?.diamonds.entries || 0} dias com dados
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border bg-gradient-to-br from-blue-50 to-white dark:from-blue-950/20 dark:to-card">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Users className="h-4 w-4 text-blue-600" />
+                <span className="text-sm font-medium text-muted-foreground">Projeção Criadores</span>
+              </div>
+              <p className="text-2xl font-bold text-blue-700 dark:text-blue-400">
+                {formatNumber(monthlyData?.creators.projection || 0)}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Baseado em {monthlyData?.creators.entries || 0} dias com dados
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border bg-gradient-to-br from-red-50 to-white dark:from-red-950/20 dark:to-card">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Swords className="h-4 w-4 text-red-600" />
+                <span className="text-sm font-medium text-muted-foreground">Média Batalhas/Dia</span>
+              </div>
+              <p className="text-2xl font-bold text-red-700 dark:text-red-400">
+                {monthlyData?.battles.average || 0}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Total: {formatNumber(monthlyData?.battles.total || 0)} batalhas
+              </p>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Rankings Section */}
@@ -477,22 +738,42 @@ const OverviewDashboard: React.FC = () => {
             </div>
 
             {/* Metrics Grid */}
-            <div className="grid grid-cols-5 gap-4 mb-8">
+            <div className="grid grid-cols-5 gap-3 mb-6">
               {metrics.map((metric, index) => (
-                <div key={index} className="bg-gray-50 rounded-lg p-4 text-center">
+                <div key={index} className="bg-gray-50 rounded-lg p-3 text-center">
                   <p className="text-xs text-gray-600 mb-1">{metric.label}</p>
-                  <p className="text-xl font-bold text-gray-900">{metric.value}</p>
+                  <p className="text-lg font-bold text-gray-900">{metric.value}</p>
+                  {metric.projection && (
+                    <p className="text-xs text-gray-500">{metric.projection}</p>
+                  )}
                 </div>
               ))}
             </div>
 
+            {/* Projections */}
+            <h2 className="text-base font-bold text-gray-900 mb-3">Projeções</h2>
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="bg-purple-50 rounded-lg p-3">
+                <p className="text-xs text-purple-700 mb-1">Projeção Diamantes</p>
+                <p className="text-xl font-bold text-purple-900">{formatNumber(monthlyData?.diamonds.projection || 0)}</p>
+              </div>
+              <div className="bg-blue-50 rounded-lg p-3">
+                <p className="text-xs text-blue-700 mb-1">Projeção Criadores</p>
+                <p className="text-xl font-bold text-blue-900">{formatNumber(monthlyData?.creators.projection || 0)}</p>
+              </div>
+              <div className="bg-red-50 rounded-lg p-3">
+                <p className="text-xs text-red-700 mb-1">Média Batalhas/Dia</p>
+                <p className="text-xl font-bold text-red-900">{monthlyData?.battles.average || 0}</p>
+              </div>
+            </div>
+
             {/* Rankings */}
-            <h2 className="text-lg font-bold text-gray-900 mb-4">Rankings do Mês</h2>
+            <h2 className="text-base font-bold text-gray-900 mb-3">Rankings do Mês</h2>
             
             <div className="grid grid-cols-2 gap-6">
               {/* Scheduling Ranking */}
               <div className="bg-gray-50 rounded-lg p-4">
-                <h3 className="font-bold text-gray-800 mb-3">Top Agendamento</h3>
+                <h3 className="font-bold text-gray-800 mb-3 text-sm">Top Agendamento</h3>
                 {monthlyData?.rankings.scheduling.map((item, index) => (
                   <div key={item.name} className="flex justify-between py-1.5 border-b border-gray-200 last:border-0">
                     <span className="text-sm">
@@ -506,7 +787,7 @@ const OverviewDashboard: React.FC = () => {
 
               {/* Battles Ranking */}
               <div className="bg-gray-50 rounded-lg p-4">
-                <h3 className="font-bold text-gray-800 mb-3">Top Batalhas</h3>
+                <h3 className="font-bold text-gray-800 mb-3 text-sm">Top Batalhas</h3>
                 {monthlyData?.rankings.battles.map((item, index) => (
                   <div key={item.name} className="flex justify-between py-1.5 border-b border-gray-200 last:border-0">
                     <span className="text-sm">
