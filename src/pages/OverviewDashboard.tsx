@@ -1,15 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Download, Calendar, Trophy, TrendingUp, Users, Gem, Swords, Radio, ChevronLeft, ChevronRight, Target, ArrowUpRight } from 'lucide-react';
+import { Download, Calendar, Trophy, TrendingUp, Users, Gem, Swords, Radio, ChevronLeft, ChevronRight, Target, ArrowUpRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
-import { format, startOfMonth, endOfMonth, getDaysInMonth, eachDayOfInterval, parseISO } from 'date-fns';
+import { format, startOfMonth, endOfMonth, getDaysInMonth, eachDayOfInterval, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, ComposedChart, Bar } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, ComposedChart, Bar } from 'recharts';
 import curliLogo from '@/assets/logo-curli.png';
+
+// Data IDs from other dashboards
+const CHART_DATA_ID = '00000000-0000-0000-0000-000000000002';
+const BATTLES_DATA_ID = '00000000-0000-0000-0000-000000000003';
+const CREATORS_DATA_ID = '00000000-0000-0000-0000-000000000004';
 
 interface MetricSummary {
   label: string;
@@ -17,6 +22,7 @@ interface MetricSummary {
   icon: React.ReactNode;
   color: string;
   projection?: string;
+  subtext?: string;
 }
 
 interface RankingItem {
@@ -39,9 +45,9 @@ interface DailyChartData {
 interface MonthlyData {
   diamonds: { total: number; entries: number; projection: number };
   creators: { total: number; entries: number; projection: number };
-  scheduling: { scheduled: number; total: number; rate: number };
-  battles: { total: number; entries: number; average: number };
-  creatorsAnalysis: { total: number };
+  scheduling: { scheduled: number; total: number; rate: number; daysWithScheduling: number };
+  battles: { total: number; entries: number; average: number; daysWithBattles: number; battleRate: number };
+  creatorsAnalysis: { total: number; lastUpdated: string | null };
   dailyData: DailyChartData[];
   rankings: {
     diamonds: RankingItem[];
@@ -61,6 +67,11 @@ const OverviewDashboard: React.FC = () => {
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
   const totalDaysInMonth = getDaysInMonth(currentMonth);
+  const today = new Date();
+  const daysElapsed = Math.min(
+    differenceInDays(today, monthStart) + 1,
+    totalDaysInMonth
+  );
 
   useEffect(() => {
     loadMonthlyData();
@@ -69,12 +80,12 @@ const OverviewDashboard: React.FC = () => {
   const loadMonthlyData = async () => {
     setLoading(true);
     try {
-      // Load all data in parallel
+      // Load all data in parallel with correct UUIDs
       const [chartsResult, schedulingResult, battlesResult, creatorsAnalysisResult] = await Promise.all([
-        supabase.from('dashboard_data').select('data').eq('id', 'charts-daily-data').single(),
+        supabase.from('dashboard_data').select('data, updated_at').eq('id', CHART_DATA_ID).maybeSingle(),
         supabase.from('live_schedules').select('*').gte('schedule_date', format(monthStart, 'yyyy-MM-dd')).lte('schedule_date', format(monthEnd, 'yyyy-MM-dd')),
-        supabase.from('dashboard_data').select('data').eq('id', 'battles-dashboard-data').single(),
-        supabase.from('dashboard_data').select('data').eq('id', 'creators-analysis-data').single()
+        supabase.from('dashboard_data').select('data, updated_at').eq('id', BATTLES_DATA_ID).maybeSingle(),
+        supabase.from('dashboard_data').select('data, updated_at').eq('id', CREATORS_DATA_ID).maybeSingle()
       ]);
 
       const chartsData = chartsResult.data;
@@ -137,7 +148,7 @@ const OverviewDashboard: React.FC = () => {
       let scheduledCount = 0;
       let totalSchedules = 0;
       const schedulingByMember: Record<string, { scheduled: number; total: number; executive: string }> = {};
-      const schedulingByDay: Record<string, number> = {};
+      const daysWithScheduling = new Set<string>();
 
       if (schedulingData) {
         schedulingData.forEach((schedule: any) => {
@@ -153,7 +164,7 @@ const OverviewDashboard: React.FC = () => {
           if (schedule.is_scheduled) {
             schedulingByMember[member].scheduled++;
             scheduledCount++;
-            schedulingByDay[date] = (schedulingByDay[date] || 0) + 1;
+            daysWithScheduling.add(date);
           }
           
           if (dailyMap[date]) {
@@ -164,56 +175,75 @@ const OverviewDashboard: React.FC = () => {
         });
       }
 
-      // Process battles data
+      // Process battles data - NEW CORRECT FORMAT
       let battlesTotal = 0;
       let battlesEntries = 0;
       const battlesByMember: Record<string, { total: number; executive: string }> = {};
+      const daysWithBattles = new Set<string>();
 
       if (battlesData?.data) {
         const data = battlesData.data as any;
+        const battleData = data.battleData || {};
+        const teamStructure = data.teamStructure || [];
         
-        if (data.battleCounts) {
-          Object.entries(data.battleCounts).forEach(([key, value]: [string, any]) => {
-            if (key.startsWith(monthKey)) {
-              const parts = key.split('_');
-              const dateStr = parts[0];
-              const member = parts.slice(1).join('_');
-              
-              if (!battlesByMember[member]) {
-                battlesByMember[member] = { total: 0, executive: '' };
+        // Create member to executive mapping
+        const memberToExecutive: Record<string, string> = {};
+        teamStructure.forEach((team: any) => {
+          team.members?.forEach((member: string) => {
+            memberToExecutive[member] = team.executive;
+          });
+        });
+        
+        // Process battle data
+        Object.entries(battleData).forEach(([member, dates]: [string, any]) => {
+          if (!battlesByMember[member]) {
+            battlesByMember[member] = { total: 0, executive: memberToExecutive[member] || '' };
+          }
+          
+          Object.entries(dates).forEach(([dateStr, count]: [string, any]) => {
+            if (dateStr.startsWith(monthKey)) {
+              const battleCount = Number(count) || 0;
+              battlesByMember[member].total += battleCount;
+              battlesTotal += battleCount;
+              if (battleCount > 0) {
+                battlesEntries++;
+                daysWithBattles.add(dateStr);
               }
-              battlesByMember[member].total += value as number;
-              battlesTotal += value as number;
-              if (value > 0) battlesEntries++;
               
               if (dailyMap[dateStr]) {
-                dailyMap[dateStr].battles += value as number;
+                dailyMap[dateStr].battles += battleCount;
               }
             }
           });
-        }
+        });
       }
+
+      // Calculate battle rate (% of days with battles up to today)
+      const battleRate = daysElapsed > 0 ? Math.round((daysWithBattles.size / daysElapsed) * 100) : 0;
 
       // Process creators analysis
       let creatorsAnalysisTotal = 0;
+      let creatorsLastUpdated: string | null = null;
+      
       if (creatorsAnalysisData?.data) {
         const data = creatorsAnalysisData.data as any;
         if (data.creatorsData) {
           Object.values(data.creatorsData).forEach((count: any) => {
-            creatorsAnalysisTotal += count || 0;
+            creatorsAnalysisTotal += Number(count) || 0;
           });
         }
+        creatorsLastUpdated = creatorsAnalysisData.updated_at || null;
       }
 
-      // Calculate projections
+      // Calculate projections based on days with data
       const diamondsProjection = diamondsEntries > 0 
         ? Math.round((diamondsTotal / diamondsEntries) * totalDaysInMonth) 
         : 0;
       const creatorsProjection = creatorsEntries > 0 
         ? Math.round((creatorsTotal / creatorsEntries) * totalDaysInMonth) 
         : 0;
-      const battlesAverage = battlesEntries > 0 
-        ? Math.round(battlesTotal / battlesEntries) 
+      const battlesAverage = daysWithBattles.size > 0 
+        ? Math.round(battlesTotal / daysWithBattles.size) 
         : 0;
 
       // Build rankings
@@ -244,10 +274,17 @@ const OverviewDashboard: React.FC = () => {
         scheduling: { 
           scheduled: scheduledCount, 
           total: totalSchedules, 
-          rate: totalSchedules > 0 ? Math.round((scheduledCount / totalSchedules) * 100) : 0 
+          rate: totalSchedules > 0 ? Math.round((scheduledCount / totalSchedules) * 100) : 0,
+          daysWithScheduling: daysWithScheduling.size
         },
-        battles: { total: battlesTotal, entries: battlesEntries, average: battlesAverage },
-        creatorsAnalysis: { total: creatorsAnalysisTotal },
+        battles: { 
+          total: battlesTotal, 
+          entries: battlesEntries, 
+          average: battlesAverage,
+          daysWithBattles: daysWithBattles.size,
+          battleRate
+        },
+        creatorsAnalysis: { total: creatorsAnalysisTotal, lastUpdated: creatorsLastUpdated },
         dailyData,
         rankings: {
           diamonds: [],
@@ -312,33 +349,40 @@ const OverviewDashboard: React.FC = () => {
       value: formatNumber(monthlyData.diamonds.total), 
       icon: <Gem className="h-5 w-5" />,
       color: 'bg-purple-100 text-purple-700',
-      projection: `Proj: ${formatCompact(monthlyData.diamonds.projection)}`
+      projection: `Proj: ${formatCompact(monthlyData.diamonds.projection)}`,
+      subtext: `${monthlyData.diamonds.entries} dias com dados`
     },
     { 
       label: 'Criadores Entrada', 
       value: formatNumber(monthlyData.creators.total), 
       icon: <Users className="h-5 w-5" />,
       color: 'bg-blue-100 text-blue-700',
-      projection: `Proj: ${formatNumber(monthlyData.creators.projection)}`
+      projection: `Proj: ${formatNumber(monthlyData.creators.projection)}`,
+      subtext: `${monthlyData.creators.entries} dias com dados`
     },
     { 
       label: 'Taxa Agendamento', 
       value: `${monthlyData.scheduling.rate}%`, 
       icon: <Radio className="h-5 w-5" />,
-      color: 'bg-green-100 text-green-700'
+      color: 'bg-green-100 text-green-700',
+      subtext: `${monthlyData.scheduling.daysWithScheduling}/${daysElapsed} dias`
     },
     { 
       label: 'Batalhas', 
       value: formatNumber(monthlyData.battles.total), 
       icon: <Swords className="h-5 w-5" />,
       color: 'bg-red-100 text-red-700',
-      projection: `Média: ${monthlyData.battles.average}/dia`
+      projection: `Taxa: ${monthlyData.battles.battleRate}%`,
+      subtext: `Média: ${monthlyData.battles.average}/dia | ${monthlyData.battles.daysWithBattles} dias`
     },
     { 
       label: 'Criadores Análise', 
       value: formatNumber(monthlyData.creatorsAnalysis.total), 
       icon: <TrendingUp className="h-5 w-5" />,
-      color: 'bg-orange-100 text-orange-700'
+      color: 'bg-orange-100 text-orange-700',
+      subtext: monthlyData.creatorsAnalysis.lastUpdated 
+        ? `Atualizado: ${format(new Date(monthlyData.creatorsAnalysis.lastUpdated), 'dd/MM HH:mm')}`
+        : 'Hoje'
     }
   ] : [];
 
@@ -403,6 +447,11 @@ const OverviewDashboard: React.FC = () => {
                   <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
                     <ArrowUpRight className="h-3 w-3" />
                     {metric.projection}
+                  </p>
+                )}
+                {metric.subtext && (
+                  <p className="text-xs text-muted-foreground/70 mt-0.5">
+                    {metric.subtext}
                   </p>
                 )}
               </CardContent>
