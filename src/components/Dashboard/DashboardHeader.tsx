@@ -24,6 +24,7 @@ import {
   CalendarDays,
   Swords,
   UserSearch,
+  LayoutDashboard,
 } from 'lucide-react';
 import { DashboardSettings } from '@/types/dashboard';
 import {
@@ -107,6 +108,19 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         </div>
         
         <div className="flex items-center gap-2 flex-wrap">
+          {/* Overview Dashboard Link */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link to="/overview">
+                <Button variant="default" size="sm" className="gap-2 bg-purple-600 hover:bg-purple-700">
+                  <LayoutDashboard className="w-4 h-4" />
+                  <span className="hidden sm:inline">Overview</span>
+                </Button>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent>Overview Mensal</TooltipContent>
+          </Tooltip>
+
           {/* Charts Dashboard Link */}
           <Tooltip>
             <TooltipTrigger asChild>
