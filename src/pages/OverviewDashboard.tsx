@@ -703,14 +703,10 @@ const OverviewDashboard: React.FC = () => {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={200}>
-                <AreaChart data={chartDataFull}>
+                <AreaChart data={chartData}>
                   <defs>
                     <linearGradient id="diamondsGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#9333ea" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#9333ea" stopOpacity={0}/>
-                    </linearGradient>
-                    <linearGradient id="diamondsProjectionGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#9333ea" stopOpacity={0.1}/>
                       <stop offset="95%" stopColor="#9333ea" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
@@ -718,10 +714,7 @@ const OverviewDashboard: React.FC = () => {
                   <XAxis dataKey="day" tick={{ fontSize: 10 }} stroke="#6b7280" />
                   <YAxis tick={{ fontSize: 10 }} stroke="#6b7280" tickFormatter={formatCompact} />
                   <Tooltip 
-                    formatter={(value: number, name: string) => [
-                      formatNumber(value), 
-                      name === 'diamondsProjection' ? 'Projeção' : 'Diamantes'
-                    ]}
+                    formatter={(value: number) => [formatNumber(value), 'Diamantes']}
                     labelFormatter={(label) => `Dia ${label}`}
                   />
                   <Area 
@@ -730,16 +723,6 @@ const OverviewDashboard: React.FC = () => {
                     stroke="#9333ea" 
                     fill="url(#diamondsGradient)"
                     strokeWidth={2}
-                    connectNulls={false}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="diamondsProjection" 
-                    stroke="#9333ea" 
-                    strokeDasharray="5 5"
-                    fill="url(#diamondsProjectionGradient)"
-                    strokeWidth={2}
-                    connectNulls
                   />
                 </AreaChart>
               </ResponsiveContainer>
@@ -756,14 +739,10 @@ const OverviewDashboard: React.FC = () => {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={200}>
-                <AreaChart data={chartDataFull}>
+                <AreaChart data={chartData}>
                   <defs>
                     <linearGradient id="creatorsGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#2563eb" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
-                    </linearGradient>
-                    <linearGradient id="creatorsProjectionGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#2563eb" stopOpacity={0.1}/>
                       <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
@@ -771,10 +750,7 @@ const OverviewDashboard: React.FC = () => {
                   <XAxis dataKey="day" tick={{ fontSize: 10 }} stroke="#6b7280" />
                   <YAxis tick={{ fontSize: 10 }} stroke="#6b7280" />
                   <Tooltip 
-                    formatter={(value: number, name: string) => [
-                      formatNumber(value), 
-                      name === 'creatorsProjection' ? 'Projeção' : 'Criadores'
-                    ]}
+                    formatter={(value: number) => [formatNumber(value), 'Criadores']}
                     labelFormatter={(label) => `Dia ${label}`}
                   />
                   <Area 
@@ -783,16 +759,6 @@ const OverviewDashboard: React.FC = () => {
                     stroke="#2563eb" 
                     fill="url(#creatorsGradient)"
                     strokeWidth={2}
-                    connectNulls={false}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="creatorsProjection" 
-                    stroke="#2563eb" 
-                    strokeDasharray="5 5"
-                    fill="url(#creatorsProjectionGradient)"
-                    strokeWidth={2}
-                    connectNulls
                   />
                 </AreaChart>
               </ResponsiveContainer>
