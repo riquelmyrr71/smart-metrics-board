@@ -1,1 +1,4 @@
 project_id = "cgipzfsoeubdysuoqiml"
+
+[functions.reset-creators-analysis]
+verify_jwt = false
