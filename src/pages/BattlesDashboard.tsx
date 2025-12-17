@@ -1024,12 +1024,37 @@ const BattlesDashboard = () => {
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-muted/50">
-                <th className="sticky left-0 bg-muted/50 px-3 py-2 text-left font-medium min-w-[150px] z-10">TIME</th>
-                {days.map(day => (
-                  <th key={day.toISOString()} className="px-2 py-2 text-center font-medium min-w-[40px]">
-                    {format(day, 'dd/MM')}
-                  </th>
-                ))}
+                <th className="sticky left-0 bg-muted/50 px-3 py-1 text-left font-medium min-w-[150px] z-10">TIME</th>
+                {days.map(day => {
+                  const isToday = format(day, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
+                  const dayOfWeek = format(day, 'EEE', { locale: ptBR });
+                  const isWeekend = day.getDay() === 0 || day.getDay() === 6;
+                  return (
+                    <th 
+                      key={day.toISOString()} 
+                      className={cn(
+                        "px-1 py-1 text-center min-w-[44px] transition-colors",
+                        isToday && "bg-primary/20 ring-2 ring-primary ring-inset",
+                        isWeekend && !isToday && "bg-muted/80"
+                      )}
+                    >
+                      <div className="flex flex-col items-center">
+                        <span className={cn(
+                          "text-lg font-bold leading-tight",
+                          isToday && "text-primary"
+                        )}>
+                          {format(day, 'd')}
+                        </span>
+                        <span className={cn(
+                          "text-[10px] text-muted-foreground uppercase leading-tight",
+                          isToday && "text-primary font-medium"
+                        )}>
+                          {dayOfWeek.replace('.', '')}
+                        </span>
+                      </div>
+                    </th>
+                  );
+                })}
                 <th className="px-3 py-2 text-center font-bold bg-muted min-w-[60px]">TOTAL</th>
               </tr>
             </thead>
