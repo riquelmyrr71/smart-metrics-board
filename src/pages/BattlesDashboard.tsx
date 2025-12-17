@@ -1093,8 +1093,8 @@ const BattlesDashboard = () => {
                             className={cn(
                               "px-1 py-1 text-center cursor-pointer transition-colors",
                               count === 0 ? "bg-red-500/20 text-red-400" : 
-                              count < 3 ? "bg-yellow-500/20 text-yellow-400" :
-                              "bg-emerald-500/20 text-emerald-400"
+                              count >= 3 ? "bg-emerald-500/20 text-emerald-400" :
+                              "bg-background text-foreground"
                             )}
                             onClick={() => handleCellClick(member, dateStr)}
                           >
@@ -1299,7 +1299,7 @@ const BattlesDashboard = () => {
                             if (day.count === 0) {
                               bgColor = '#ef4444';
                               textColor = '#fff';
-                            } else if (day.count >= 4) {
+                            } else if (day.count >= 3) {
                               bgColor = '#22c55e';
                               textColor = '#fff';
                             }
