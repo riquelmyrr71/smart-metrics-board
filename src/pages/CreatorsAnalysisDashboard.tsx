@@ -358,8 +358,11 @@ const CreatorsAnalysisDashboard = () => {
                           <Input
                             type="number"
                             min="0"
-                            value={count}
-                            onChange={(e) => setCreatorCount(member, parseInt(e.target.value) || 0)}
+                            value={count || ''}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setCreatorCount(member, val === '' ? 0 : Math.max(0, parseInt(val) || 0));
+                            }}
                             className="w-20 h-8 text-center font-bold"
                           />
                           <Button
