@@ -16,7 +16,8 @@ import {
   Minus,
   BarChart3,
   ExternalLink,
-  Trophy
+  Trophy,
+  Target
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -42,6 +43,7 @@ interface TeamStructure {
 interface ComparisonData {
   yesterdayTotal: number;
   yesterdayTime: string;
+  dailyGoal: number;
 }
 
 const CREATORS_DATA_ID = '00000000-0000-0000-0000-000000000004';
@@ -67,7 +69,7 @@ const CreatorsAnalysisDashboard = () => {
   const [showExecutiveDialog, setShowExecutiveDialog] = useState(false);
   const [showAssociateDialog, setShowAssociateDialog] = useState(false);
   const [isExportingPDF, setIsExportingPDF] = useState(false);
-  const [comparisonData, setComparisonData] = useState<ComparisonData>({ yesterdayTotal: 0, yesterdayTime: '' });
+  const [comparisonData, setComparisonData] = useState<ComparisonData>({ yesterdayTotal: 0, yesterdayTime: '', dailyGoal: 50 });
   
   const reportRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -173,6 +175,14 @@ const CreatorsAnalysisDashboard = () => {
     const diff = current - yesterday;
     const percentage = yesterday > 0 ? Math.round((diff / yesterday) * 100) : 0;
     return { diff, percentage };
+  };
+
+  const getGoalProgress = (): { percentage: number; remaining: number } => {
+    const current = getGrandTotal();
+    const goal = comparisonData.dailyGoal || 50;
+    const percentage = goal > 0 ? Math.min(Math.round((current / goal) * 100), 100) : 0;
+    const remaining = Math.max(goal - current, 0);
+    return { percentage, remaining };
   };
 
   const handleAddExecutive = () => {
@@ -287,6 +297,69 @@ const CreatorsAnalysisDashboard = () => {
                 Última atualização: {lastUpdated 
                   ? format(new Date(lastUpdated), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
                   : 'Nunca salvo'}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Daily Goal Progress */}
+        <Card className="mb-4 border-purple-200 dark:border-purple-800">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Target className="h-5 w-5 text-purple-500" />
+                <span className="font-semibold">Meta Diária</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  min="1"
+                  value={comparisonData.dailyGoal || ''}
+                  onChange={(e) => setComparisonData(prev => ({
+                    ...prev,
+                    dailyGoal: parseInt(e.target.value) || 50
+                  }))}
+                  className="w-20 h-8 text-center font-bold"
+                  placeholder="50"
+                />
+                <span className="text-sm text-muted-foreground">criadores</span>
+              </div>
+            </div>
+            
+            {/* Progress Bar */}
+            <div className="relative">
+              <div className="h-6 bg-muted rounded-full overflow-hidden">
+                <div 
+                  className={`h-full transition-all duration-500 rounded-full ${
+                    getGoalProgress().percentage >= 100 
+                      ? 'bg-green-500' 
+                      : getGoalProgress().percentage >= 75 
+                        ? 'bg-blue-500' 
+                        : getGoalProgress().percentage >= 50 
+                          ? 'bg-amber-500' 
+                          : 'bg-red-500'
+                  }`}
+                  style={{ width: `${Math.min(getGoalProgress().percentage, 100)}%` }}
+                />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-xs font-bold text-foreground">
+                    {getGrandTotal()} / {comparisonData.dailyGoal || 50} ({getGoalProgress().percentage}%)
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            {/* Progress Info */}
+            <div className="flex justify-between mt-2 text-xs text-muted-foreground">
+              <span>
+                {getGoalProgress().percentage >= 100 
+                  ? '🎉 Meta atingida!' 
+                  : `Faltam ${getGoalProgress().remaining} criadores`}
+              </span>
+              <span>
+                {getGoalProgress().percentage >= 100 
+                  ? `+${getGrandTotal() - (comparisonData.dailyGoal || 50)} acima da meta`
+                  : `${100 - getGoalProgress().percentage}% restante`}
               </span>
             </div>
           </CardContent>
@@ -557,6 +630,33 @@ const CreatorsAnalysisDashboard = () => {
                 <p className="text-xs text-gray-600">Média/Assoc.</p>
                 <p className="text-xl font-bold text-blue-700">{getAveragePerAssociate()}</p>
               </div>
+            </div>
+
+            {/* Daily Goal Progress */}
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-bold text-gray-700">🎯 Meta Diária: {comparisonData.dailyGoal || 50}</span>
+                <span className="text-xs font-bold text-gray-700">{getGoalProgress().percentage}%</span>
+              </div>
+              <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
+                <div 
+                  className={`h-full rounded-full ${
+                    getGoalProgress().percentage >= 100 
+                      ? 'bg-green-500' 
+                      : getGoalProgress().percentage >= 75 
+                        ? 'bg-blue-500' 
+                        : getGoalProgress().percentage >= 50 
+                          ? 'bg-amber-500' 
+                          : 'bg-red-500'
+                  }`}
+                  style={{ width: `${Math.min(getGoalProgress().percentage, 100)}%` }}
+                />
+              </div>
+              <p className="text-xs text-gray-500 text-center mt-1">
+                {getGoalProgress().percentage >= 100 
+                  ? `🎉 Meta atingida! (+${getGrandTotal() - (comparisonData.dailyGoal || 50)} acima)`
+                  : `Faltam ${getGoalProgress().remaining} criadores`}
+              </p>
             </div>
 
             {/* Top Performer */}
