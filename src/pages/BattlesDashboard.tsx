@@ -1134,7 +1134,7 @@ const BattlesDashboard = () => {
           {reportConfig.metrics.totalBattles && (
             <div className="mb-5 rounded p-4" style={{ backgroundColor: '#fff', border: '1px solid #ddd' }}>
               <h2 className="text-sm font-bold mb-3" style={{ color: '#333', borderBottom: '1px solid #eee', paddingBottom: '8px' }}>Resumo de Métricas</h2>
-              <div className="grid grid-cols-4 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <div className="text-center p-3 rounded" style={{ backgroundColor: '#fef2f2', border: '1px solid #fca5a5' }}>
                   <div className="text-2xl font-black" style={{ color: '#dc2626' }}>{reportData.grandTotal}</div>
                   <div className="text-xs font-semibold" style={{ color: '#666' }}>Total Batalhas</div>
@@ -1147,109 +1147,6 @@ const BattlesDashboard = () => {
                   <div className="text-2xl font-black" style={{ color: '#333' }}>{reportData.avgPerMember.toFixed(1)}</div>
                   <div className="text-xs font-semibold" style={{ color: '#666' }}>Média/Associado</div>
                 </div>
-                <div className="text-center p-3 rounded" style={{ backgroundColor: '#f5f5f5', border: '1px solid #ddd' }}>
-                  <div className="text-2xl font-black" style={{ color: '#333' }}>{reportConfig.selectedMembers.length}</div>
-                  <div className="text-xs font-semibold" style={{ color: '#666' }}>Associados</div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Daily Evolution Chart */}
-          {reportConfig.metrics.dailyBreakdown && reportData.dailyTotals.length > 1 && (
-            <div className="mb-5 rounded p-4" style={{ backgroundColor: '#fff', border: '1px solid #ddd' }}>
-              <h2 className="text-sm font-bold mb-3" style={{ color: '#333', borderBottom: '1px solid #eee', paddingBottom: '8px' }}>📈 Evolução Diária de Batalhas</h2>
-              <div style={{ width: '100%', height: '200px', position: 'relative' }}>
-                {(() => {
-                  const maxValue = Math.max(...reportData.dailyTotals.map(d => d.total), 1);
-                  const avgValue = reportData.avgBattlesPerDay;
-                  const chartWidth = 100;
-                  const chartHeight = 160;
-                  const padding = { top: 20, right: 10, bottom: 30, left: 40 };
-                  const innerWidth = chartWidth - padding.left - padding.right;
-                  const innerHeight = chartHeight - padding.top - padding.bottom;
-                  
-                  const points = reportData.dailyTotals.map((d, i) => {
-                    const x = padding.left + (i / (reportData.dailyTotals.length - 1 || 1)) * innerWidth;
-                    const y = padding.top + innerHeight - (d.total / maxValue) * innerHeight;
-                    return { x, y, ...d };
-                  });
-                  
-                  const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
-                  const areaPath = `${linePath} L ${points[points.length - 1]?.x || 0} ${padding.top + innerHeight} L ${padding.left} ${padding.top + innerHeight} Z`;
-                  const avgY = padding.top + innerHeight - (avgValue / maxValue) * innerHeight;
-                  
-                  return (
-                    <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} style={{ width: '100%', height: '100%' }} preserveAspectRatio="xMidYMid meet">
-                      {/* Grid lines */}
-                      {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => (
-                        <g key={i}>
-                          <line
-                            x1={padding.left}
-                            y1={padding.top + innerHeight * (1 - ratio)}
-                            x2={chartWidth - padding.right}
-                            y2={padding.top + innerHeight * (1 - ratio)}
-                            stroke="#eee"
-                            strokeWidth="0.3"
-                          />
-                          <text
-                            x={padding.left - 3}
-                            y={padding.top + innerHeight * (1 - ratio) + 1}
-                            fontSize="3"
-                            fill="#999"
-                            textAnchor="end"
-                          >
-                            {Math.round(maxValue * ratio)}
-                          </text>
-                        </g>
-                      ))}
-                      
-                      {/* Average line */}
-                      <line
-                        x1={padding.left}
-                        y1={avgY}
-                        x2={chartWidth - padding.right}
-                        y2={avgY}
-                        stroke="#f59e0b"
-                        strokeWidth="0.5"
-                        strokeDasharray="2,1"
-                      />
-                      <text x={chartWidth - padding.right + 1} y={avgY + 1} fontSize="2.5" fill="#f59e0b">
-                        Média: {avgValue.toFixed(1)}
-                      </text>
-                      
-                      {/* Area fill */}
-                      <path d={areaPath} fill="url(#areaGradient)" />
-                      
-                      {/* Line */}
-                      <path d={linePath} fill="none" stroke="#dc2626" strokeWidth="0.8" strokeLinecap="round" strokeLinejoin="round" />
-                      
-                      {/* Data points */}
-                      {points.map((p, i) => (
-                        <g key={i}>
-                          <circle cx={p.x} cy={p.y} r="1.5" fill="#dc2626" />
-                          <text x={p.x} y={p.y - 3} fontSize="2.5" fill="#333" textAnchor="middle" fontWeight="bold">
-                            {p.total}
-                          </text>
-                          {/* X-axis labels - show every nth label based on data length */}
-                          {(reportData.dailyTotals.length <= 10 || i % Math.ceil(reportData.dailyTotals.length / 10) === 0) && (
-                            <text x={p.x} y={chartHeight - padding.bottom + 8} fontSize="2.5" fill="#666" textAnchor="middle">
-                              {p.dateLabel}
-                            </text>
-                          )}
-                        </g>
-                      ))}
-                      
-                      {/* Gradient definition */}
-                      <defs>
-                        <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                          <stop offset="0%" stopColor="#dc2626" stopOpacity="0.3" />
-                          <stop offset="100%" stopColor="#dc2626" stopOpacity="0.05" />
-                        </linearGradient>
-                      </defs>
-                    </svg>
-                  );
-                })()}
               </div>
             </div>
           )}
