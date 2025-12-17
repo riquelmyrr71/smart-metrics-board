@@ -1,14 +1,17 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Download, Calendar, Trophy, TrendingUp, Users, Gem, Swords, Radio, ChevronLeft, ChevronRight, Target, ArrowUpRight } from 'lucide-react';
+import { Download, Calendar, Trophy, TrendingUp, Users, Gem, Swords, Radio, ChevronLeft, ChevronRight, Target, ArrowUpRight, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
-import { format, startOfMonth, endOfMonth, getDaysInMonth, eachDayOfInterval, differenceInDays } from 'date-fns';
+import { format, startOfMonth, endOfMonth, getDaysInMonth, eachDayOfInterval, differenceInDays, subDays, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, ComposedChart, Bar } from 'recharts';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
 import curliLogo from '@/assets/logo-curli.png';
 
 // Data IDs from other dashboards
@@ -16,6 +19,8 @@ const DASHBOARD_ID = '00000000-0000-0000-0000-000000000001';
 const CHART_DATA_ID = '00000000-0000-0000-0000-000000000002';
 const BATTLES_DATA_ID = '00000000-0000-0000-0000-000000000003';
 const CREATORS_DATA_ID = '00000000-0000-0000-0000-000000000004';
+
+type PeriodFilter = 'all' | '7d' | '15d' | 'custom';
 
 interface MetricSummary {
   label: string;
@@ -63,6 +68,8 @@ const OverviewDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [monthlyData, setMonthlyData] = useState<MonthlyData | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all');
+  const [customDateRange, setCustomDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({ from: undefined, to: undefined });
   const reportRef = useRef<HTMLDivElement>(null);
 
   const monthStart = startOfMonth(currentMonth);
@@ -390,9 +397,51 @@ const OverviewDashboard: React.FC = () => {
     return num.toString();
   };
 
-  // Filter data to only show up to today
+  // Filter data based on period selection
   const todayStr = format(today, 'yyyy-MM-dd');
-  const filteredDailyData = monthlyData?.dailyData.filter(d => d.date <= todayStr) || [];
+  
+  const filteredDailyData = useMemo(() => {
+    if (!monthlyData?.dailyData) return [];
+    
+    let startDate: string;
+    let endDate = todayStr;
+    
+    switch (periodFilter) {
+      case '7d':
+        startDate = format(subDays(today, 6), 'yyyy-MM-dd');
+        break;
+      case '15d':
+        startDate = format(subDays(today, 14), 'yyyy-MM-dd');
+        break;
+      case 'custom':
+        if (customDateRange.from && customDateRange.to) {
+          startDate = format(customDateRange.from, 'yyyy-MM-dd');
+          endDate = format(customDateRange.to, 'yyyy-MM-dd');
+        } else {
+          startDate = format(monthStart, 'yyyy-MM-dd');
+        }
+        break;
+      default: // 'all'
+        startDate = format(monthStart, 'yyyy-MM-dd');
+    }
+    
+    return monthlyData.dailyData.filter(d => d.date >= startDate && d.date <= endDate);
+  }, [monthlyData?.dailyData, periodFilter, customDateRange, todayStr, monthStart]);
+
+  // Recalculate accumulated values for filtered data
+  const chartData = useMemo(() => {
+    let diamondsAccum = 0;
+    let creatorsAccum = 0;
+    return filteredDailyData.map(d => {
+      diamondsAccum += d.diamonds;
+      creatorsAccum += d.creators;
+      return {
+        ...d,
+        diamondsAccum,
+        creatorsAccum
+      };
+    });
+  }, [filteredDailyData]);
 
   const metrics: MetricSummary[] = monthlyData ? [
     { 
@@ -511,10 +560,74 @@ const OverviewDashboard: React.FC = () => {
         </div>
 
         {/* Evolution Charts */}
-        <h2 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
-          <TrendingUp className="h-5 w-5 text-primary" />
-          Evolução Mensal
-        </h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-primary" />
+            Evolução Mensal
+          </h2>
+          
+          {/* Period Filter */}
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            <div className="flex bg-muted rounded-lg p-1">
+              <Button 
+                variant={periodFilter === 'all' ? 'default' : 'ghost'} 
+                size="sm" 
+                className="h-7 text-xs"
+                onClick={() => setPeriodFilter('all')}
+              >
+                Mês
+              </Button>
+              <Button 
+                variant={periodFilter === '15d' ? 'default' : 'ghost'} 
+                size="sm" 
+                className="h-7 text-xs"
+                onClick={() => setPeriodFilter('15d')}
+              >
+                15 dias
+              </Button>
+              <Button 
+                variant={periodFilter === '7d' ? 'default' : 'ghost'} 
+                size="sm" 
+                className="h-7 text-xs"
+                onClick={() => setPeriodFilter('7d')}
+              >
+                7 dias
+              </Button>
+            </div>
+            
+            {/* Custom Date Range */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button 
+                  variant={periodFilter === 'custom' ? 'default' : 'outline'} 
+                  size="sm" 
+                  className="h-7 text-xs gap-1"
+                >
+                  <Calendar className="h-3 w-3" />
+                  {periodFilter === 'custom' && customDateRange.from && customDateRange.to
+                    ? `${format(customDateRange.from, 'dd/MM')} - ${format(customDateRange.to, 'dd/MM')}`
+                    : 'Personalizado'
+                  }
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 bg-popover" align="end">
+                <CalendarComponent
+                  mode="range"
+                  selected={{ from: customDateRange.from, to: customDateRange.to }}
+                  onSelect={(range) => {
+                    setCustomDateRange({ from: range?.from, to: range?.to });
+                    if (range?.from && range?.to) {
+                      setPeriodFilter('custom');
+                    }
+                  }}
+                  numberOfMonths={1}
+                  className="p-3 pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Diamonds Evolution Chart */}
@@ -527,7 +640,7 @@ const OverviewDashboard: React.FC = () => {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={200}>
-                <AreaChart data={filteredDailyData}>
+                <AreaChart data={chartData}>
                   <defs>
                     <linearGradient id="diamondsGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#9333ea" stopOpacity={0.3}/>
@@ -563,7 +676,7 @@ const OverviewDashboard: React.FC = () => {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={200}>
-                <AreaChart data={filteredDailyData}>
+                <AreaChart data={chartData}>
                   <defs>
                     <linearGradient id="creatorsGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#2563eb" stopOpacity={0.3}/>
@@ -599,7 +712,7 @@ const OverviewDashboard: React.FC = () => {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={200}>
-                <LineChart data={filteredDailyData}>
+                <LineChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                   <XAxis dataKey="day" tick={{ fontSize: 10 }} stroke="#6b7280" />
                   <YAxis tick={{ fontSize: 10 }} stroke="#6b7280" domain={[0, 100]} />
