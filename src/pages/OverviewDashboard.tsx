@@ -432,15 +432,28 @@ const OverviewDashboard: React.FC = () => {
   const chartDataWithProjection = useMemo(() => {
     if (!monthlyData?.dailyData) return { actual: [], withProjection: [] };
     
+    // Find the last day with actual data
+    let lastDataIndex = -1;
+    for (let i = filteredDailyData.length - 1; i >= 0; i--) {
+      if (filteredDailyData[i].diamonds > 0 || filteredDailyData[i].creators > 0) {
+        lastDataIndex = i;
+        break;
+      }
+    }
+    
     let diamondsAccum = 0;
     let creatorsAccum = 0;
-    const actualData = filteredDailyData.map(d => {
+    const actualData = filteredDailyData.map((d, index) => {
       diamondsAccum += d.diamonds;
       creatorsAccum += d.creators;
+      
+      // Only show accumulated values up to the last day with data
+      const showAccum = index <= lastDataIndex;
+      
       return {
         ...d,
-        diamondsAccum,
-        creatorsAccum
+        diamondsAccum: showAccum ? diamondsAccum : null as number | null,
+        creatorsAccum: showAccum ? creatorsAccum : null as number | null
       };
     });
     
@@ -457,51 +470,63 @@ const OverviewDashboard: React.FC = () => {
       ? monthlyData.creators.total / monthlyData.creators.entries 
       : 0;
     
-    // Get remaining days after today
-    const todayDay = today.getDate();
+    // Get the last day with data
+    const lastDataDay = lastDataIndex >= 0 ? parseInt(filteredDailyData[lastDataIndex].day) : 0;
+    
+    // Get remaining days after last data day
     const remainingDays = monthlyData.dailyData.filter(d => {
       const dayNum = parseInt(d.day);
-      return dayNum > todayDay;
+      return dayNum > lastDataDay;
     });
     
-    // Build projection data starting from last actual point
-    const lastActual = actualData[actualData.length - 1];
-    if (!lastActual || remainingDays.length === 0) {
-      return { actual: actualData, withProjection: actualData };
+    // Get last accumulated values
+    const lastDiamondsAccum = monthlyData.diamonds.total;
+    const lastCreatorsAccum = monthlyData.creators.total;
+    
+    if (remainingDays.length === 0) {
+      return { actual: actualData, withProjection: actualData.map(d => ({
+        ...d,
+        diamondsProjection: null as number | null,
+        creatorsProjection: null as number | null
+      })) };
     }
     
-    let projDiamonds = lastActual.diamondsAccum;
-    let projCreators = lastActual.creatorsAccum;
+    let projDiamonds = lastDiamondsAccum;
+    let projCreators = lastCreatorsAccum;
     
     const projectionData = remainingDays.map(d => {
       projDiamonds += diamondsDailyAvg;
       projCreators += creatorsDailyAvg;
       return {
         ...d,
-        day: d.day,
+        diamondsAccum: null as number | null,
+        creatorsAccum: null as number | null,
         diamondsProjection: Math.round(projDiamonds),
         creatorsProjection: Math.round(projCreators)
       };
     });
     
-    // Combine actual with projection
+    // Combine actual with projection - add transition point
+    const transitionPoint = lastDataIndex >= 0 ? {
+      ...filteredDailyData[lastDataIndex],
+      diamondsAccum: lastDiamondsAccum,
+      creatorsAccum: lastCreatorsAccum,
+      diamondsProjection: lastDiamondsAccum,
+      creatorsProjection: lastCreatorsAccum
+    } : null;
+    
     const withProjection = [
-      ...actualData.map(d => ({
+      ...actualData.slice(0, lastDataIndex).map(d => ({
         ...d,
         diamondsProjection: null as number | null,
         creatorsProjection: null as number | null
       })),
-      // Add transition point (last actual with projection starting)
-      {
-        ...lastActual,
-        diamondsProjection: lastActual.diamondsAccum,
-        creatorsProjection: lastActual.creatorsAccum
-      },
+      ...(transitionPoint ? [transitionPoint] : []),
       ...projectionData
     ];
     
     return { actual: actualData, withProjection };
-  }, [filteredDailyData, monthlyData, periodFilter, today]);
+  }, [filteredDailyData, monthlyData, periodFilter]);
 
   const chartData = chartDataWithProjection.actual;
   const chartDataFull = chartDataWithProjection.withProjection;
