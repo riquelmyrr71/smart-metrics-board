@@ -65,6 +65,23 @@ interface ReportConfig {
   };
 }
 
+// Battle Categories
+type BattleCategory = 'curliChallenge' | 'rise' | 'oficial';
+
+interface BattleCategoryData {
+  [memberName: string]: {
+    curliChallenge: number;
+    rise: number;
+    oficial: number;
+  };
+}
+
+const CATEGORY_CONFIG: { key: BattleCategory; label: string; color: string; bgColor: string; textColor: string }[] = [
+  { key: 'curliChallenge', label: 'Curli Challenge', color: '#dc2626', bgColor: 'bg-red-500', textColor: 'text-white' },
+  { key: 'rise', label: 'Rise', color: '#ffffff', bgColor: 'bg-white border border-gray-300', textColor: 'text-black' },
+  { key: 'oficial', label: 'OFICIAL', color: '#2563eb', bgColor: 'bg-blue-500', textColor: 'text-white' },
+];
+
 const BATTLES_DATA_ID = '00000000-0000-0000-0000-000000000003';
 const CHART_DATA_ID = '00000000-0000-0000-0000-000000000002';
 
@@ -94,6 +111,7 @@ const DEFAULT_TEAM_STRUCTURE: TeamStructure[] = [
 const BattlesDashboard = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [battleData, setBattleData] = useState<BattleData>({});
+  const [categoryData, setCategoryData] = useState<BattleCategoryData>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [teamStructure, setTeamStructure] = useState<TeamStructure[]>(DEFAULT_TEAM_STRUCTURE);
@@ -157,9 +175,10 @@ const BattlesDashboard = () => {
         if (chartResult.error) throw chartResult.error;
 
         if (battlesResult.data?.data) {
-          const parsed = battlesResult.data.data as { battleData?: BattleData; teamStructure?: TeamStructure[] };
+          const parsed = battlesResult.data.data as { battleData?: BattleData; teamStructure?: TeamStructure[]; categoryData?: BattleCategoryData };
           if (parsed.battleData) setBattleData(parsed.battleData);
           if (parsed.teamStructure) setTeamStructure(parsed.teamStructure);
+          if (parsed.categoryData) setCategoryData(parsed.categoryData);
         }
 
         if (chartResult.data?.data) {
@@ -183,7 +202,7 @@ const BattlesDashboard = () => {
     try {
       const payload = {
         id: BATTLES_DATA_ID,
-        data: { battleData, teamStructure } as unknown as import('@/integrations/supabase/types').Json,
+        data: { battleData, teamStructure, categoryData } as unknown as import('@/integrations/supabase/types').Json,
         updated_at: new Date().toISOString(),
       };
       const { error } = await supabase.from('dashboard_data').upsert(payload);
@@ -315,6 +334,53 @@ const BattlesDashboard = () => {
       lowPerformers: memberTotals.filter(m => m.total < 10),
     };
   }, [battleData, teamStructure, currentMonth]);
+
+  // Category calculations
+  const categoryTotals = useMemo(() => {
+    // Get totals per member
+    const getMemberCategoryTotal = (member: string, category: BattleCategory) => {
+      return categoryData[member]?.[category] || 0;
+    };
+
+    // Get totals per executive
+    const getExecutiveCategoryTotals = (members: string[]) => {
+      return CATEGORY_CONFIG.reduce((acc, cat) => {
+        acc[cat.key] = members.reduce((sum, member) => sum + getMemberCategoryTotal(member, cat.key), 0);
+        return acc;
+      }, {} as Record<BattleCategory, number>);
+    };
+
+    // Grand totals
+    const grandTotals = CATEGORY_CONFIG.reduce((acc, cat) => {
+      acc[cat.key] = teamStructure.flatMap(e => e.members).reduce((sum, member) => sum + getMemberCategoryTotal(member, cat.key), 0);
+      return acc;
+    }, {} as Record<BattleCategory, number>);
+
+    return { getMemberCategoryTotal, getExecutiveCategoryTotals, grandTotals };
+  }, [categoryData, teamStructure]);
+
+  // Update category value for a member
+  const updateMemberCategory = (member: string, category: BattleCategory, value: number) => {
+    setCategoryData(prev => ({
+      ...prev,
+      [member]: {
+        ...(prev[member] || { curliChallenge: 0, rise: 0, oficial: 0 }),
+        [category]: Math.max(0, value),
+      },
+    }));
+  };
+
+  // Get member total battles from calendar
+  const getMemberBattleTotal = (member: string) => {
+    return getMemberTotal(member);
+  };
+
+  // Get sum of all categories for a member
+  const getMemberCategorySum = (member: string) => {
+    const data = categoryData[member];
+    if (!data) return 0;
+    return data.curliChallenge + data.rise + data.oficial;
+  };
 
   // Add executive
   const handleAddExecutive = () => {
@@ -793,6 +859,130 @@ const BattlesDashboard = () => {
             </DialogContent>
           </Dialog>
         </div>
+
+        {/* Categories Panel */}
+        <Card className="mb-6">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Swords className="h-5 w-5" />
+              Categorias de Batalhas
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left px-3 py-2 font-medium min-w-[150px]">ASSOCIADO</th>
+                    <th className="text-center px-3 py-2 font-medium min-w-[80px]">TOTAL BATALHAS</th>
+                    {CATEGORY_CONFIG.map(cat => (
+                      <th key={cat.key} className="text-center px-3 py-2 font-medium min-w-[120px]">
+                        <span className={cn("px-2 py-1 rounded text-xs", cat.bgColor, cat.textColor)}>
+                          {cat.label}
+                        </span>
+                      </th>
+                    ))}
+                    <th className="text-center px-3 py-2 font-medium min-w-[100px]">SOMA CATEGORIAS</th>
+                    <th className="text-center px-3 py-2 font-medium min-w-[80px]">STATUS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {teamStructure.map((exec) => {
+                    const execTotals = categoryTotals.getExecutiveCategoryTotals(exec.members);
+                    const execBattleTotal = exec.members.reduce((sum, m) => sum + getMemberBattleTotal(m), 0);
+                    const execCategorySum = exec.members.reduce((sum, m) => sum + getMemberCategorySum(m), 0);
+                    
+                    return (
+                      <React.Fragment key={exec.executive}>
+                        {/* Executive Header */}
+                        <tr className="bg-gray-900 text-white">
+                          <td className="px-3 py-2 font-bold">{exec.executive.split('(')[0].trim()}</td>
+                          <td className="text-center font-bold">{execBattleTotal}</td>
+                          {CATEGORY_CONFIG.map(cat => (
+                            <td key={cat.key} className="text-center font-bold">
+                              <span className={cn("px-2 py-1 rounded", cat.bgColor, cat.textColor)}>
+                                {execTotals[cat.key]}
+                              </span>
+                            </td>
+                          ))}
+                          <td className="text-center font-bold">{execCategorySum}</td>
+                          <td className="text-center">
+                            {execBattleTotal === execCategorySum ? (
+                              <span className="text-emerald-400">✓</span>
+                            ) : (
+                              <span className="text-red-400">✗</span>
+                            )}
+                          </td>
+                        </tr>
+                        
+                        {/* Members */}
+                        {exec.members.map(member => {
+                          const memberBattleTotal = getMemberBattleTotal(member);
+                          const memberCategorySum = getMemberCategorySum(member);
+                          const isValid = memberBattleTotal === memberCategorySum;
+                          
+                          return (
+                            <tr key={member} className="border-b border-border/50 hover:bg-muted/30">
+                              <td className="px-3 py-2 text-sm">{member}</td>
+                              <td className="text-center font-bold">{memberBattleTotal}</td>
+                              {CATEGORY_CONFIG.map(cat => (
+                                <td key={cat.key} className="text-center px-1">
+                                  <Input
+                                    type="number"
+                                    min={0}
+                                    value={categoryData[member]?.[cat.key] || 0}
+                                    onChange={(e) => updateMemberCategory(member, cat.key, parseInt(e.target.value) || 0)}
+                                    className={cn(
+                                      "h-8 w-16 mx-auto text-center text-sm",
+                                      cat.key === 'curliChallenge' && "border-red-500 focus:ring-red-500",
+                                      cat.key === 'rise' && "border-gray-400",
+                                      cat.key === 'oficial' && "border-blue-500 focus:ring-blue-500"
+                                    )}
+                                  />
+                                </td>
+                              ))}
+                              <td className="text-center font-medium">{memberCategorySum}</td>
+                              <td className="text-center">
+                                {isValid ? (
+                                  <span className="text-emerald-500 font-bold">✓</span>
+                                ) : (
+                                  <span className="text-red-500 font-bold">✗ ({memberBattleTotal - memberCategorySum})</span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </React.Fragment>
+                    );
+                  })}
+                  
+                  {/* Grand Total */}
+                  <tr className="bg-muted font-bold border-t-2">
+                    <td className="px-3 py-3">TOTAL GERAL</td>
+                    <td className="text-center">{getGrandTotal()}</td>
+                    {CATEGORY_CONFIG.map(cat => (
+                      <td key={cat.key} className="text-center">
+                        <span className={cn("px-3 py-1 rounded font-bold text-sm", cat.bgColor, cat.textColor)}>
+                          {categoryTotals.grandTotals[cat.key]}
+                        </span>
+                      </td>
+                    ))}
+                    <td className="text-center">{
+                      Object.values(categoryTotals.grandTotals).reduce((a, b) => a + b, 0)
+                    }</td>
+                    <td className="text-center">
+                      {getGrandTotal() === Object.values(categoryTotals.grandTotals).reduce((a, b) => a + b, 0) ? (
+                        <span className="text-emerald-500">✓</span>
+                      ) : (
+                        <span className="text-red-500">✗</span>
+                      )}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Main Table */}
         <div ref={reportRef} className="bg-card rounded-lg border overflow-x-auto">
