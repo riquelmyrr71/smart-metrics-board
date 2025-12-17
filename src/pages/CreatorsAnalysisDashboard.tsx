@@ -617,7 +617,7 @@ const CreatorsAnalysisDashboard = () => {
                 <p className="text-xl font-bold text-purple-700">{getGrandTotal()}</p>
               </div>
               <div className="bg-gray-50 p-2 rounded text-center">
-                <p className="text-xs text-gray-600">Ontem</p>
+                <p className="text-xs text-gray-600">Em análise ontem no mesmo período</p>
                 <p className="text-xl font-bold text-gray-700">{comparisonData.yesterdayTotal || '-'}</p>
               </div>
               <div className={`p-2 rounded text-center ${getComparisonDiff().diff >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
@@ -659,22 +659,6 @@ const CreatorsAnalysisDashboard = () => {
               </p>
             </div>
 
-            {/* Top Performer */}
-            {(() => {
-              const top = getTopPerformer();
-              if (top && top.count > 0) {
-                return (
-                  <div className="bg-amber-50 p-2 rounded mb-4 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-amber-500">🏆</span>
-                      <span className="text-sm font-bold text-amber-800">Top Performer: {top.name}</span>
-                    </div>
-                    <span className="text-sm font-bold text-amber-700">{top.count} criadores</span>
-                  </div>
-                );
-              }
-              return null;
-            })()}
 
             {/* Table */}
             <table className="w-full text-sm">
@@ -696,14 +680,10 @@ const CreatorsAnalysisDashboard = () => {
                       </tr>
                       {exec.members.map(member => {
                         const count = getCreatorCount(member);
-                        const isTop = getTopPerformer()?.name === member && count > 0;
                         return (
-                          <tr key={member} className={`border-b border-gray-200 ${isTop ? 'bg-amber-50' : ''}`}>
-                            <td className="py-1 pl-4 text-gray-700">
-                              {isTop && <span className="mr-1">⭐</span>}
-                              {member}
-                            </td>
-                            <td className={`py-1 text-right ${isTop ? 'font-bold text-amber-700' : 'text-gray-700'}`}>{count}</td>
+                          <tr key={member} className="border-b border-gray-200">
+                            <td className="py-1 pl-4 text-gray-700">{member}</td>
+                            <td className="py-1 text-right text-gray-700">{count}</td>
                           </tr>
                         );
                       })}
@@ -711,7 +691,7 @@ const CreatorsAnalysisDashboard = () => {
                   );
                 })}
                 <tr className="border-t-2 border-gray-400">
-                  <td className="py-2 font-bold text-gray-900">TOTAL GERAL ({getTotalAssociates()} associados)</td>
+                  <td className="py-2 font-bold text-gray-900">TOTAL EM ANÁLISE</td>
                   <td className="py-2 text-right font-bold text-xl text-purple-700">{getGrandTotal()}</td>
                 </tr>
               </tbody>
