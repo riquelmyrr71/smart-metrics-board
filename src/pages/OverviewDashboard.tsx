@@ -358,16 +358,9 @@ const OverviewDashboard: React.FC = () => {
       {/* Header */}
       <header className="bg-card border-b border-border px-6 py-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link to="/">
-              <Button variant="ghost" size="icon">
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-            </Link>
-            <div className="flex items-center gap-3">
-              <img src={curliLogo} alt="Curli" className="h-8 w-auto" />
-              <h1 className="text-xl font-bold text-foreground">Overview Geral</h1>
-            </div>
+          <div className="flex items-center gap-3">
+            <img src={curliLogo} alt="Curli" className="h-8 w-auto" />
+            <h1 className="text-xl font-bold text-foreground">Overview Geral</h1>
           </div>
           
           <div className="flex items-center gap-4">
@@ -682,8 +675,8 @@ const OverviewDashboard: React.FC = () => {
 
         {/* Quick Links */}
         <h2 className="text-lg font-bold text-foreground mb-4">Acessar Dashboards</h2>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <Link to="/">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+          <Link to="/painel">
             <Card className="border-border hover:border-primary transition-colors cursor-pointer">
               <CardContent className="p-4 text-center">
                 <TrendingUp className="h-8 w-8 mx-auto mb-2 text-purple-600" />
@@ -720,6 +713,14 @@ const OverviewDashboard: React.FC = () => {
               <CardContent className="p-4 text-center">
                 <Users className="h-8 w-8 mx-auto mb-2 text-orange-600" />
                 <p className="font-medium text-sm">Criadores</p>
+              </CardContent>
+            </Card>
+          </Link>
+          <Link to="/anotacoes">
+            <Card className="border-border hover:border-primary transition-colors cursor-pointer">
+              <CardContent className="p-4 text-center">
+                <Calendar className="h-8 w-8 mx-auto mb-2 text-gray-600" />
+                <p className="font-medium text-sm">Anotações</p>
               </CardContent>
             </Card>
           </Link>
