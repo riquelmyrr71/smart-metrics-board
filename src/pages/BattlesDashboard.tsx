@@ -18,7 +18,8 @@ import {
   Loader2,
   Settings2,
   Eye,
-  EyeOff
+  EyeOff,
+  BarChart3
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,6 +35,7 @@ import { cn } from '@/lib/utils';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import curliLogo from '@/assets/logo-curli.png';
+import { BattlesMetricsReport } from '@/components/BattlesMetricsReport';
 
 interface BattleData {
   [memberName: string]: {
@@ -128,6 +130,7 @@ const BattlesDashboard = () => {
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const [showReportDialog, setShowReportDialog] = useState(false);
   const [hidePastDays, setHidePastDays] = useState(false);
+  const [showMetricsReport, setShowMetricsReport] = useState(false);
   const [reportConfig, setReportConfig] = useState<ReportConfig>({
     startDate: format(startOfMonth(new Date()), 'yyyy-MM-dd'),
     endDate: format(new Date(), 'yyyy-MM-dd'),
@@ -670,6 +673,16 @@ const BattlesDashboard = () => {
               {hidePastDays ? 'Mostrar Todos' : 'Ocultar Passados'}
             </Button>
 
+            <Button 
+              variant={showMetricsReport ? "default" : "outline"} 
+              size="sm" 
+              onClick={() => setShowMetricsReport(!showMetricsReport)}
+              className="gap-2"
+            >
+              <BarChart3 className="h-4 w-4" />
+              {showMetricsReport ? 'Ocultar Métricas' : 'Ver Métricas'}
+            </Button>
+
             <Dialog open={showReportDialog} onOpenChange={setShowReportDialog}>
               <DialogTrigger asChild>
                 <Button variant="outline" size="sm">
@@ -785,6 +798,18 @@ const BattlesDashboard = () => {
       </header>
 
       <main className="p-4">
+        {/* Metrics Report */}
+        {showMetricsReport && (
+          <div className="mb-6">
+            <BattlesMetricsReport
+              battleData={battleData}
+              teamStructure={teamStructure}
+              diamondEntries={diamondEntries}
+              currentMonth={currentMonth}
+            />
+          </div>
+        )}
+
         {/* Summary Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <Card>
