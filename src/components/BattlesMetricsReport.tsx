@@ -222,6 +222,83 @@ export const BattlesMetricsReport: React.FC<BattlesMetricsReportProps> = ({
     const avgDiamondsLow = lowBattleDays.length > 0 
       ? lowBattleDays.reduce((s, d) => s + d.diamonds, 0) / lowBattleDays.length : 0;
 
+    // NEW: Daily Performance Analysis - Linking battles with diamonds
+    const dailyPerformanceAnalysis = correlationData.map(day => {
+      const avgDiamondsPerBattle = day.battles > 0 ? day.diamonds / day.battles : 0;
+      const overallAvgDPB = totalBattles > 0 ? totalDiamonds / totalBattles : 0;
+      const performanceRatio = overallAvgDPB > 0 ? (avgDiamondsPerBattle / overallAvgDPB) * 100 : 0;
+      
+      // Classify performance
+      let classification: 'high_efficiency' | 'normal' | 'low_efficiency' | 'anomaly_high' | 'anomaly_low' = 'normal';
+      if (day.battles < 10 && day.diamonds > avgDiamondsLow * 1.5) {
+        classification = 'anomaly_high'; // Few battles but high diamonds (unusual)
+      } else if (day.battles >= 20 && day.diamonds < avgDiamondsHigh * 0.5) {
+        classification = 'anomaly_low'; // Many battles but low diamonds (drop)
+      } else if (performanceRatio > 120) {
+        classification = 'high_efficiency';
+      } else if (performanceRatio < 80) {
+        classification = 'low_efficiency';
+      }
+      
+      return {
+        date: day.date,
+        battles: day.battles,
+        diamonds: day.diamonds,
+        diamondsPerBattle: avgDiamondsPerBattle,
+        performanceRatio,
+        classification,
+      };
+    });
+
+    // NEW: Anomaly Detection - Days with unexpected results
+    const anomalies = dailyPerformanceAnalysis.filter(d => 
+      d.classification === 'anomaly_high' || d.classification === 'anomaly_low'
+    );
+
+    const dropsOnHighBattleDays = dailyPerformanceAnalysis.filter(d => 
+      d.battles >= 20 && d.performanceRatio < 80
+    );
+
+    const spikesOnLowBattleDays = dailyPerformanceAnalysis.filter(d => 
+      d.battles < 10 && d.battles > 0 && d.performanceRatio > 120
+    );
+
+    // NEW: Efficiency metrics by battle volume
+    const efficiencyByVolume = {
+      high: {
+        days: highBattleDays.length,
+        totalBattles: highBattleDays.reduce((s, d) => s + d.battles, 0),
+        totalDiamonds: highBattleDays.reduce((s, d) => s + d.diamonds, 0),
+        avgDiamondsPerBattle: highBattleDays.length > 0 
+          ? highBattleDays.reduce((s, d) => s + d.diamonds, 0) / highBattleDays.reduce((s, d) => s + d.battles, 0) || 0 
+          : 0,
+      },
+      medium: {
+        days: mediumBattleDays.length,
+        totalBattles: mediumBattleDays.reduce((s, d) => s + d.battles, 0),
+        totalDiamonds: mediumBattleDays.reduce((s, d) => s + d.diamonds, 0),
+        avgDiamondsPerBattle: mediumBattleDays.length > 0 
+          ? mediumBattleDays.reduce((s, d) => s + d.diamonds, 0) / mediumBattleDays.reduce((s, d) => s + d.battles, 0) || 0 
+          : 0,
+      },
+      low: {
+        days: lowBattleDays.filter(d => d.battles > 0).length,
+        totalBattles: lowBattleDays.reduce((s, d) => s + d.battles, 0),
+        totalDiamonds: lowBattleDays.reduce((s, d) => s + d.diamonds, 0),
+        avgDiamondsPerBattle: lowBattleDays.filter(d => d.battles > 0).length > 0 
+          ? lowBattleDays.reduce((s, d) => s + d.diamonds, 0) / lowBattleDays.reduce((s, d) => s + d.battles, 0) || 0 
+          : 0,
+      },
+    };
+
+    // NEW: Best and worst efficiency days
+    const sortedByEfficiency = [...dailyPerformanceAnalysis]
+      .filter(d => d.battles > 0)
+      .sort((a, b) => b.diamondsPerBattle - a.diamondsPerBattle);
+    
+    const bestEfficiencyDays = sortedByEfficiency.slice(0, 3);
+    const worstEfficiencyDays = sortedByEfficiency.slice(-3).reverse();
+
     // Streaks analysis
     const memberStreaks = allMembers.map(member => {
       const dates = Object.entries(battleData[member] || {})
@@ -275,12 +352,20 @@ export const BattlesMetricsReport: React.FC<BattlesMetricsReportProps> = ({
       bestDay,
       worstDay,
       correlation,
+      correlationData,
       highBattleDays: highBattleDays.length,
       mediumBattleDays: mediumBattleDays.length,
       lowBattleDays: lowBattleDays.length,
       avgDiamondsHigh,
       avgDiamondsMedium,
       avgDiamondsLow,
+      dailyPerformanceAnalysis,
+      anomalies,
+      dropsOnHighBattleDays,
+      spikesOnLowBattleDays,
+      efficiencyByVolume,
+      bestEfficiencyDays,
+      worstEfficiencyDays,
       memberStreaks: memberStreaks.slice(0, 5),
       weeklyTrend,
       realizationRate,
@@ -456,6 +541,166 @@ export const BattlesMetricsReport: React.FC<BattlesMetricsReportProps> = ({
               </div>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* NEW: Daily Battle-Diamond Correlation Analysis */}
+      <Card className="border-indigo-500/20">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Zap className="h-5 w-5 text-indigo-500" />
+            Análise Diária: Batalhas × Diamantes
+          </CardTitle>
+          <CardDescription>Identificação de anomalias e padrões de eficiência</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Efficiency by Volume */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-emerald-500/10 rounded-lg p-3 border border-emerald-500/20">
+              <div className="text-xs text-muted-foreground mb-1">Alta Volume (≥20)</div>
+              <div className="text-lg font-bold text-emerald-500">
+                {formatNumber(metrics.efficiencyByVolume.high.avgDiamondsPerBattle)} 💎/batalha
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {metrics.efficiencyByVolume.high.days} dias • {metrics.efficiencyByVolume.high.totalBattles} batalhas
+              </div>
+            </div>
+            <div className="bg-amber-500/10 rounded-lg p-3 border border-amber-500/20">
+              <div className="text-xs text-muted-foreground mb-1">Média Volume (10-19)</div>
+              <div className="text-lg font-bold text-amber-500">
+                {formatNumber(metrics.efficiencyByVolume.medium.avgDiamondsPerBattle)} 💎/batalha
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {metrics.efficiencyByVolume.medium.days} dias • {metrics.efficiencyByVolume.medium.totalBattles} batalhas
+              </div>
+            </div>
+            <div className="bg-blue-500/10 rounded-lg p-3 border border-blue-500/20">
+              <div className="text-xs text-muted-foreground mb-1">Baixa Volume (&lt;10)</div>
+              <div className="text-lg font-bold text-blue-500">
+                {formatNumber(metrics.efficiencyByVolume.low.avgDiamondsPerBattle)} 💎/batalha
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {metrics.efficiencyByVolume.low.days} dias • {metrics.efficiencyByVolume.low.totalBattles} batalhas
+              </div>
+            </div>
+          </div>
+
+          {/* Anomalies */}
+          {(metrics.dropsOnHighBattleDays.length > 0 || metrics.spikesOnLowBattleDays.length > 0) && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+              {/* Drops on high battle days */}
+              {metrics.dropsOnHighBattleDays.length > 0 && (
+                <div className="bg-red-500/10 rounded-lg p-3 border border-red-500/20">
+                  <div className="flex items-center gap-2 mb-2">
+                    <TrendingDown className="h-4 w-4 text-red-500" />
+                    <span className="text-sm font-medium text-red-500">Quedas em Dias de Alta</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Dias com muitas batalhas (≥20) mas eficiência abaixo do esperado
+                  </p>
+                  <div className="space-y-1">
+                    {metrics.dropsOnHighBattleDays.slice(0, 3).map(day => (
+                      <div key={day.date} className="flex items-center justify-between text-xs bg-red-500/5 rounded p-2">
+                        <span>{format(parseISO(day.date), 'dd/MM')}</span>
+                        <span>{day.battles} batalhas</span>
+                        <span>{formatNumber(day.diamonds)} 💎</span>
+                        <span className="text-red-500 font-bold">{day.performanceRatio.toFixed(0)}%</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Spikes on low battle days */}
+              {metrics.spikesOnLowBattleDays.length > 0 && (
+                <div className="bg-emerald-500/10 rounded-lg p-3 border border-emerald-500/20">
+                  <div className="flex items-center gap-2 mb-2">
+                    <TrendingUp className="h-4 w-4 text-emerald-500" />
+                    <span className="text-sm font-medium text-emerald-500">Altas em Dias de Baixa</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Dias com poucas batalhas (&lt;10) mas eficiência acima do esperado
+                  </p>
+                  <div className="space-y-1">
+                    {metrics.spikesOnLowBattleDays.slice(0, 3).map(day => (
+                      <div key={day.date} className="flex items-center justify-between text-xs bg-emerald-500/5 rounded p-2">
+                        <span>{format(parseISO(day.date), 'dd/MM')}</span>
+                        <span>{day.battles} batalhas</span>
+                        <span>{formatNumber(day.diamonds)} 💎</span>
+                        <span className="text-emerald-500 font-bold">{day.performanceRatio.toFixed(0)}%</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Best & Worst Efficiency Days */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+            <div className="bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 rounded-lg p-3 border border-emerald-500/20">
+              <div className="flex items-center gap-2 mb-2">
+                <Trophy className="h-4 w-4 text-emerald-500" />
+                <span className="text-sm font-medium">Dias Mais Eficientes</span>
+              </div>
+              <div className="space-y-1">
+                {metrics.bestEfficiencyDays.map((day, idx) => (
+                  <div key={day.date} className="flex items-center justify-between text-xs bg-background/50 rounded p-2">
+                    <span className="font-medium">{idx + 1}. {format(parseISO(day.date), 'dd/MM')}</span>
+                    <span className="text-muted-foreground">{day.battles} batalhas</span>
+                    <span className="text-emerald-500 font-bold">{formatNumber(day.diamondsPerBattle)} 💎/bat</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="bg-gradient-to-br from-red-500/10 to-red-500/5 rounded-lg p-3 border border-red-500/20">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertTriangle className="h-4 w-4 text-red-500" />
+                <span className="text-sm font-medium">Dias Menos Eficientes</span>
+              </div>
+              <div className="space-y-1">
+                {metrics.worstEfficiencyDays.map((day, idx) => (
+                  <div key={day.date} className="flex items-center justify-between text-xs bg-background/50 rounded p-2">
+                    <span className="font-medium">{idx + 1}. {format(parseISO(day.date), 'dd/MM')}</span>
+                    <span className="text-muted-foreground">{day.battles} batalhas</span>
+                    <span className="text-red-500 font-bold">{formatNumber(day.diamondsPerBattle)} 💎/bat</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Daily Timeline */}
+          {metrics.correlationData.length > 0 && (
+            <div className="mt-4">
+              <div className="text-sm font-medium mb-2">Linha do Tempo Diária</div>
+              <div className="flex gap-1 flex-wrap">
+                {metrics.dailyPerformanceAnalysis.map(day => {
+                  const bgColor = day.classification === 'anomaly_high' ? 'bg-emerald-500' :
+                    day.classification === 'anomaly_low' ? 'bg-red-500' :
+                    day.classification === 'high_efficiency' ? 'bg-emerald-400' :
+                    day.classification === 'low_efficiency' ? 'bg-red-400' : 'bg-primary/40';
+                  
+                  return (
+                    <div
+                      key={day.date}
+                      className={cn("w-6 h-6 rounded flex items-center justify-center text-[9px] font-bold text-white cursor-help", bgColor)}
+                      title={`${format(parseISO(day.date), 'dd/MM')}: ${day.battles} batalhas, ${formatNumber(day.diamonds)} 💎, ${day.performanceRatio.toFixed(0)}% eficiência`}
+                    >
+                      {format(parseISO(day.date), 'd')}
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1"><div className="w-3 h-3 rounded bg-emerald-500" /> Alta incomum</div>
+                <div className="flex items-center gap-1"><div className="w-3 h-3 rounded bg-red-500" /> Queda incomum</div>
+                <div className="flex items-center gap-1"><div className="w-3 h-3 rounded bg-emerald-400" /> Eficiente</div>
+                <div className="flex items-center gap-1"><div className="w-3 h-3 rounded bg-red-400" /> Ineficiente</div>
+                <div className="flex items-center gap-1"><div className="w-3 h-3 rounded bg-primary/40" /> Normal</div>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
