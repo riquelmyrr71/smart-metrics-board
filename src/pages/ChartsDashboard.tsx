@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { format, startOfMonth, endOfMonth, isWithinInterval, subDays, isToday, parseISO, getDaysInMonth, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { WeeklyAnalysis } from '@/components/Charts/WeeklyAnalysis';
+import { CreatorsConversionMetrics } from '@/components/CreatorsConversionMetrics';
 import logoImage from '@/assets/logo-curli.png';
 interface DailyEntry {
   id: string;
@@ -941,6 +942,9 @@ const ChartsDashboard: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* CREATORS CONVERSION METRICS */}
+        <CreatorsConversionMetrics />
 
         {/* TODAY'S METRICS - Separate Section */}
         <Card className="border-destructive/30 bg-gradient-to-br from-destructive/5 to-background">
