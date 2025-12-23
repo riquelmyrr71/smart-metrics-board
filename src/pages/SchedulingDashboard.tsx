@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { format, getDaysInMonth, startOfMonth, addDays, getDay, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Calendar as CalendarIcon, BarChart3, Target, TrendingUp, TrendingDown, Users, ChevronLeft, ChevronRight, Save, Home, CheckCircle2, XCircle, FileText, Plus, Trash2, AlertTriangle, Activity } from 'lucide-react';
+import { Calendar as CalendarIcon, BarChart3, Target, TrendingUp, TrendingDown, Users, ChevronLeft, ChevronRight, Save, Home, CheckCircle2, XCircle, FileText, Plus, Trash2, AlertTriangle, Activity, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -841,62 +841,70 @@ const SchedulingDashboard = () => {
       </Card>
 
       {/* Metrics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-        <Card className="bg-emerald-500/10 border-emerald-500/30">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
+        <Card className="bg-primary/5 border-primary/20">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-emerald-400 flex items-center gap-2">
+            <CardTitle className="text-sm text-primary flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               Dias Agendados
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-emerald-400">{metrics.scheduledRate.toFixed(1)}%</div>
+            <div className="text-2xl font-bold text-primary">{metrics.scheduledRate.toFixed(1)}%</div>
             <p className="text-xs text-muted-foreground">{metrics.totalScheduled} agendamentos</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-red-500/10 border-red-500/30">
+        <Card className="bg-destructive/5 border-destructive/20">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-red-400 flex items-center gap-2">
+            <CardTitle className="text-sm text-destructive flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
-              Dias Sem Agendamento
+              Sem Agendamento
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-400">{metrics.unscheduledRate.toFixed(1)}%</div>
+            <div className="text-2xl font-bold text-destructive">{metrics.unscheduledRate.toFixed(1)}%</div>
             <p className="text-xs text-muted-foreground">{metrics.totalPossible - metrics.totalScheduled} vazios</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-amber-500/10 border-amber-500/30">
+        <Card className="bg-warning/5 border-warning/20">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-amber-400 flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
-              Dia Mais Problemático
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-amber-400">{metrics.worstDays[0]?.dayName || '-'}</div>
-            <p className="text-xs text-muted-foreground">{metrics.worstDays[0]?.rate.toFixed(1)}% de agendamentos</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-blue-500/10 border-blue-500/30">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-blue-400 flex items-center gap-2">
-              <Users className="h-4 w-4" />
+            <CardTitle className="text-sm text-warning flex items-center gap-2">
+              <Trophy className="h-4 w-4" />
               Melhor Membro
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-lg font-bold text-blue-400 truncate">{metrics.ranking[0]?.name || '-'}</div>
-            <p className="text-xs text-muted-foreground">{metrics.ranking[0]?.scheduled || 0} dias agendados</p>
+            <div className="text-xl font-bold text-foreground truncate">
+              {metrics.ranking[0]?.name?.split(' ')[0] || '-'}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {metrics.ranking[0]?.rate.toFixed(0)}% • {metrics.ranking[0]?.scheduled || 0} dias
+            </p>
           </CardContent>
         </Card>
 
-        <Card className="bg-purple-500/10 border-purple-500/30">
+        <Card className="bg-primary/10 border-primary/30">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-purple-400 flex items-center gap-2">
+            <CardTitle className="text-sm text-primary flex items-center gap-2">
+              <Activity className="h-4 w-4" />
+              Impacto da Taxa
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-primary">
+              {impactAnalysis.differencePercent > 0 ? '+' : ''}{impactAnalysis.differencePercent.toFixed(1)}%
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {impactAnalysis.differencePercent >= 0 ? 'Melhor c/ agendamento' : 'Variação negativa'}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-primary/5 border-primary/20">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-primary flex items-center gap-2">
               <Target className="h-4 w-4" />
               Meta do Mês
             </CardTitle>
@@ -913,16 +921,16 @@ const SchedulingDashboard = () => {
             </div>
             <div className="mt-2 h-2 bg-muted rounded-full overflow-hidden">
               <div
-                className="h-full bg-purple-500 transition-all"
+                className="h-full bg-primary transition-all"
                 style={{ width: `${metrics.goalProgress}%` }}
               />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-cyan-500/10 border-cyan-500/30">
+        <Card className="bg-primary/5 border-primary/20">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-cyan-400 flex items-center gap-2">
+            <CardTitle className="text-sm text-primary flex items-center gap-2">
               <Users className="h-4 w-4" />
               Criadores Ativos
             </CardTitle>
@@ -937,7 +945,7 @@ const SchedulingDashboard = () => {
               />
               <span className="text-sm text-muted-foreground">ativos</span>
             </div>
-            <p className="text-xs text-muted-foreground mt-2">Total de criadores ativos no mês</p>
+            <p className="text-xs text-muted-foreground mt-2">Total de criadores ativos</p>
           </CardContent>
         </Card>
       </div>
