@@ -863,6 +863,82 @@ const OverviewDashboard: React.FC = () => {
   const chartData = chartDataWithProjection.actual;
   const chartDataFull = chartDataWithProjection.withProjection;
 
+  // Calculate filtered scheduling ranking based on period filter
+  const [filteredSchedulingRanking, setFilteredSchedulingRanking] = useState<RankingItem[]>([]);
+  
+  useEffect(() => {
+    const loadFilteredSchedulingRanking = async () => {
+      try {
+        let startDate: string;
+        let endDate: string;
+        
+        const now = new Date();
+        const todayFormatted = format(now, 'yyyy-MM-dd');
+        
+        switch (periodFilter) {
+          case '7d':
+            startDate = format(subDays(now, 6), 'yyyy-MM-dd');
+            endDate = todayFormatted;
+            break;
+          case '15d':
+            startDate = format(subDays(now, 14), 'yyyy-MM-dd');
+            endDate = todayFormatted;
+            break;
+          case 'custom':
+            if (customDateRange.from && customDateRange.to) {
+              startDate = format(customDateRange.from, 'yyyy-MM-dd');
+              endDate = format(customDateRange.to, 'yyyy-MM-dd');
+            } else {
+              startDate = format(monthStart, 'yyyy-MM-dd');
+              endDate = format(monthEnd, 'yyyy-MM-dd');
+            }
+            break;
+          default: // 'all'
+            startDate = format(monthStart, 'yyyy-MM-dd');
+            endDate = format(monthEnd, 'yyyy-MM-dd');
+        }
+        
+        const { data: schedulingData } = await supabase
+          .from('live_schedules')
+          .select('*')
+          .gte('schedule_date', startDate)
+          .lte('schedule_date', endDate);
+        
+        if (schedulingData) {
+          const schedulingByMember: Record<string, { scheduled: number; total: number; executive: string }> = {};
+          
+          schedulingData.forEach((schedule: any) => {
+            const member = schedule.member_name;
+            
+            if (!schedulingByMember[member]) {
+              schedulingByMember[member] = { scheduled: 0, total: 0, executive: schedule.executive_name };
+            }
+            schedulingByMember[member].total++;
+            
+            if (schedule.is_scheduled) {
+              schedulingByMember[member].scheduled++;
+            }
+          });
+          
+          const ranking: RankingItem[] = Object.entries(schedulingByMember)
+            .map(([name, data]) => ({
+              name,
+              value: data.total > 0 ? Math.round((data.scheduled / data.total) * 100) : 0,
+              executive: data.executive
+            }))
+            .sort((a, b) => b.value - a.value)
+            .slice(0, 5);
+          
+          setFilteredSchedulingRanking(ranking);
+        }
+      } catch (error) {
+        console.error('Error loading filtered scheduling ranking:', error);
+      }
+    };
+    
+    loadFilteredSchedulingRanking();
+  }, [periodFilter, customDateRange, monthStart, monthEnd]);
+
   const metrics: MetricSummary[] = monthlyData ? [
     { 
       label: 'Diamantes', 
@@ -1401,9 +1477,9 @@ const OverviewDashboard: React.FC = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {monthlyData?.rankings.scheduling.length ? (
+              {filteredSchedulingRanking.length ? (
                 <div className="space-y-2">
-                  {monthlyData.rankings.scheduling.map((item, index) => (
+                  {filteredSchedulingRanking.map((item, index) => (
                     <div key={item.name} className="flex items-center justify-between py-2 border-b border-border last:border-0">
                       <div className="flex items-center gap-3">
                         <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
