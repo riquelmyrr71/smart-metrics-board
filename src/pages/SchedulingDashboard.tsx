@@ -1368,12 +1368,12 @@ const SchedulingDashboard = () => {
         style={{ fontFamily: 'Arial, sans-serif' }}
       >
         {/* Header */}
-        <div className="bg-gradient-to-r from-gray-900 to-gray-800 text-white p-6">
+        <div className="bg-gradient-to-r from-rose-800 to-rose-700 text-white p-6">
           <div className="flex items-center justify-between">
             <img src={curliLogo} alt="Curli Logo" className="h-14 object-contain brightness-0 invert" />
             <div className="text-right">
               <h1 className="text-xl font-bold tracking-wide">AGENDAMENTO LIVE</h1>
-              <p className="text-gray-300 text-sm mt-1">
+              <p className="text-rose-200 text-sm mt-1">
                 {reportType === 'daily' 
                   ? format(reportDate, "dd/MM/yyyy", { locale: ptBR })
                   : `${format(reportDateRange.start, "dd/MM")} - ${format(reportDateRange.end, "dd/MM/yyyy")}`
@@ -1385,23 +1385,34 @@ const SchedulingDashboard = () => {
 
         <div className="p-6">
           {/* Monthly Summary */}
-          <div className="bg-white rounded-lg shadow-sm p-4 mb-6 border border-gray-200">
-            <div className="text-xs text-gray-500 uppercase tracking-wide mb-3">Resumo</div>
-            <div className="grid grid-cols-4 gap-4">
-              <div className="text-center">
+          <div className="bg-white rounded-lg shadow-sm p-4 mb-6 border border-rose-200">
+            <div className="text-xs text-rose-600 uppercase tracking-wide mb-3 font-medium">Resumo</div>
+            <div className="grid grid-cols-5 gap-4">
+              <div className="text-center p-3 bg-rose-50 rounded-lg">
                 <div className="text-2xl font-bold text-gray-900">{activeCreators}</div>
                 <div className="text-xs text-gray-500">Criadores Ativos</div>
               </div>
-              <div className="text-center">
+              <div className="text-center p-3 bg-amber-50 rounded-lg">
+                <div className="text-xl font-bold text-amber-600">
+                  {metrics.ranking[0]?.name?.split(' ')[0] || '-'}
+                </div>
+                <div className="text-xs text-gray-500">Melhor Membro</div>
+                <div className="text-xs text-amber-600 mt-1">
+                  {metrics.ranking[0]?.rate.toFixed(0)}% • {metrics.ranking[0]?.scheduled || 0} dias
+                </div>
+              </div>
+              <div className="text-center p-3 bg-rose-50 rounded-lg">
+                <div className="text-2xl font-bold text-rose-600">
+                  {impactAnalysis.differencePercent > 0 ? '+' : ''}{impactAnalysis.differencePercent.toFixed(1)}%
+                </div>
+                <div className="text-xs text-gray-500">Impacto Taxa</div>
+              </div>
+              <div className="text-center p-3 bg-red-50 rounded-lg">
                 <div className="text-2xl font-bold text-red-600">{metrics.worstDays[0]?.dayName || '-'}</div>
                 <div className="text-xs text-gray-500">Pior Dia</div>
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-orange-600">{impactAnalysis.daysWithDropAndMissing}</div>
-                <div className="text-xs text-gray-500">Falta/Queda</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">{metrics.scheduledRate.toFixed(0)}%</div>
+              <div className="text-center p-3 bg-emerald-50 rounded-lg">
+                <div className="text-2xl font-bold text-emerald-600">{metrics.scheduledRate.toFixed(0)}%</div>
                 <div className="text-xs text-gray-500">Agend. Mensal</div>
               </div>
             </div>
