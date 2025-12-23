@@ -665,13 +665,12 @@ const CreatorsAnalysisDashboard = () => {
               <thead>
                 <tr className="border-b-2 border-gray-300">
                   <th className="text-left py-2 font-bold text-gray-800">Executivo / Associado</th>
-                  <th className="text-right py-2 font-bold text-gray-800 w-20">Criadores</th>
+                  <th className="text-right py-2 font-bold text-gray-800 w-16">Qtd</th>
                 </tr>
               </thead>
               <tbody>
                 {teamStructure.map((exec) => {
                   const execTotal = getExecutiveTotal(exec.members);
-                  const topPerformer = getTopPerformer();
                   
                   return (
                     <React.Fragment key={exec.executive}>
@@ -681,50 +680,27 @@ const CreatorsAnalysisDashboard = () => {
                       </tr>
                       {exec.members.map(member => {
                         const count = getCreatorCount(member);
-                        const isTopPerformer = topPerformer && topPerformer.name === member && topPerformer.count > 0;
-                        
                         return (
-                          <tr 
-                            key={member} 
-                            className={`border-b border-gray-200 ${isTopPerformer ? 'bg-amber-50' : ''}`}
-                          >
-                            <td className="py-1.5 pl-4 text-gray-700">
-                              <div className="flex items-center gap-2">
-                                {isTopPerformer && <span className="text-amber-500">🏆</span>}
-                                <span className={isTopPerformer ? 'font-semibold text-amber-700' : ''}>{member}</span>
-                                <span className={`ml-auto font-bold text-lg ${
-                                  count >= 10 ? 'text-green-600' : 
-                                  count >= 5 ? 'text-blue-600' : 
-                                  count > 0 ? 'text-gray-800' : 'text-gray-400'
-                                }`}>
-                                  {count}
-                                </span>
-                              </div>
-                            </td>
-                            <td className="py-1.5 text-right">
-                              {count >= 10 && <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-medium">Alta</span>}
-                              {count >= 5 && count < 10 && <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-medium">Média</span>}
-                            </td>
+                          <tr key={member} className="border-b border-gray-200">
+                            <td className="py-1 pl-4 text-gray-700">{member}</td>
+                            <td className="py-1 text-right text-gray-700">{count}</td>
                           </tr>
                         );
                       })}
                     </React.Fragment>
                   );
                 })}
-                <tr className="border-t-2 border-gray-400 bg-purple-50">
+                <tr className="border-t-2 border-gray-400">
                   <td className="py-2 font-bold text-gray-900">TOTAL EM ANÁLISE</td>
-                  <td className="py-2 text-right font-bold text-2xl text-purple-700">{getGrandTotal()}</td>
+                  <td className="py-2 text-right font-bold text-xl text-purple-700">{getGrandTotal()}</td>
                 </tr>
               </tbody>
             </table>
 
             {/* Footer */}
-            <div className="mt-6 pt-3 border-t-2 border-gray-300 text-center space-y-1">
-              <p className="text-xs font-medium text-purple-600">
-                Relatório gerado pelo Sistema de Painel da Curli
-              </p>
+            <div className="mt-4 pt-2 border-t border-gray-200 text-center">
               <p className="text-xs text-gray-400">
-                {format(new Date(), "EEEE, dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR })}
+                Relatório gerado automaticamente • {format(new Date(), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
               </p>
             </div>
           </div>
