@@ -1376,28 +1376,116 @@ const SchedulingDashboard = () => {
         </div>
 
         <div className="p-6">
-          {/* Monthly Summary */}
-          <div className="bg-white rounded-lg shadow-sm p-4 mb-6 border border-gray-200">
-            <div className="text-xs text-gray-500 uppercase tracking-wide mb-3">Resumo</div>
-            <div className="grid grid-cols-4 gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">{activeCreators}</div>
-                <div className="text-xs text-gray-500">Criadores Ativos</div>
+          {/* Monthly Summary - Styled Cards */}
+          <div className="grid grid-cols-5 gap-3 mb-6">
+            {/* Dias Agendados */}
+            <div className="bg-emerald-50 rounded-xl p-4 border border-emerald-200">
+              <div className="flex items-center gap-1.5 text-emerald-600 text-xs font-medium mb-2">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                Dias Agendados
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-red-600">{metrics.worstDays[0]?.dayName || '-'}</div>
-                <div className="text-xs text-gray-500">Pior Dia</div>
+              <div className="text-2xl font-bold text-emerald-600">{metrics.scheduledRate.toFixed(1)}%</div>
+              <div className="text-xs text-emerald-700 mt-1">{metrics.totalScheduled} agendamentos</div>
+            </div>
+
+            {/* Dias Sem Agendamento */}
+            <div className="bg-green-50 rounded-xl p-4 border border-green-200">
+              <div className="flex items-center gap-1.5 text-green-600 text-xs font-medium mb-2">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                Dias Sem Agendamento
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-orange-600">{impactAnalysis.daysWithDropAndMissing}</div>
-                <div className="text-xs text-gray-500">Falta/Queda</div>
+              <div className="text-2xl font-bold text-red-500">{metrics.unscheduledRate.toFixed(1)}%</div>
+              <div className="text-xs text-green-700 mt-1">{metrics.totalPossible - metrics.totalScheduled} vazios</div>
+            </div>
+
+            {/* Dia Mais Problemático */}
+            <div className="bg-cyan-50 rounded-xl p-4 border border-cyan-200">
+              <div className="flex items-center gap-1.5 text-cyan-600 text-xs font-medium mb-2">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+                Dia Mais Problemático
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">{metrics.scheduledRate.toFixed(0)}%</div>
-                <div className="text-xs text-gray-500">Agend. Mensal</div>
+              <div className="text-2xl font-bold text-cyan-700">{metrics.worstDays[0]?.dayName || '-'}</div>
+              <div className="text-xs text-cyan-600 mt-1">{metrics.worstDays[0]?.rate?.toFixed(1) || '0'}% de agendamentos</div>
+            </div>
+
+            {/* Melhor Membro */}
+            <div className="bg-amber-50 rounded-xl p-4 border border-amber-200">
+              <div className="flex items-center gap-1.5 text-amber-600 text-xs font-medium mb-2">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                </svg>
+                Melhor Membro
+              </div>
+              <div className="text-lg font-bold text-amber-700 truncate">
+                {metrics.ranking[0]?.name || '-'}
+              </div>
+              <div className="text-xs text-amber-600 mt-1">
+                {metrics.ranking[0]?.scheduled || 0} dias agendados
+              </div>
+            </div>
+
+            {/* Meta do Mês */}
+            <div className="bg-fuchsia-50 rounded-xl p-4 border border-fuchsia-200">
+              <div className="flex items-center gap-1.5 text-fuchsia-600 text-xs font-medium mb-2">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Meta do Mês
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-2xl font-bold text-fuchsia-700">{daysGoal}</span>
+                <span className="text-sm text-fuchsia-600">dias</span>
+              </div>
+              <div className="mt-2 h-1.5 bg-fuchsia-200 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-fuchsia-500 rounded-full transition-all"
+                  style={{ width: `${Math.min(100, metrics.goalProgress)}%` }}
+                />
               </div>
             </div>
           </div>
+
+          {/* Impacto Card */}
+          {impactAnalysis.hasData && (
+            <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl p-4 mb-6 border border-orange-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-1.5 text-orange-600 text-xs font-medium mb-1">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    Impacto Taxa ≥70%
+                  </div>
+                  <div className="text-lg font-bold">
+                    <span className={impactAnalysis.differencePercent > 0 ? 'text-emerald-600' : 'text-red-600'}>
+                      {impactAnalysis.differencePercent > 0 ? '+' : ''}{impactAnalysis.differencePercent.toFixed(1)}%
+                    </span>
+                    <span className="text-gray-600 ml-1">💎 diamantes</span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4 text-center">
+                  <div>
+                    <div className="text-xs text-gray-500">💎 ≥70%</div>
+                    <div className="text-sm font-bold text-emerald-600">
+                      {(impactAnalysis.avgDiamondsHighScheduling / 1000000).toFixed(2)}M
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-500">💎 &lt;70%</div>
+                    <div className="text-sm font-bold text-red-600">
+                      {(impactAnalysis.avgDiamondsLowScheduling / 1000000).toFixed(2)}M
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Period Totals */}
           <div className="flex items-center justify-between bg-gray-100 rounded-lg p-3 mb-6">
@@ -1494,11 +1582,58 @@ const SchedulingDashboard = () => {
               );
             })}
           </div>
+
+          {/* Low Scheduling Members Section */}
+          {(() => {
+            const lowSchedulingMembers = metrics.ranking
+              .filter(m => m.scheduled < (daysGoal * 0.5))
+              .sort((a, b) => a.scheduled - b.scheduled)
+              .slice(0, 10);
+            
+            if (lowSchedulingMembers.length === 0) return null;
+            
+            return (
+              <div className="mt-6 bg-red-50 rounded-xl p-4 border border-red-200">
+                <div className="flex items-center gap-2 text-red-600 text-sm font-semibold mb-3">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  Associados com Baixo Agendamento
+                </div>
+                <div className="grid grid-cols-5 gap-2">
+                  {lowSchedulingMembers.map((member, idx) => (
+                    <div key={member.name} className="bg-white rounded-lg p-3 border border-red-100 text-center">
+                      <div className="text-xs text-gray-400 mb-1">#{idx + 1}</div>
+                      <div className="text-xs font-medium text-gray-900 truncate">{member.name}</div>
+                      <div className="text-lg font-bold text-red-600">{member.scheduled}</div>
+                      <div className="text-xs text-gray-500">dias</div>
+                      <div className="mt-1.5 h-1 bg-red-100 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-red-400 rounded-full"
+                          style={{ width: `${Math.min(100, (member.scheduled / daysGoal) * 100)}%` }}
+                        />
+                      </div>
+                      <div className="text-xs text-red-500 mt-1">
+                        {((member.scheduled / daysGoal) * 100).toFixed(0)}% da meta
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
         </div>
 
         {/* Footer */}
-        <div className="bg-gray-100 px-6 py-3 text-center text-xs text-gray-500 border-t border-gray-200">
-          Gerado em {format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+        <div className="bg-gray-100 px-6 py-4 border-t border-gray-200">
+          <div className="text-center">
+            <p className="text-xs font-medium text-purple-600 mb-1">
+              Relatório gerado pelo Sistema de Painel da Curli
+            </p>
+            <p className="text-xs text-gray-400">
+              {format(new Date(), "EEEE, dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR })}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -1522,60 +1657,101 @@ const SchedulingDashboard = () => {
         </div>
 
         <div className="p-6">
-          {/* Summary Section */}
-          <div className="bg-white rounded-lg shadow-sm p-4 mb-6 border border-gray-200">
-            <div className="text-xs text-gray-500 uppercase tracking-wide mb-3">Resumo</div>
-            <div className="grid grid-cols-5 gap-3">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-red-600">{impactAnalysis.daysWithDropAndMissing}</div>
-                <div className="text-xs text-gray-500">Falta/Queda</div>
+          {/* Summary Section - Styled Cards */}
+          <div className="grid grid-cols-5 gap-3 mb-6">
+            {/* Dias com Queda */}
+            <div className="bg-red-50 rounded-xl p-4 border border-red-200">
+              <div className="flex items-center gap-1.5 text-red-600 text-xs font-medium mb-2">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+                </svg>
+                Dias com Queda
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-orange-600">
-                  {impactAnalysis.totalEstimatedLoss > 0 
-                    ? (impactAnalysis.totalEstimatedLoss / 1000000).toFixed(2) + 'M'
-                    : '-'}
-                </div>
-                <div className="text-xs text-gray-500">Perda Total</div>
+              <div className="text-2xl font-bold text-red-600">{impactAnalysis.daysWithDropAndMissing}</div>
+              <div className="text-xs text-red-700 mt-1">falta + queda 💎</div>
+            </div>
+
+            {/* Perda Total */}
+            <div className="bg-orange-50 rounded-xl p-4 border border-orange-200">
+              <div className="flex items-center gap-1.5 text-orange-600 text-xs font-medium mb-2">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Perda Total
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-yellow-600">
-                  {impactAnalysis.avgLossPerMissing > 0 
-                    ? (impactAnalysis.avgLossPerMissing / 1000).toFixed(0) + 'K'
-                    : '-'}
-                </div>
-                <div className="text-xs text-gray-500">Perda/Falta</div>
+              <div className="text-2xl font-bold text-orange-600">
+                {impactAnalysis.totalEstimatedLoss > 0 
+                  ? (impactAnalysis.totalEstimatedLoss / 1000000).toFixed(2) + 'M'
+                  : '-'}
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">
-                  {impactAnalysis.avgDiamondsHighScheduling > 0 
-                    ? (impactAnalysis.avgDiamondsHighScheduling / 1000000).toFixed(2) + 'M'
-                    : '-'}
-                </div>
-                <div className="text-xs text-gray-500">💎 ≥70%</div>
+              <div className="text-xs text-orange-700 mt-1">estimativa</div>
+            </div>
+
+            {/* Perda por Falta */}
+            <div className="bg-yellow-50 rounded-xl p-4 border border-yellow-200">
+              <div className="flex items-center gap-1.5 text-yellow-600 text-xs font-medium mb-2">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                Perda/Falta
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-600">
-                  {impactAnalysis.avgDiamondsLowScheduling > 0 
-                    ? (impactAnalysis.avgDiamondsLowScheduling / 1000000).toFixed(2) + 'M'
-                    : '-'}
-                </div>
-                <div className="text-xs text-gray-500">💎 &lt;70%</div>
+              <div className="text-2xl font-bold text-yellow-600">
+                {impactAnalysis.avgLossPerMissing > 0 
+                  ? (impactAnalysis.avgLossPerMissing / 1000).toFixed(0) + 'K'
+                  : '-'}
               </div>
+              <div className="text-xs text-yellow-700 mt-1">média</div>
+            </div>
+
+            {/* Diamantes ≥70% */}
+            <div className="bg-emerald-50 rounded-xl p-4 border border-emerald-200">
+              <div className="flex items-center gap-1.5 text-emerald-600 text-xs font-medium mb-2">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+                💎 Taxa ≥70%
+              </div>
+              <div className="text-2xl font-bold text-emerald-600">
+                {impactAnalysis.avgDiamondsHighScheduling > 0 
+                  ? (impactAnalysis.avgDiamondsHighScheduling / 1000000).toFixed(2) + 'M'
+                  : '-'}
+              </div>
+              <div className="text-xs text-emerald-700 mt-1">média/dia</div>
+            </div>
+
+            {/* Diamantes <70% */}
+            <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+              <div className="flex items-center gap-1.5 text-gray-600 text-xs font-medium mb-2">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+                </svg>
+                💎 Taxa &lt;70%
+              </div>
+              <div className="text-2xl font-bold text-gray-600">
+                {impactAnalysis.avgDiamondsLowScheduling > 0 
+                  ? (impactAnalysis.avgDiamondsLowScheduling / 1000000).toFixed(2) + 'M'
+                  : '-'}
+              </div>
+              <div className="text-xs text-gray-500 mt-1">média/dia</div>
             </div>
           </div>
 
-          {/* Difference Highlight */}
+          {/* Impacto Card */}
           {impactAnalysis.differencePercent !== 0 && (
-            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
+            <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl p-4 mb-6 border border-orange-200">
               <div className="text-center">
-                <div className="text-sm text-orange-800 font-medium mb-1">Impacto</div>
-                <div className="text-lg font-bold text-gray-900">
+                <div className="flex items-center justify-center gap-1.5 text-orange-600 text-sm font-medium mb-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  Impacto da Taxa de Agendamento
+                </div>
+                <div className="text-xl font-bold text-gray-900">
                   Taxa ≥70% = {' '}
                   <span className={impactAnalysis.differencePercent > 0 ? 'text-emerald-600' : 'text-red-600'}>
                     {impactAnalysis.differencePercent > 0 ? '+' : ''}{impactAnalysis.differencePercent.toFixed(1)}%
                   </span>{' '}
-                  diamantes
+                  💎 diamantes
                 </div>
               </div>
             </div>
@@ -1691,8 +1867,15 @@ const SchedulingDashboard = () => {
         </div>
 
         {/* Footer */}
-        <div className="bg-gray-100 px-6 py-3 text-center text-xs text-gray-500 border-t border-gray-200">
-          Gerado em {format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+        <div className="bg-gray-100 px-6 py-4 border-t border-gray-200">
+          <div className="text-center">
+            <p className="text-xs font-medium text-purple-600 mb-1">
+              Relatório gerado pelo Sistema de Painel da Curli
+            </p>
+            <p className="text-xs text-gray-400">
+              {format(new Date(), "EEEE, dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR })}
+            </p>
+          </div>
         </div>
       </div>
     </div>
