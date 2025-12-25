@@ -12,7 +12,9 @@ import { format, startOfMonth, endOfMonth, isWithinInterval, subDays, isToday, p
 import { ptBR } from 'date-fns/locale';
 import { WeeklyAnalysis } from '@/components/Charts/WeeklyAnalysis';
 import { CreatorsConversionMetrics } from '@/components/CreatorsConversionMetrics';
-import logoImage from '@/assets/logo-curli.png';
+import { BrandLogo } from '@/components/BrandLogo';
+import { branding, getReportFooter } from '@/config/branding';
+
 interface DailyEntry {
   id: string;
   date: string;
@@ -560,9 +562,9 @@ const ChartsDashboard: React.FC = () => {
               </Button>
             </Link>
             <div className="flex items-center gap-3">
-              <img src={logoImage} alt="Curli Logo" className="w-10 h-10 object-contain" />
+              <BrandLogo size="md" />
               <h1 className="text-xl font-bold text-foreground">
-                Dashboard de Métricas
+                {branding.titles.charts}
               </h1>
             </div>
           </div>
@@ -1389,8 +1391,8 @@ const ChartsDashboard: React.FC = () => {
           <div className="text-center mb-8 pb-6" style={{
           borderBottom: '2px solid #1a1a1a'
         }}>
-            <img src={logoImage} alt="Curli Logo" className="w-16 h-16 mx-auto mb-3 object-contain" />
-            <h1 className="text-2xl font-bold mb-2" style={{
+            <span className="text-3xl font-bold" style={{ color: '#dc2626' }}>{branding.companyShortName}</span>
+            <h1 className="text-2xl font-bold mb-2 mt-3" style={{
             color: '#1a1a1a'
           }}>Relatório Diário</h1>
             <p className="text-lg font-medium" style={{
@@ -1402,7 +1404,7 @@ const ChartsDashboard: React.FC = () => {
             </p>
             <p className="text-sm mt-1" style={{
             color: '#525252'
-          }}>CURLI AGÊNCIA</p>
+          }}>{branding.companyName.toUpperCase()}</p>
           </div>
 
           {/* Selected Date Main Metrics */}
@@ -1649,8 +1651,8 @@ const ChartsDashboard: React.FC = () => {
           <div className="text-center mb-8 pb-6" style={{
           borderBottom: '2px solid #b91c1c'
         }}>
-            <img src={logoImage} alt="Curli Logo" className="w-16 h-16 mx-auto mb-3 object-contain" />
-            <h1 className="text-2xl font-bold mb-2" style={{
+            <span className="text-3xl font-bold" style={{ color: '#dc2626' }}>{branding.companyShortName}</span>
+            <h1 className="text-2xl font-bold mb-2 mt-3" style={{
             color: '#b91c1c'
           }}>Relatório de Diamantes</h1>
             <p className="text-lg font-medium" style={{
@@ -1828,8 +1830,8 @@ const ChartsDashboard: React.FC = () => {
           <div className="text-center mb-8 pb-6" style={{
           borderBottom: '2px solid #1a1a1a'
         }}>
-            <img src={logoImage} alt="Curli Logo" className="w-16 h-16 mx-auto mb-3 object-contain" />
-            <h1 className="text-2xl font-bold mb-2" style={{
+            <span className="text-3xl font-bold" style={{ color: '#dc2626' }}>{branding.companyShortName}</span>
+            <h1 className="text-2xl font-bold mb-2 mt-3" style={{
             color: '#1a1a1a'
           }}>Relatório de Criadores</h1>
             <p className="text-lg font-medium" style={{
@@ -2009,8 +2011,8 @@ const ChartsDashboard: React.FC = () => {
           <div className="text-center mb-8 pb-6" style={{
             borderBottom: '3px solid #f59e0b'
           }}>
-            <img src={logoImage} alt="Curli Logo" className="w-16 h-16 mx-auto mb-3 object-contain" />
-            <h1 className="text-2xl font-bold mb-2" style={{
+            <span className="text-3xl font-bold" style={{ color: '#f59e0b' }}>{branding.companyShortName}</span>
+            <h1 className="text-2xl font-bold mb-2 mt-3" style={{
               color: '#b45309'
             }}>Relatório de Marcos</h1>
             <p className="text-lg font-medium" style={{

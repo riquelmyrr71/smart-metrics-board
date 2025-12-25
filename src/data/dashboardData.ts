@@ -611,7 +611,7 @@ const totalRow: Row = {
   order: 100,
   cells: {
     streamers: createCell('total', 'streamers', 1497, 'number'),
-    team: createCell('total', 'team', 'CURLI AGÊNCIA GERAL', 'text'),
+    team: createCell('total', 'team', 'AGÊNCIA GERAL', 'text'),
     rec_atual: createCell('total', 'rec_atual', 977, 'number'),
     meta_rec: createCell('total', 'meta_rec', 1675, 'number'),
     atg_percent: createCell('total', 'atg_percent', 0.58, 'percentage'),
