@@ -34,7 +34,8 @@ import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import curliLogo from '@/assets/logo-curli.png';
+import { BrandLogo } from '@/components/BrandLogo';
+import { branding, getReportFooter } from '@/config/branding';
 import { BattlesMetricsReport } from '@/components/BattlesMetricsReport';
 
 interface BattleData {
@@ -81,7 +82,7 @@ interface BattleCategoryData {
 }
 
 const CATEGORY_CONFIG: { key: BattleCategory; label: string; color: string; bgColor: string; textColor: string }[] = [
-  { key: 'curliChallenge', label: 'Curli Challenge', color: '#dc2626', bgColor: 'bg-red-500', textColor: 'text-white' },
+  { key: 'curliChallenge', label: 'Challenge', color: '#dc2626', bgColor: 'bg-red-500', textColor: 'text-white' },
   { key: 'rise', label: 'Rise', color: '#ffffff', bgColor: 'bg-white border border-gray-300', textColor: 'text-black' },
   { key: 'oficial', label: 'OFICIAL', color: '#2563eb', bgColor: 'bg-blue-500', textColor: 'text-white' },
 ];
@@ -1290,7 +1291,7 @@ const BattlesDashboard = () => {
           {/* Header */}
           <div className="flex items-center justify-between mb-4 pb-2" style={{ borderBottom: '2px solid #dc2626' }}>
             <div className="flex items-center gap-3">
-              <img src={curliLogo} alt="Curli" className="h-10 w-auto" />
+              <span className="text-xl font-bold" style={{ color: '#dc2626' }}>{branding.companyShortName}</span>
               <div>
                 <h1 className="text-lg font-bold" style={{ color: '#1a1a1a' }}>Relatório de Batalhas</h1>
                 <p className="text-xs" style={{ color: '#555' }}>

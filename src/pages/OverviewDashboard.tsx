@@ -12,7 +12,8 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import curliLogo from '@/assets/logo-curli.png';
+import { BrandLogo } from '@/components/BrandLogo';
+import { branding, getReportFooter } from '@/config/branding';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 // Data IDs from other dashboards
@@ -575,13 +576,9 @@ const OverviewDashboard: React.FC = () => {
       pdf.rect(0, 0, pageWidth, pageHeight, 'F');
       
       // Logo placeholder
-      try {
-        pdf.addImage(curliLogo, 'PNG', 10, 8, 25, 12);
-      } catch (e) {
-        pdf.setFontSize(14);
-        pdf.setTextColor(220, 38, 38);
-        pdf.text('CURLI', 10, 16);
-      }
+      pdf.setFontSize(14);
+      pdf.setTextColor(220, 38, 38);
+      pdf.text(branding.companyShortName.toUpperCase(), 10, 16);
       
       // Title
       pdf.setFontSize(16);
@@ -999,8 +996,8 @@ const OverviewDashboard: React.FC = () => {
       <header className="bg-card border-b border-border px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src={curliLogo} alt="Curli" className="h-8 w-auto" />
-            <h1 className="text-xl font-bold text-foreground">Overview Geral</h1>
+            <BrandLogo size="md" />
+            <h1 className="text-xl font-bold text-foreground">{branding.titles.overview}</h1>
           </div>
           
           <div className="flex items-center gap-4">
@@ -1667,7 +1664,7 @@ const OverviewDashboard: React.FC = () => {
           <div ref={reportRef} className="bg-white p-8 w-[800px]" style={{ fontFamily: 'Arial, sans-serif' }}>
             {/* PDF Header */}
             <div className="flex items-center justify-between mb-6 pb-4 border-b-2 border-gray-300">
-              <img src={curliLogo} alt="Curli" className="h-10 w-auto" />
+              <span className="text-2xl font-bold text-primary">{branding.companyShortName}</span>
               <div className="text-right">
                 <h1 className="text-xl font-bold text-gray-900">OVERVIEW MENSAL</h1>
                 <p className="text-sm text-gray-600 capitalize">{format(currentMonth, 'MMMM yyyy', { locale: ptBR })}</p>
@@ -1746,8 +1743,8 @@ const OverviewDashboard: React.FC = () => {
           {/* Consolidated PDF Report */}
           <div ref={consolidatedReportRef} className="bg-white p-8 w-[800px]" style={{ fontFamily: 'Arial, sans-serif' }}>
             {/* PDF Header */}
-            <div className="flex items-center justify-between mb-6 pb-4 border-b-2 border-red-600">
-              <img src={curliLogo} alt="Curli" className="h-12 w-auto" />
+            <div className="flex items-center justify-between mb-6 pb-4 border-b-2 border-primary">
+              <span className="text-3xl font-bold text-primary">{branding.companyShortName}</span>
               <div className="text-right">
                 <h1 className="text-2xl font-bold text-gray-900">RELATÓRIO CONSOLIDADO</h1>
                 <p className="text-sm text-gray-600 capitalize">{format(currentMonth, 'MMMM yyyy', { locale: ptBR })}</p>
@@ -1963,9 +1960,9 @@ const OverviewDashboard: React.FC = () => {
             </div>
 
             {/* Footer */}
-            <div className="mt-6 pt-4 border-t-2 border-red-600 text-center">
+            <div className="mt-6 pt-4 border-t-2 border-primary text-center">
               <p className="text-xs text-gray-500">
-                Curli Agência - Relatório Consolidado Mensal
+                {getReportFooter()}
               </p>
               <p className="text-xs text-gray-400 mt-1">
                 Este relatório foi gerado automaticamente pelo sistema de gestão.

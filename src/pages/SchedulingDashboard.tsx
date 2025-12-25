@@ -13,7 +13,8 @@ import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import curliLogo from '@/assets/logo-curli.png';
+import { BrandLogo } from '@/components/BrandLogo';
+import { branding, getReportFooter } from '@/config/branding';
 import {
   LineChart,
   Line,
@@ -1370,7 +1371,7 @@ const SchedulingDashboard = () => {
         {/* Header */}
         <div className="bg-gradient-to-r from-rose-800 to-rose-700 text-white p-6">
           <div className="flex items-center justify-between">
-            <img src={curliLogo} alt="Curli Logo" className="h-14 object-contain brightness-0 invert" />
+            <span className="text-2xl font-bold">{branding.companyShortName}</span>
             <div className="text-right">
               <h1 className="text-xl font-bold tracking-wide">AGENDAMENTO LIVE</h1>
               <p className="text-rose-200 text-sm mt-1">
@@ -1530,7 +1531,7 @@ const SchedulingDashboard = () => {
         {/* Header */}
         <div className="bg-gradient-to-r from-orange-600 to-orange-500 text-white p-6">
           <div className="flex items-center justify-between">
-            <img src={curliLogo} alt="Curli Logo" className="h-14 object-contain brightness-0 invert" />
+            <span className="text-2xl font-bold">{branding.companyShortName}</span>
             <div className="text-right">
               <h1 className="text-xl font-bold tracking-wide">ANÁLISE DE IMPACTO</h1>
               <p className="text-orange-100 text-sm mt-1">
