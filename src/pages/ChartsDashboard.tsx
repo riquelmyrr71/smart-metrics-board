@@ -2016,7 +2016,7 @@ const ChartsDashboard: React.FC = () => {
               Relatório de Marcos
             </h1>
             <p className="text-sm" style={{ color: '#737373' }}>
-              {format(new Date(), "MMMM 'de' yyyy", { locale: ptBR })} • {branding.companyShortName}
+              {format(new Date(), "MMMM 'de' yyyy", { locale: ptBR })}
             </p>
           </div>
 
