@@ -377,20 +377,18 @@ export const PreviousMonthSummary: React.FC<PreviousMonthSummaryProps> = ({
 
           {/* Summary Stats */}
           <div className="pt-6 border-t-2 border-gray-200">
-            <div className="grid grid-cols-3 gap-5 text-center">
-              <div className="p-5 rounded-2xl bg-gray-100 border border-gray-200">
-                <p className="text-2xl font-extrabold text-gray-800">{previousMonthData.totalDays}</p>
-                <p className="text-base text-gray-600 mt-2 font-medium">Dias no Mês</p>
-              </div>
+            <div className="grid grid-cols-2 gap-5 text-center">
               <div className="p-5 rounded-2xl bg-gray-100 border border-gray-200">
                 <p className="text-2xl font-extrabold text-gray-800">{formatNumber(previousMonthData.avgCreators)}</p>
                 <p className="text-base text-gray-600 mt-2 font-medium">Média Criadores/Dia</p>
               </div>
               <div className="p-5 rounded-2xl bg-gray-100 border border-gray-200">
-                <p className="text-4xl font-extrabold text-gray-800">
-                  {((previousMonthData.daysWithData / previousMonthData.totalDays) * 100).toFixed(0)}%
+                <p className="text-2xl font-extrabold text-gray-800">
+                  {previousMonthData.totalCreators > 0 
+                    ? formatNumber(Math.round(previousMonthData.totalDiamonds / previousMonthData.totalCreators))
+                    : '0'}
                 </p>
-                <p className="text-base text-gray-600 mt-2 font-medium">Cobertura de Dados</p>
+                <p className="text-base text-gray-600 mt-2 font-medium">Média Diamantes/Criador</p>
               </div>
             </div>
           </div>
