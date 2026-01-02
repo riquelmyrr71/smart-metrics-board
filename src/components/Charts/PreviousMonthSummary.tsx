@@ -195,178 +195,184 @@ export const PreviousMonthSummary: React.FC<PreviousMonthSummaryProps> = ({
           Exportar PDF
         </Button>
       </CardHeader>
-      <CardContent className="space-y-6" ref={reportRef}>
-        {/* Main KPIs */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {/* Total Diamonds */}
-          <div className="p-4 rounded-xl bg-gradient-to-br from-destructive/10 to-destructive/5 border border-destructive/20">
-            <div className="flex items-center gap-2 mb-2">
-              <Diamond className="w-4 h-4 text-destructive" />
-              <span className="text-xs font-medium text-muted-foreground">Total Diamantes</span>
-            </div>
-            <p className="text-2xl font-bold text-destructive">
-              {formatNumber(previousMonthData.totalDiamonds)}
-            </p>
-            {previousMonthData.diamondsChange !== 0 && (
-              <div className="flex items-center gap-1 mt-1">
-                <TrendIcon value={previousMonthData.diamondsChange} />
-                <span className={`text-xs ${previousMonthData.diamondsChange > 0 ? 'text-green-500' : previousMonthData.diamondsChange < 0 ? 'text-red-500' : 'text-muted-foreground'}`}>
-                  {Math.abs(previousMonthData.diamondsChange).toFixed(1)}% vs atual
-                </span>
-              </div>
-            )}
+      <CardContent className="space-y-6">
+        <div ref={reportRef} className="space-y-6 p-6 rounded-xl bg-[#0f172a]">
+          {/* Report Header */}
+          <div className="text-center pb-4 border-b border-white/10">
+            <h2 className="text-2xl font-bold text-white capitalize">
+              Relatório - {previousMonthData.monthName}
+            </h2>
           </div>
 
-          {/* Total Creators */}
-          <div className="p-4 rounded-xl bg-gradient-to-br from-blue-500/10 to-blue-500/5 border border-blue-500/20">
-            <div className="flex items-center gap-2 mb-2">
-              <Users className="w-4 h-4 text-blue-500" />
-              <span className="text-xs font-medium text-muted-foreground">Total Criadores</span>
-            </div>
-            <p className="text-2xl font-bold text-blue-500">
-              {previousMonthData.totalCreators.toLocaleString('pt-BR')}
-            </p>
-            {previousMonthData.creatorsChange !== 0 && (
-              <div className="flex items-center gap-1 mt-1">
-                <TrendIcon value={previousMonthData.creatorsChange} />
-                <span className={`text-xs ${previousMonthData.creatorsChange > 0 ? 'text-green-500' : previousMonthData.creatorsChange < 0 ? 'text-red-500' : 'text-muted-foreground'}`}>
-                  {Math.abs(previousMonthData.creatorsChange).toFixed(1)}% vs atual
-                </span>
+          {/* Main KPIs */}
+          <div className="grid grid-cols-2 gap-4">
+            {/* Total Diamonds */}
+            <div className="p-5 rounded-xl bg-gradient-to-br from-red-500/20 to-red-600/10 border-2 border-red-500/40">
+              <div className="flex items-center gap-2 mb-3">
+                <Diamond className="w-5 h-5 text-red-400" />
+                <span className="text-sm font-semibold text-red-300">Total Diamantes</span>
               </div>
-            )}
-          </div>
-
-          {/* Average Diamonds */}
-          <div className="p-4 rounded-xl bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 border border-yellow-500/20">
-            <div className="flex items-center gap-2 mb-2">
-              <TrendingUp className="w-4 h-4 text-yellow-600" />
-              <span className="text-xs font-medium text-muted-foreground">Média/Dia Diamantes</span>
-            </div>
-            <p className="text-2xl font-bold text-yellow-600">
-              {formatNumber(previousMonthData.avgDiamonds)}
-            </p>
-            <span className="text-xs text-muted-foreground">
-              {previousMonthData.daysWithData} dias com dados
-            </span>
-          </div>
-
-          {/* Level Achieved */}
-          <div className="p-4 rounded-xl bg-gradient-to-br from-purple-500/10 to-purple-500/5 border border-purple-500/20">
-            <div className="flex items-center gap-2 mb-2">
-              <Award className="w-4 h-4 text-purple-500" />
-              <span className="text-xs font-medium text-muted-foreground">Nível Alcançado</span>
-            </div>
-            <p className="text-2xl font-bold text-purple-500">
-              {previousMonthData.achievedLevel ? `${previousMonthData.achievedLevel.percentage}%` : '0%'}
-            </p>
-            <span className="text-xs text-muted-foreground">
-              Meta: {formatNumber(previousMonthData.achievedLevel?.diamondsValue || 0)}
-            </span>
-          </div>
-        </div>
-
-        {/* Goal Progress */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Diamonds Goal */}
-          <div className="p-4 rounded-lg bg-muted/30 border border-border">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Diamond className="w-4 h-4 text-destructive" />
-                <span className="text-sm font-medium">Meta de Diamantes</span>
-              </div>
-              <span className={`text-sm font-bold ${previousMonthData.diamondsGoalProgress >= 100 ? 'text-green-500' : 'text-destructive'}`}>
-                {previousMonthData.diamondsGoalProgress.toFixed(1)}%
-              </span>
-            </div>
-            <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-              <div 
-                className={`h-full rounded-full transition-all ${previousMonthData.diamondsGoalProgress >= 100 ? 'bg-green-500' : 'bg-destructive'}`}
-                style={{ width: `${Math.min(100, previousMonthData.diamondsGoalProgress)}%` }}
-              />
-            </div>
-            <div className="flex justify-between mt-2 text-xs text-muted-foreground">
-              <span>{formatNumber(previousMonthData.totalDiamonds)}</span>
-              <span>Meta: {formatNumber(diamondsGoal)}</span>
-            </div>
-          </div>
-
-          {/* Creators Goal */}
-          <div className="p-4 rounded-lg bg-muted/30 border border-border">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-blue-500" />
-                <span className="text-sm font-medium">Meta de Criadores</span>
-              </div>
-              <span className={`text-sm font-bold ${previousMonthData.creatorsGoalProgress >= 100 ? 'text-green-500' : 'text-blue-500'}`}>
-                {previousMonthData.creatorsGoalProgress.toFixed(1)}%
-              </span>
-            </div>
-            <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-              <div 
-                className={`h-full rounded-full transition-all ${previousMonthData.creatorsGoalProgress >= 100 ? 'bg-green-500' : 'bg-blue-500'}`}
-                style={{ width: `${Math.min(100, previousMonthData.creatorsGoalProgress)}%` }}
-              />
-            </div>
-            <div className="flex justify-between mt-2 text-xs text-muted-foreground">
-              <span>{previousMonthData.totalCreators.toLocaleString('pt-BR')}</span>
-              <span>Meta: {creatorsGoal.toLocaleString('pt-BR')}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Best Days */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {previousMonthData.bestDayDiamonds && (
-            <div className="p-4 rounded-lg bg-gradient-to-r from-destructive/5 to-transparent border border-destructive/10">
-              <div className="flex items-center gap-2 mb-2">
-                <Diamond className="w-4 h-4 text-destructive" />
-                <span className="text-sm font-medium text-muted-foreground">Melhor Dia (Diamantes)</span>
-              </div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-xl font-bold text-destructive">
-                  {formatNumber(previousMonthData.bestDayDiamonds.diamonds)}
-                </span>
-                <span className="text-sm text-muted-foreground">
-                  em {format(new Date(previousMonthData.bestDayDiamonds.date + 'T12:00:00'), 'dd/MM', { locale: ptBR })}
-                </span>
-              </div>
-            </div>
-          )}
-
-          {previousMonthData.bestDayCreators && (
-            <div className="p-4 rounded-lg bg-gradient-to-r from-blue-500/5 to-transparent border border-blue-500/10">
-              <div className="flex items-center gap-2 mb-2">
-                <Users className="w-4 h-4 text-blue-500" />
-                <span className="text-sm font-medium text-muted-foreground">Melhor Dia (Criadores)</span>
-              </div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-xl font-bold text-blue-500">
-                  {previousMonthData.bestDayCreators.creators.toLocaleString('pt-BR')}
-                </span>
-                <span className="text-sm text-muted-foreground">
-                  em {format(new Date(previousMonthData.bestDayCreators.date + 'T12:00:00'), 'dd/MM', { locale: ptBR })}
-                </span>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Summary Stats - without days with data */}
-        <div className="pt-4 border-t border-border">
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-center">
-            <div>
-              <p className="text-2xl font-bold text-foreground">{previousMonthData.totalDays}</p>
-              <p className="text-xs text-muted-foreground">Total de dias no mês</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-foreground">{formatNumber(previousMonthData.avgCreators)}</p>
-              <p className="text-xs text-muted-foreground">Média criadores/dia</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-foreground">
-                {((previousMonthData.daysWithData / previousMonthData.totalDays) * 100).toFixed(0)}%
+              <p className="text-4xl font-bold text-red-400">
+                {formatNumber(previousMonthData.totalDiamonds)}
               </p>
-              <p className="text-xs text-muted-foreground">Cobertura de dados</p>
+              {previousMonthData.diamondsChange !== 0 && (
+                <div className="flex items-center gap-1 mt-2">
+                  <TrendIcon value={previousMonthData.diamondsChange} />
+                  <span className={`text-sm font-medium ${previousMonthData.diamondsChange > 0 ? 'text-green-400' : previousMonthData.diamondsChange < 0 ? 'text-red-400' : 'text-gray-400'}`}>
+                    {Math.abs(previousMonthData.diamondsChange).toFixed(1)}% vs mês atual
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Total Creators */}
+            <div className="p-5 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-600/10 border-2 border-blue-500/40">
+              <div className="flex items-center gap-2 mb-3">
+                <Users className="w-5 h-5 text-blue-400" />
+                <span className="text-sm font-semibold text-blue-300">Total Criadores</span>
+              </div>
+              <p className="text-4xl font-bold text-blue-400">
+                {previousMonthData.totalCreators.toLocaleString('pt-BR')}
+              </p>
+              {previousMonthData.creatorsChange !== 0 && (
+                <div className="flex items-center gap-1 mt-2">
+                  <TrendIcon value={previousMonthData.creatorsChange} />
+                  <span className={`text-sm font-medium ${previousMonthData.creatorsChange > 0 ? 'text-green-400' : previousMonthData.creatorsChange < 0 ? 'text-red-400' : 'text-gray-400'}`}>
+                    {Math.abs(previousMonthData.creatorsChange).toFixed(1)}% vs mês atual
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Average Diamonds */}
+            <div className="p-5 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 border-2 border-amber-500/40">
+              <div className="flex items-center gap-2 mb-3">
+                <TrendingUp className="w-5 h-5 text-amber-400" />
+                <span className="text-sm font-semibold text-amber-300">Média Diária (Diamantes)</span>
+              </div>
+              <p className="text-4xl font-bold text-amber-400">
+                {formatNumber(previousMonthData.avgDiamonds)}
+              </p>
+            </div>
+
+            {/* Level Achieved */}
+            <div className="p-5 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/10 border-2 border-purple-500/40">
+              <div className="flex items-center gap-2 mb-3">
+                <Award className="w-5 h-5 text-purple-400" />
+                <span className="text-sm font-semibold text-purple-300">Nível Alcançado</span>
+              </div>
+              <p className="text-4xl font-bold text-purple-400">
+                {previousMonthData.achievedLevel ? `${previousMonthData.achievedLevel.percentage}%` : '0%'}
+              </p>
+              <span className="text-sm text-purple-300/70">
+                Meta: {formatNumber(previousMonthData.achievedLevel?.diamondsValue || 0)}
+              </span>
+            </div>
+          </div>
+
+          {/* Goal Progress */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Diamonds Goal */}
+            <div className="p-5 rounded-xl bg-white/5 border border-white/10">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Diamond className="w-5 h-5 text-red-400" />
+                  <span className="text-base font-semibold text-white">Meta de Diamantes</span>
+                </div>
+                <span className={`text-lg font-bold ${previousMonthData.diamondsGoalProgress >= 100 ? 'text-green-400' : 'text-red-400'}`}>
+                  {previousMonthData.diamondsGoalProgress.toFixed(1)}%
+                </span>
+              </div>
+              <div className="w-full h-4 bg-white/10 rounded-full overflow-hidden">
+                <div 
+                  className={`h-full rounded-full transition-all ${previousMonthData.diamondsGoalProgress >= 100 ? 'bg-green-500' : 'bg-red-500'}`}
+                  style={{ width: `${Math.min(100, previousMonthData.diamondsGoalProgress)}%` }}
+                />
+              </div>
+              <div className="flex justify-between mt-3 text-sm text-gray-300">
+                <span>Alcançado: {formatNumber(previousMonthData.totalDiamonds)}</span>
+                <span>Meta: {formatNumber(diamondsGoal)}</span>
+              </div>
+            </div>
+
+            {/* Creators Goal */}
+            <div className="p-5 rounded-xl bg-white/5 border border-white/10">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Users className="w-5 h-5 text-blue-400" />
+                  <span className="text-base font-semibold text-white">Meta de Criadores</span>
+                </div>
+                <span className={`text-lg font-bold ${previousMonthData.creatorsGoalProgress >= 100 ? 'text-green-400' : 'text-blue-400'}`}>
+                  {previousMonthData.creatorsGoalProgress.toFixed(1)}%
+                </span>
+              </div>
+              <div className="w-full h-4 bg-white/10 rounded-full overflow-hidden">
+                <div 
+                  className={`h-full rounded-full transition-all ${previousMonthData.creatorsGoalProgress >= 100 ? 'bg-green-500' : 'bg-blue-500'}`}
+                  style={{ width: `${Math.min(100, previousMonthData.creatorsGoalProgress)}%` }}
+                />
+              </div>
+              <div className="flex justify-between mt-3 text-sm text-gray-300">
+                <span>Alcançado: {previousMonthData.totalCreators.toLocaleString('pt-BR')}</span>
+                <span>Meta: {creatorsGoal.toLocaleString('pt-BR')}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Best Days */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {previousMonthData.bestDayDiamonds && (
+              <div className="p-5 rounded-xl bg-gradient-to-r from-red-500/10 to-transparent border border-red-500/30">
+                <div className="flex items-center gap-2 mb-3">
+                  <Diamond className="w-5 h-5 text-red-400" />
+                  <span className="text-base font-semibold text-red-300">Melhor Dia (Diamantes)</span>
+                </div>
+                <div className="flex items-baseline gap-3">
+                  <span className="text-3xl font-bold text-red-400">
+                    {formatNumber(previousMonthData.bestDayDiamonds.diamonds)}
+                  </span>
+                  <span className="text-base text-gray-300">
+                    em {format(new Date(previousMonthData.bestDayDiamonds.date + 'T12:00:00'), 'dd/MM', { locale: ptBR })}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {previousMonthData.bestDayCreators && (
+              <div className="p-5 rounded-xl bg-gradient-to-r from-blue-500/10 to-transparent border border-blue-500/30">
+                <div className="flex items-center gap-2 mb-3">
+                  <Users className="w-5 h-5 text-blue-400" />
+                  <span className="text-base font-semibold text-blue-300">Melhor Dia (Criadores)</span>
+                </div>
+                <div className="flex items-baseline gap-3">
+                  <span className="text-3xl font-bold text-blue-400">
+                    {previousMonthData.bestDayCreators.creators.toLocaleString('pt-BR')}
+                  </span>
+                  <span className="text-base text-gray-300">
+                    em {format(new Date(previousMonthData.bestDayCreators.date + 'T12:00:00'), 'dd/MM', { locale: ptBR })}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Summary Stats */}
+          <div className="pt-5 border-t border-white/10">
+            <div className="grid grid-cols-3 gap-6 text-center">
+              <div className="p-4 rounded-lg bg-white/5">
+                <p className="text-3xl font-bold text-white">{previousMonthData.totalDays}</p>
+                <p className="text-sm text-gray-400 mt-1">Dias no Mês</p>
+              </div>
+              <div className="p-4 rounded-lg bg-white/5">
+                <p className="text-3xl font-bold text-white">{formatNumber(previousMonthData.avgCreators)}</p>
+                <p className="text-sm text-gray-400 mt-1">Média Criadores/Dia</p>
+              </div>
+              <div className="p-4 rounded-lg bg-white/5">
+                <p className="text-3xl font-bold text-white">
+                  {((previousMonthData.daysWithData / previousMonthData.totalDays) * 100).toFixed(0)}%
+                </p>
+                <p className="text-sm text-gray-400 mt-1">Cobertura de Dados</p>
+              </div>
             </div>
           </div>
         </div>
