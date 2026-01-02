@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { format, startOfMonth, endOfMonth, isWithinInterval, subDays, isToday, parseISO, getDaysInMonth, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { WeeklyAnalysis } from '@/components/Charts/WeeklyAnalysis';
+import { PreviousMonthSummary } from '@/components/Charts/PreviousMonthSummary';
 import { CreatorsConversionMetrics } from '@/components/CreatorsConversionMetrics';
 import { BrandLogo } from '@/components/BrandLogo';
 import { branding, getReportFooter } from '@/config/branding';
@@ -1118,6 +1119,14 @@ const ChartsDashboard: React.FC = () => {
 
         {/* Weekly Analysis Section */}
         <WeeklyAnalysis entries={entries} />
+
+        {/* Previous Month Summary Section */}
+        <PreviousMonthSummary 
+          entries={entries}
+          percentageTargets={monthlyGoals.percentageTargets}
+          diamondsGoal={monthlyGoals.diamondsGoal}
+          creatorsGoal={monthlyGoals.creatorsGoal}
+        />
 
         {/* Report Section - This will be exported as PDF */}
         <div ref={reportRef} className="space-y-6 bg-background p-4 rounded-lg">
