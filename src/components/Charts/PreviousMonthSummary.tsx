@@ -1,8 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Diamond, Users, TrendingUp, Calendar, Award, ChevronDown, ChevronUp, Minus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Diamond, Users, TrendingUp, Calendar, Award, ChevronDown, ChevronUp, Minus, FileDown } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, subMonths, isWithinInterval, getDaysInMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { toast } from 'sonner';
 
 interface DailyEntry {
   id: string;
@@ -106,6 +108,38 @@ export const PreviousMonthSummary: React.FC<PreviousMonthSummaryProps> = ({
     };
   }, [entries, percentageTargets, diamondsGoal, creatorsGoal]);
 
+  const reportRef = useRef<HTMLDivElement>(null);
+
+  const handleExport = useCallback(async () => {
+    try {
+      toast.info('Gerando relatório...');
+      
+      const html2canvas = (await import('html2canvas')).default;
+      const jsPDF = (await import('jspdf')).default;
+
+      if (!reportRef.current) return;
+
+      const canvas = await html2canvas(reportRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#1a1a2e',
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 190;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+      pdf.save(`resumo-${previousMonthData.monthName.replace(/ /g, '-')}.pdf`);
+
+      toast.success('Relatório exportado com sucesso!');
+    } catch (error) {
+      console.error('Error exporting:', error);
+      toast.error('Erro ao exportar relatório');
+    }
+  }, [previousMonthData.monthName]);
+
   const formatNumber = (num: number) => {
     if (num >= 1000000) {
       return (num / 1000000).toFixed(2).replace('.', ',') + 'M';
@@ -146,16 +180,22 @@ export const PreviousMonthSummary: React.FC<PreviousMonthSummaryProps> = ({
 
   return (
     <Card className="border-border bg-card">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Calendar className="w-5 h-5 text-primary" />
-          Resumo do Mês Anterior
-        </CardTitle>
-        <CardDescription className="capitalize">
-          {previousMonthData.monthName}
-        </CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Calendar className="w-5 h-5 text-primary" />
+            Resumo do Mês Anterior
+          </CardTitle>
+          <CardDescription className="capitalize">
+            {previousMonthData.monthName}
+          </CardDescription>
+        </div>
+        <Button variant="outline" size="sm" onClick={handleExport} className="gap-2">
+          <FileDown className="w-4 h-4" />
+          Exportar PDF
+        </Button>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6" ref={reportRef}>
         {/* Main KPIs */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {/* Total Diamonds */}
@@ -311,16 +351,12 @@ export const PreviousMonthSummary: React.FC<PreviousMonthSummaryProps> = ({
           )}
         </div>
 
-        {/* Summary Stats */}
+        {/* Summary Stats - without days with data */}
         <div className="pt-4 border-t border-border">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-            <div>
-              <p className="text-2xl font-bold text-foreground">{previousMonthData.daysWithData}</p>
-              <p className="text-xs text-muted-foreground">Dias com dados</p>
-            </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-center">
             <div>
               <p className="text-2xl font-bold text-foreground">{previousMonthData.totalDays}</p>
-              <p className="text-xs text-muted-foreground">Total de dias</p>
+              <p className="text-xs text-muted-foreground">Total de dias no mês</p>
             </div>
             <div>
               <p className="text-2xl font-bold text-foreground">{formatNumber(previousMonthData.avgCreators)}</p>
