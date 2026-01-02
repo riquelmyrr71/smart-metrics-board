@@ -217,7 +217,7 @@ export const PreviousMonthSummary: React.FC<PreviousMonthSummaryProps> = ({
                 </div>
                 <span className="text-base font-bold text-rose-700">Total Diamantes</span>
               </div>
-              <p className="text-5xl font-extrabold text-rose-600">
+              <p className="text-3xl font-extrabold text-rose-600">
                 {formatNumber(previousMonthData.totalDiamonds)}
               </p>
               {previousMonthData.diamondsChange !== 0 && (
@@ -238,7 +238,7 @@ export const PreviousMonthSummary: React.FC<PreviousMonthSummaryProps> = ({
                 </div>
                 <span className="text-base font-bold text-blue-700">Total Criadores</span>
               </div>
-              <p className="text-5xl font-extrabold text-blue-600">
+              <p className="text-3xl font-extrabold text-blue-600">
                 {previousMonthData.totalCreators.toLocaleString('pt-BR')}
               </p>
               {previousMonthData.creatorsChange !== 0 && (
@@ -259,7 +259,7 @@ export const PreviousMonthSummary: React.FC<PreviousMonthSummaryProps> = ({
                 </div>
                 <span className="text-base font-bold text-amber-700">Média Diária (Diamantes)</span>
               </div>
-              <p className="text-5xl font-extrabold text-amber-600">
+              <p className="text-3xl font-extrabold text-amber-600">
                 {formatNumber(previousMonthData.avgDiamonds)}
               </p>
             </div>
@@ -272,7 +272,7 @@ export const PreviousMonthSummary: React.FC<PreviousMonthSummaryProps> = ({
                 </div>
                 <span className="text-base font-bold text-violet-700">Nível Alcançado</span>
               </div>
-              <p className="text-5xl font-extrabold text-violet-600">
+              <p className="text-3xl font-extrabold text-violet-600">
                 {previousMonthData.achievedLevel ? `${previousMonthData.achievedLevel.percentage}%` : '0%'}
               </p>
               <p className="text-base text-violet-600 mt-2 font-medium">
@@ -345,7 +345,7 @@ export const PreviousMonthSummary: React.FC<PreviousMonthSummaryProps> = ({
                   <span className="text-lg font-bold text-rose-700">🏆 Melhor Dia (Diamantes)</span>
                 </div>
                 <div className="flex items-baseline gap-3">
-                  <span className="text-4xl font-extrabold text-rose-600">
+                  <span className="text-2xl font-extrabold text-rose-600">
                     {formatNumber(previousMonthData.bestDayDiamonds.diamonds)}
                   </span>
                   <span className="text-lg text-gray-600 font-medium">
@@ -364,7 +364,7 @@ export const PreviousMonthSummary: React.FC<PreviousMonthSummaryProps> = ({
                   <span className="text-lg font-bold text-blue-700">🏆 Melhor Dia (Criadores)</span>
                 </div>
                 <div className="flex items-baseline gap-3">
-                  <span className="text-4xl font-extrabold text-blue-600">
+                  <span className="text-2xl font-extrabold text-blue-600">
                     {previousMonthData.bestDayCreators.creators.toLocaleString('pt-BR')}
                   </span>
                   <span className="text-lg text-gray-600 font-medium">
@@ -379,11 +379,11 @@ export const PreviousMonthSummary: React.FC<PreviousMonthSummaryProps> = ({
           <div className="pt-6 border-t-2 border-gray-200">
             <div className="grid grid-cols-3 gap-5 text-center">
               <div className="p-5 rounded-2xl bg-gray-100 border border-gray-200">
-                <p className="text-4xl font-extrabold text-gray-800">{previousMonthData.totalDays}</p>
+                <p className="text-2xl font-extrabold text-gray-800">{previousMonthData.totalDays}</p>
                 <p className="text-base text-gray-600 mt-2 font-medium">Dias no Mês</p>
               </div>
               <div className="p-5 rounded-2xl bg-gray-100 border border-gray-200">
-                <p className="text-4xl font-extrabold text-gray-800">{formatNumber(previousMonthData.avgCreators)}</p>
+                <p className="text-2xl font-extrabold text-gray-800">{formatNumber(previousMonthData.avgCreators)}</p>
                 <p className="text-base text-gray-600 mt-2 font-medium">Média Criadores/Dia</p>
               </div>
               <div className="p-5 rounded-2xl bg-gray-100 border border-gray-200">
