@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,13 +8,14 @@ import { ArrowLeft, Plus, Trash2, Diamond, Users, TrendingUp, Save, Loader2, Fil
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, BarChart, Bar, ComposedChart, PieChart, Pie, Cell } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { format, startOfMonth, endOfMonth, isWithinInterval, subDays, isToday, parseISO, getDaysInMonth, differenceInDays } from 'date-fns';
+import { format, startOfMonth, endOfMonth, isWithinInterval, subDays, isToday, parseISO, getDaysInMonth, differenceInDays, isSameMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { WeeklyAnalysis } from '@/components/Charts/WeeklyAnalysis';
 import { PreviousMonthSummary } from '@/components/Charts/PreviousMonthSummary';
 import { CreatorsConversionMetrics } from '@/components/CreatorsConversionMetrics';
 import { BrandLogo } from '@/components/BrandLogo';
 import { branding, getReportFooter } from '@/config/branding';
+import { MonthSelector } from '@/components/Charts/MonthSelector';
 
 interface DailyEntry {
   id: string;
@@ -74,11 +75,25 @@ const ChartsDashboard: React.FC = () => {
   const [isExportingCreatorsGoals, setIsExportingCreatorsGoals] = useState(false);
   const [isExportingMarcosReport, setIsExportingMarcosReport] = useState(false);
   const [showGoalsSettings, setShowGoalsSettings] = useState(false);
+  const [viewingMonth, setViewingMonth] = useState<Date>(startOfMonth(new Date()));
   const reportRef = useRef<HTMLDivElement>(null);
   const dailyReportRef = useRef<HTMLDivElement>(null);
   const diamondsGoalsReportRef = useRef<HTMLDivElement>(null);
   const creatorsGoalsReportRef = useRef<HTMLDivElement>(null);
   const marcosReportRef = useRef<HTMLDivElement>(null);
+  
+  // Check if viewing current month
+  const isViewingCurrentMonth = isSameMonth(viewingMonth, new Date());
+
+  // Filter entries by selected month
+  const filteredEntries = useMemo(() => {
+    const monthStart = startOfMonth(viewingMonth);
+    const monthEnd = endOfMonth(viewingMonth);
+    return entries.filter(e => {
+      const entryDate = new Date(e.date + 'T12:00:00');
+      return isWithinInterval(entryDate, { start: monthStart, end: monthEnd });
+    });
+  }, [entries, viewingMonth]);
 
   // Load data from database
   const loadData = useCallback(async () => {
@@ -393,8 +408,8 @@ const ChartsDashboard: React.FC = () => {
     })} zeradas`);
   }, [resetDate, entries]);
 
-  // Chart data
-  const chartData = entries.map(entry => ({
+  // Chart data - use filtered entries for selected month
+  const chartData = filteredEntries.map(entry => ({
     ...entry,
     dateLabel: format(new Date(entry.date + 'T12:00:00'), 'dd/MM', {
       locale: ptBR
@@ -404,35 +419,29 @@ const ChartsDashboard: React.FC = () => {
     })
   }));
 
-  // Totals and statistics
-  const totalDiamonds = entries.reduce((sum, e) => sum + e.diamonds, 0);
-  const totalCreators = entries.reduce((sum, e) => sum + e.creators, 0);
+  // Totals for selected month
+  const totalDiamonds = filteredEntries.reduce((sum, e) => sum + e.diamonds, 0);
+  const totalCreators = filteredEntries.reduce((sum, e) => sum + e.creators, 0);
 
-  // Current month data
+  // Use filtered entries as current month data (since we're viewing that month)
   const now = new Date();
-  const monthStart = startOfMonth(now);
-  const monthEnd = endOfMonth(now);
-  const currentMonthEntries = entries.filter(e => {
-    const entryDate = new Date(e.date + 'T12:00:00');
-    return isWithinInterval(entryDate, {
-      start: monthStart,
-      end: monthEnd
-    });
-  });
-  const monthDiamonds = currentMonthEntries.reduce((sum, e) => sum + e.diamonds, 0);
-  const monthCreators = currentMonthEntries.reduce((sum, e) => sum + e.creators, 0);
+  const monthStart = startOfMonth(viewingMonth);
+  const monthEnd = endOfMonth(viewingMonth);
+  const currentMonthEntries = filteredEntries; // Already filtered by viewing month
+  const monthDiamonds = totalDiamonds;
+  const monthCreators = totalCreators;
 
-  // Last 7 days
-  const last7Days = entries.filter(e => {
+  // Last 7 days (only relevant for current month view)
+  const last7Days = isViewingCurrentMonth ? entries.filter(e => {
     const entryDate = new Date(e.date + 'T12:00:00');
     return entryDate >= subDays(now, 7);
-  });
+  }) : [];
   const weekDiamonds = last7Days.reduce((sum, e) => sum + e.diamonds, 0);
   const weekCreators = last7Days.reduce((sum, e) => sum + e.creators, 0);
 
-  // Averages
-  const avgDiamondsPerDay = entries.length > 0 ? totalDiamonds / entries.length : 0;
-  const avgCreatorsPerDay = entries.length > 0 ? totalCreators / entries.length : 0;
+  // Averages for selected month
+  const avgDiamondsPerDay = filteredEntries.length > 0 ? totalDiamonds / filteredEntries.length : 0;
+  const avgCreatorsPerDay = filteredEntries.length > 0 ? totalCreators / filteredEntries.length : 0;
 
   // Monthly goal progress
   const diamondsProgress = monthlyGoals.diamondsGoal > 0 ? Math.min(100, monthDiamonds / monthlyGoals.diamondsGoal * 100) : 0;
@@ -444,11 +453,11 @@ const ChartsDashboard: React.FC = () => {
   const nextLevel = sortedTargets.find(t => monthDiamonds < t.diamondsValue);
   const progressToNextLevel = nextLevel ? (monthDiamonds - (currentLevel?.diamondsValue || 0)) / (nextLevel.diamondsValue - (currentLevel?.diamondsValue || 0)) * 100 : 100;
 
-  // Projection calculations - Option A: usar número de entradas como dias decorridos
-  const totalDaysInMonth = getDaysInMonth(now);
-  const dayOfMonth = now.getDate();
-  const daysWithData = currentMonthEntries.length;
-  const daysRemaining = totalDaysInMonth - dayOfMonth;
+  // Projection calculations - use viewing month context
+  const totalDaysInMonth = getDaysInMonth(viewingMonth);
+  const dayOfMonth = isViewingCurrentMonth ? now.getDate() : totalDaysInMonth;
+  const daysWithData = filteredEntries.length;
+  const daysRemaining = isViewingCurrentMonth ? totalDaysInMonth - now.getDate() : 0;
   const daysElapsed = daysWithData;
 
   // Projeção = (acumulado / dias_com_dados) × total_dias_mês
@@ -597,7 +606,22 @@ const ChartsDashboard: React.FC = () => {
       </header>
 
       <main className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
-        {/* Add Entry Form */}
+        {/* Month Selector */}
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <MonthSelector
+            selectedMonth={viewingMonth}
+            onMonthChange={setViewingMonth}
+          />
+          <div className="text-sm text-muted-foreground">
+            <span className="capitalize font-medium">
+              {format(viewingMonth, "MMMM 'de' yyyy", { locale: ptBR })}
+            </span>
+            {' • '}
+            <span>{filteredEntries.length} dias com dados</span>
+          </div>
+        </div>
+
+        {/* Add Entry Form - Only show for current month */}
         <Card className="border-destructive/20 bg-card">
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-2 text-lg">
@@ -1117,16 +1141,18 @@ const ChartsDashboard: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Weekly Analysis Section */}
-        <WeeklyAnalysis entries={entries} />
+        {/* Weekly Analysis Section - Only for current month */}
+        {isViewingCurrentMonth && <WeeklyAnalysis entries={filteredEntries} />}
 
-        {/* Previous Month Summary Section */}
-        <PreviousMonthSummary 
-          entries={entries}
-          percentageTargets={monthlyGoals.percentageTargets}
-          diamondsGoal={monthlyGoals.diamondsGoal}
-          creatorsGoal={monthlyGoals.creatorsGoal}
-        />
+        {/* Previous Month Summary Section - Only show when viewing current month */}
+        {isViewingCurrentMonth && (
+          <PreviousMonthSummary 
+            entries={entries}
+            percentageTargets={monthlyGoals.percentageTargets}
+            diamondsGoal={monthlyGoals.diamondsGoal}
+            creatorsGoal={monthlyGoals.creatorsGoal}
+          />
+        )}
 
         {/* Report Section - This will be exported as PDF */}
         <div ref={reportRef} className="space-y-6 bg-background p-4 rounded-lg">
@@ -1335,11 +1361,16 @@ const ChartsDashboard: React.FC = () => {
             <CardTitle className="flex items-center gap-2">
               <Calendar className="w-5 h-5 text-muted-foreground" />
               Histórico de Entradas
+              <span className="text-sm font-normal text-muted-foreground capitalize">
+                - {format(viewingMonth, "MMMM 'de' yyyy", { locale: ptBR })}
+              </span>
             </CardTitle>
-            <CardDescription>Todas as entradas registradas • {entries.length} dias</CardDescription>
+            <CardDescription>
+              Entradas de {format(viewingMonth, "MMMM", { locale: ptBR })} • {filteredEntries.length} dias
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            {entries.length > 0 ? <div className="overflow-x-auto rounded-lg border border-border">
+            {filteredEntries.length > 0 ? <div className="overflow-x-auto rounded-lg border border-border">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="bg-muted/50">
@@ -1350,7 +1381,7 @@ const ChartsDashboard: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {entries.slice().reverse().map((entry, idx) => <tr key={entry.id} className={`border-t border-border ${idx % 2 === 0 ? 'bg-background' : 'bg-muted/20'} hover:bg-muted/40 transition-colors`}>
+                    {filteredEntries.slice().reverse().map((entry, idx) => <tr key={entry.id} className={`border-t border-border ${idx % 2 === 0 ? 'bg-background' : 'bg-muted/20'} hover:bg-muted/40 transition-colors`}>
                         <td className="py-3 px-4 font-medium">
                           {format(new Date(entry.date + 'T12:00:00'), "dd/MM/yyyy (EEEE)", {
                       locale: ptBR
@@ -1371,7 +1402,7 @@ const ChartsDashboard: React.FC = () => {
                   </tbody>
                   <tfoot>
                     <tr className="bg-muted/50 border-t-2 border-border">
-                      <td className="py-3 px-4 font-bold">TOTAL</td>
+                      <td className="py-3 px-4 font-bold">TOTAL DO MÊS</td>
                       <td className="py-3 px-4 text-right font-bold text-destructive">
                         {totalDiamonds.toLocaleString('pt-BR')}
                       </td>
