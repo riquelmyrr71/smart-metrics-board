@@ -1401,15 +1401,19 @@ const SchedulingDashboard = () => {
                   {metrics.ranking[0]?.rate.toFixed(0)}% • {metrics.ranking[0]?.scheduled || 0} dias
                 </div>
               </div>
-              <div className="text-center p-3 bg-rose-50 rounded-lg">
-                <div className="text-2xl font-bold text-rose-600">
-                  {impactAnalysis.differencePercent > 0 ? '+' : ''}{impactAnalysis.differencePercent.toFixed(1)}%
+              <div className="text-center p-3 bg-yellow-50 rounded-lg">
+                <div className="text-2xl font-bold text-yellow-600">
+                  {impactAnalysis.avgLossPerMissing > 0 
+                    ? (impactAnalysis.avgLossPerMissing / 1000).toFixed(0) + 'K'
+                    : '-'}
                 </div>
-                <div className="text-xs text-gray-500">Impacto Taxa</div>
+                <div className="text-xs text-gray-500">Perda/Falta</div>
               </div>
-              <div className="text-center p-3 bg-red-50 rounded-lg">
-                <div className="text-2xl font-bold text-red-600">{metrics.worstDays[0]?.dayName || '-'}</div>
-                <div className="text-xs text-gray-500">Pior Dia</div>
+              <div className="text-center p-3 bg-blue-50 rounded-lg">
+                <div className="text-2xl font-bold text-blue-600">
+                  {allMembers.length > 0 ? (metrics.totalScheduled / allMembers.length).toFixed(1) : '-'}
+                </div>
+                <div className="text-xs text-gray-500">Média Dias/Membro</div>
               </div>
               <div className="text-center p-3 bg-emerald-50 rounded-lg">
                 <div className="text-2xl font-bold text-emerald-600">{metrics.scheduledRate.toFixed(0)}%</div>
