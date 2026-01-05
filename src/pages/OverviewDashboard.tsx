@@ -21,6 +21,7 @@ const DASHBOARD_ID = '00000000-0000-0000-0000-000000000001';
 const CHART_DATA_ID = '00000000-0000-0000-0000-000000000002';
 const BATTLES_DATA_ID = '00000000-0000-0000-0000-000000000003';
 const CREATORS_DATA_ID = '00000000-0000-0000-0000-000000000004';
+const TEAM_STRUCTURE_ID = '00000000-0000-0000-0000-000000000003';
 
 type PeriodFilter = 'all' | '7d' | '15d' | 'custom';
 
@@ -114,12 +115,13 @@ const OverviewDashboard: React.FC = () => {
     setLoading(true);
     try {
       // Load all data in parallel with correct UUIDs
-      const [mainDashboardResult, chartsResult, schedulingResult, battlesResult, creatorsAnalysisResult] = await Promise.all([
+      const [mainDashboardResult, chartsResult, schedulingResult, battlesResult, creatorsAnalysisResult, teamStructureResult] = await Promise.all([
         supabase.from('dashboard_data').select('data, updated_at').eq('id', DASHBOARD_ID).maybeSingle(),
         supabase.from('dashboard_data').select('data, updated_at').eq('id', CHART_DATA_ID).maybeSingle(),
         supabase.from('live_schedules').select('*').gte('schedule_date', format(monthStart, 'yyyy-MM-dd')).lte('schedule_date', format(monthEnd, 'yyyy-MM-dd')),
         supabase.from('dashboard_data').select('data, updated_at').eq('id', BATTLES_DATA_ID).maybeSingle(),
-        supabase.from('dashboard_data').select('data, updated_at').eq('id', CREATORS_DATA_ID).maybeSingle()
+        supabase.from('dashboard_data').select('data, updated_at').eq('id', CREATORS_DATA_ID).maybeSingle(),
+        supabase.from('dashboard_data').select('data').eq('id', TEAM_STRUCTURE_ID).maybeSingle()
       ]);
 
       const mainDashboardData = mainDashboardResult.data;
@@ -127,6 +129,19 @@ const OverviewDashboard: React.FC = () => {
       const schedulingData = schedulingResult.data;
       const battlesData = battlesResult.data;
       const creatorsAnalysisData = creatorsAnalysisResult.data;
+      
+      // Get team structure from database (scheduling dashboard)
+      let teamMembers: { name: string; executive: string }[] = [];
+      if (teamStructureResult.data?.data) {
+        const teamData = teamStructureResult.data.data as any;
+        if (Array.isArray(teamData)) {
+          teamData.forEach((team: any) => {
+            (team.members || []).forEach((member: string) => {
+              teamMembers.push({ name: member, executive: team.executive });
+            });
+          });
+        }
+      }
 
       // Initialize daily data map
       const dailyMap: Record<string, DailyChartData> = {};
@@ -179,33 +194,39 @@ const OverviewDashboard: React.FC = () => {
         dailyMap[date].creatorsAccum = creatorsAccum;
       });
 
-      // Process scheduling data - Calculate rate based on (scheduled days / total days in month) per member
+      // Process scheduling data - Use team structure for accurate calculations
       let scheduledCount = 0;
       const schedulingByMember: Record<string, { scheduled: number; total: number; executive: string }> = {};
       const daysWithScheduling = new Set<string>();
-      const uniqueMembers = new Set<string>();
+
+      // Initialize all team members with their totals (based on team structure)
+      if (teamMembers.length > 0) {
+        teamMembers.forEach(({ name, executive }) => {
+          schedulingByMember[name] = { scheduled: 0, total: totalDaysInMonth, executive };
+        });
+      }
 
       if (schedulingData) {
-        // First pass: identify all unique members
-        schedulingData.forEach((schedule: any) => {
-          uniqueMembers.add(schedule.member_name);
-        });
+        // If no team structure, fall back to members from live_schedules
+        if (teamMembers.length === 0) {
+          schedulingData.forEach((schedule: any) => {
+            const member = schedule.member_name;
+            if (!schedulingByMember[member]) {
+              schedulingByMember[member] = { scheduled: 0, total: totalDaysInMonth, executive: schedule.executive_name };
+            }
+          });
+        }
         
-        // Initialize all members with total days in month
-        schedulingData.forEach((schedule: any) => {
-          const member = schedule.member_name;
-          if (!schedulingByMember[member]) {
-            schedulingByMember[member] = { scheduled: 0, total: totalDaysInMonth, executive: schedule.executive_name };
-          }
-        });
-        
-        // Second pass: count scheduled days per member
+        // Count scheduled days per member
         schedulingData.forEach((schedule: any) => {
           const member = schedule.member_name;
           const date = schedule.schedule_date;
           
           if (schedule.is_scheduled) {
-            schedulingByMember[member].scheduled++;
+            // Only count if member is in our tracking (from team structure or fallback)
+            if (schedulingByMember[member]) {
+              schedulingByMember[member].scheduled++;
+            }
             scheduledCount++;
             daysWithScheduling.add(date);
           }
@@ -219,7 +240,8 @@ const OverviewDashboard: React.FC = () => {
       }
       
       // Calculate total possible schedules: members × days in month
-      const totalPossibleSchedules = uniqueMembers.size * totalDaysInMonth;
+      const activeMembersCount = Object.keys(schedulingByMember).length;
+      const totalPossibleSchedules = activeMembersCount * totalDaysInMonth;
 
       // Process battles data - NEW CORRECT FORMAT
       let battlesTotal = 0;
@@ -430,6 +452,25 @@ const OverviewDashboard: React.FC = () => {
       });
     }
     
+    // Load team structure once for all months
+    const { data: teamStructureData } = await supabase
+      .from('dashboard_data')
+      .select('data')
+      .eq('id', TEAM_STRUCTURE_ID)
+      .maybeSingle();
+    
+    let teamMembers: string[] = [];
+    if (teamStructureData?.data) {
+      const teamData = teamStructureData.data as any;
+      if (Array.isArray(teamData)) {
+        teamData.forEach((team: any) => {
+          (team.members || []).forEach((member: string) => {
+            teamMembers.push(member);
+          });
+        });
+      }
+    }
+
     for (let i = 0; i < 6; i++) {
       const monthDate = subMonths(currentMonth, i);
       const monthKey = format(monthDate, 'yyyy-MM');
@@ -457,18 +498,28 @@ const OverviewDashboard: React.FC = () => {
           });
         }
 
-        // Process scheduling - Calculate rate as (scheduled days / total possible days)
+        // Process scheduling - Use team structure for accurate rate
         let scheduled = 0;
-        const uniqueMembersInMonth = new Set<string>();
         const daysInComparisonMonth = getDaysInMonth(monthDate);
         
+        // Use team structure if available, otherwise fall back to unique members from data
+        let membersCount = teamMembers.length;
+        
         if (schedulingResult.data) {
+          if (membersCount === 0) {
+            const uniqueMembersInMonth = new Set<string>();
+            schedulingResult.data.forEach((s: any) => {
+              uniqueMembersInMonth.add(s.member_name);
+            });
+            membersCount = uniqueMembersInMonth.size;
+          }
+          
           schedulingResult.data.forEach((s: any) => {
-            uniqueMembersInMonth.add(s.member_name);
             if (s.is_scheduled) scheduled++;
           });
         }
-        const totalPossible = uniqueMembersInMonth.size * daysInComparisonMonth;
+        
+        const totalPossible = membersCount * daysInComparisonMonth;
         const schedulingRate = totalPossible > 0 ? Math.round((scheduled / totalPossible) * 100) : 0;
 
         // Process battles
@@ -950,39 +1001,70 @@ const OverviewDashboard: React.FC = () => {
             endDate = format(monthEnd, 'yyyy-MM-dd');
         }
         
-        const { data: schedulingData } = await supabase
-          .from('live_schedules')
-          .select('*')
-          .gte('schedule_date', startDate)
-          .lte('schedule_date', endDate);
+        // Load team structure and scheduling data in parallel
+        const [teamStructureResult, schedulingDataResult] = await Promise.all([
+          supabase.from('dashboard_data').select('data').eq('id', TEAM_STRUCTURE_ID).maybeSingle(),
+          supabase.from('live_schedules').select('*').gte('schedule_date', startDate).lte('schedule_date', endDate)
+        ]);
         
-        if (schedulingData) {
-          const schedulingByMember: Record<string, { scheduled: number; total: number; executive: string }> = {};
+        // Calculate days in the period
+        const periodStart = parseISO(startDate);
+        const periodEnd = parseISO(endDate);
+        const daysInPeriod = differenceInDays(periodEnd, periodStart) + 1;
+        
+        // Get team structure
+        let teamMembers: { name: string; executive: string }[] = [];
+        if (teamStructureResult.data?.data) {
+          const teamData = teamStructureResult.data.data as any;
+          if (Array.isArray(teamData)) {
+            teamData.forEach((team: any) => {
+              (team.members || []).forEach((member: string) => {
+                teamMembers.push({ name: member, executive: team.executive });
+              });
+            });
+          }
+        }
+        
+        const schedulingByMember: Record<string, { scheduled: number; total: number; executive: string }> = {};
+        
+        // Initialize all team members with the period total
+        if (teamMembers.length > 0) {
+          teamMembers.forEach(({ name, executive }) => {
+            schedulingByMember[name] = { scheduled: 0, total: daysInPeriod, executive };
+          });
+        }
+        
+        if (schedulingDataResult.data) {
+          // If no team structure, fall back to members from live_schedules
+          if (teamMembers.length === 0) {
+            schedulingDataResult.data.forEach((schedule: any) => {
+              const member = schedule.member_name;
+              if (!schedulingByMember[member]) {
+                schedulingByMember[member] = { scheduled: 0, total: daysInPeriod, executive: schedule.executive_name };
+              }
+            });
+          }
           
-          schedulingData.forEach((schedule: any) => {
+          // Count scheduled days per member
+          schedulingDataResult.data.forEach((schedule: any) => {
             const member = schedule.member_name;
             
-            if (!schedulingByMember[member]) {
-              schedulingByMember[member] = { scheduled: 0, total: 0, executive: schedule.executive_name };
-            }
-            schedulingByMember[member].total++;
-            
-            if (schedule.is_scheduled) {
+            if (schedulingByMember[member] && schedule.is_scheduled) {
               schedulingByMember[member].scheduled++;
             }
           });
-          
-          const ranking: RankingItem[] = Object.entries(schedulingByMember)
-            .map(([name, data]) => ({
-              name,
-              value: data.total > 0 ? Math.round((data.scheduled / data.total) * 100) : 0,
-              executive: data.executive
-            }))
-            .sort((a, b) => b.value - a.value)
-            .slice(0, 5);
-          
-          setFilteredSchedulingRanking(ranking);
         }
+        
+        const ranking: RankingItem[] = Object.entries(schedulingByMember)
+          .map(([name, data]) => ({
+            name,
+            value: data.total > 0 ? Math.round((data.scheduled / data.total) * 100) : 0,
+            executive: data.executive
+          }))
+          .sort((a, b) => b.value - a.value)
+          .slice(0, 5);
+        
+        setFilteredSchedulingRanking(ranking);
       } catch (error) {
         console.error('Error loading filtered scheduling ranking:', error);
       }
