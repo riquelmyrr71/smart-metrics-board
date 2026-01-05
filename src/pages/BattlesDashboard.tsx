@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { format, getDaysInMonth, startOfMonth, addDays, eachDayOfInterval, parseISO } from 'date-fns';
+import { format, getDaysInMonth, startOfMonth, addDays, eachDayOfInterval, parseISO, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { 
   Swords, 
@@ -19,7 +19,8 @@ import {
   Settings2,
   Eye,
   EyeOff,
-  BarChart3
+  BarChart3,
+  CalendarDays
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,6 +29,8 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -132,6 +135,8 @@ const BattlesDashboard = () => {
   const [showReportDialog, setShowReportDialog] = useState(false);
   const [hidePastDays, setHidePastDays] = useState(false);
   const [showMetricsReport, setShowMetricsReport] = useState(false);
+  const [calendarViewMode, setCalendarViewMode] = useState(false);
+  const [selectedCalendarDays, setSelectedCalendarDays] = useState<Date[]>([]);
   const [reportConfig, setReportConfig] = useState<ReportConfig>(() => {
     const now = new Date();
     return {
@@ -159,12 +164,48 @@ const BattlesDashboard = () => {
   const monthStart = startOfMonth(currentMonth);
   const days = Array.from({ length: daysInMonth }, (_, i) => addDays(monthStart, i));
   
-  // Filter days to show only today and future if hidePastDays is enabled
+  // Filter days to show based on view mode
   const displayDays = useMemo(() => {
+    // If calendar view mode is active and days are selected, use those
+    if (calendarViewMode && selectedCalendarDays.length > 0) {
+      return selectedCalendarDays
+        .filter(day => {
+          const dayMonth = format(day, 'yyyy-MM');
+          const currentMonthStr = format(currentMonth, 'yyyy-MM');
+          return dayMonth === currentMonthStr;
+        })
+        .sort((a, b) => a.getTime() - b.getTime());
+    }
+    
+    // Otherwise use normal filtering
     if (!hidePastDays) return days;
     const today = format(new Date(), 'yyyy-MM-dd');
     return days.filter(day => format(day, 'yyyy-MM-dd') >= today);
-  }, [days, hidePastDays]);
+  }, [days, hidePastDays, calendarViewMode, selectedCalendarDays, currentMonth]);
+
+  // Handle calendar day selection toggle
+  const handleCalendarDayToggle = (day: Date | undefined) => {
+    if (!day) return;
+    
+    setSelectedCalendarDays(prev => {
+      const exists = prev.some(d => isSameDay(d, day));
+      if (exists) {
+        return prev.filter(d => !isSameDay(d, day));
+      } else {
+        return [...prev, day];
+      }
+    });
+  };
+
+  // Clear all selected days
+  const clearSelectedDays = () => {
+    setSelectedCalendarDays([]);
+  };
+
+  // Select all days in month
+  const selectAllDaysInMonth = () => {
+    setSelectedCalendarDays(days);
+  };
 
   // Get all members
   const allMembers = useMemo(() => {
@@ -666,12 +707,73 @@ const BattlesDashboard = () => {
               </Button>
             </div>
 
+            {/* Calendar View Mode */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button 
+                  variant={calendarViewMode ? "default" : "outline"} 
+                  size="sm" 
+                  className="gap-2"
+                >
+                  <CalendarDays className="h-4 w-4" />
+                  {calendarViewMode ? `${selectedCalendarDays.length} dias` : 'Calendário'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <div className="p-3 border-b">
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <span className="text-sm font-medium">Selecionar Dias</span>
+                    <div className="flex items-center gap-1">
+                      <Checkbox
+                        id="calendarViewMode"
+                        checked={calendarViewMode}
+                        onCheckedChange={(checked) => {
+                          setCalendarViewMode(!!checked);
+                          if (!checked) setSelectedCalendarDays([]);
+                        }}
+                      />
+                      <Label htmlFor="calendarViewMode" className="text-xs cursor-pointer">Ativar</Label>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" className="text-xs h-7" onClick={selectAllDaysInMonth}>
+                      Todos
+                    </Button>
+                    <Button variant="outline" size="sm" className="text-xs h-7" onClick={clearSelectedDays}>
+                      Limpar
+                    </Button>
+                  </div>
+                </div>
+                <Calendar
+                  mode="multiple"
+                  selected={selectedCalendarDays}
+                  onSelect={(days) => setSelectedCalendarDays(days || [])}
+                  month={currentMonth}
+                  onMonthChange={setCurrentMonth}
+                  locale={ptBR}
+                  className="pointer-events-auto"
+                  modifiers={{
+                    hasBattles: (day) => {
+                      const dateStr = format(day, 'yyyy-MM-dd');
+                      let total = 0;
+                      teamStructure.forEach(exec => exec.members.forEach(m => { total += battleData[m]?.[dateStr] || 0; }));
+                      return total > 0;
+                    }
+                  }}
+                  modifiersStyles={{
+                    hasBattles: { backgroundColor: 'hsl(var(--primary) / 0.2)' }
+                  }}
+                />
+              </PopoverContent>
+            </Popover>
+
             {/* Hide Past Days Toggle */}
             <Button 
               variant={hidePastDays ? "default" : "outline"} 
               size="sm" 
               onClick={() => setHidePastDays(!hidePastDays)}
               className="gap-2"
+              disabled={calendarViewMode}
             >
               {hidePastDays ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               {hidePastDays ? 'Mostrar Todos' : 'Ocultar Passados'}
