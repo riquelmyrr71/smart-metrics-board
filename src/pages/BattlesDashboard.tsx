@@ -1296,7 +1296,9 @@ const BattlesDashboard = () => {
             <div>
               <h1 className="text-lg font-bold" style={{ color: '#1a1a1a' }}>Relatório de Batalhas</h1>
               <p className="text-xs" style={{ color: '#555' }}>
-                {format(parseISO(reportConfig.startDate), "dd/MM/yyyy")} - {format(parseISO(reportConfig.endDate), "dd/MM/yyyy")}
+                {reportConfig.startDate && reportConfig.endDate ? 
+                  `${format(parseISO(reportConfig.startDate), "dd/MM/yyyy")} - ${format(parseISO(reportConfig.endDate), "dd/MM/yyyy")}` : 
+                  'Período não definido'}
               </p>
             </div>
             <div className="text-right text-xs" style={{ color: '#666' }}>
