@@ -1371,8 +1371,7 @@ const SchedulingDashboard = () => {
         {/* Header */}
         <div className="bg-gradient-to-r from-rose-800 to-rose-700 text-white p-6">
           <div className="flex items-center justify-between">
-            <span className="text-2xl font-bold">{branding.companyShortName}</span>
-            <div className="text-right">
+            <div>
               <h1 className="text-xl font-bold tracking-wide">AGENDAMENTO LIVE</h1>
               <p className="text-rose-200 text-sm mt-1">
                 {reportType === 'daily' 
@@ -1531,8 +1530,7 @@ const SchedulingDashboard = () => {
         {/* Header */}
         <div className="bg-gradient-to-r from-orange-600 to-orange-500 text-white p-6">
           <div className="flex items-center justify-between">
-            <span className="text-2xl font-bold">{branding.companyShortName}</span>
-            <div className="text-right">
+            <div>
               <h1 className="text-xl font-bold tracking-wide">ANÁLISE DE IMPACTO</h1>
               <p className="text-orange-100 text-sm mt-1">
                 Agendamentos × Diamantes - {format(currentMonth, "MMMM yyyy", { locale: ptBR })}

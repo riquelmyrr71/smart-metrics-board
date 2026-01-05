@@ -1431,8 +1431,7 @@ const ChartsDashboard: React.FC = () => {
           <div className="text-center mb-8 pb-6" style={{
           borderBottom: '2px solid #1a1a1a'
         }}>
-            <span className="text-3xl font-bold" style={{ color: '#dc2626' }}>{branding.companyShortName}</span>
-            <h1 className="text-2xl font-bold mb-2 mt-3" style={{
+            <h1 className="text-2xl font-bold mb-2" style={{
             color: '#1a1a1a'
           }}>Relatório Diário</h1>
             <p className="text-lg font-medium" style={{
@@ -1442,9 +1441,6 @@ const ChartsDashboard: React.FC = () => {
               locale: ptBR
             })}
             </p>
-            <p className="text-sm mt-1" style={{
-            color: '#525252'
-          }}>{branding.companyName.toUpperCase()}</p>
           </div>
 
           {/* Selected Date Main Metrics */}
@@ -1691,8 +1687,7 @@ const ChartsDashboard: React.FC = () => {
           <div className="text-center mb-8 pb-6" style={{
           borderBottom: '2px solid #b91c1c'
         }}>
-            <span className="text-3xl font-bold" style={{ color: '#dc2626' }}>{branding.companyShortName}</span>
-            <h1 className="text-2xl font-bold mb-2 mt-3" style={{
+            <h1 className="text-2xl font-bold mb-2" style={{
             color: '#b91c1c'
           }}>Relatório de Diamantes</h1>
             <p className="text-lg font-medium" style={{
@@ -1870,8 +1865,7 @@ const ChartsDashboard: React.FC = () => {
           <div className="text-center mb-8 pb-6" style={{
           borderBottom: '2px solid #1a1a1a'
         }}>
-            <span className="text-3xl font-bold" style={{ color: '#dc2626' }}>{branding.companyShortName}</span>
-            <h1 className="text-2xl font-bold mb-2 mt-3" style={{
+            <h1 className="text-2xl font-bold mb-2" style={{
             color: '#1a1a1a'
           }}>Relatório de Criadores</h1>
             <p className="text-lg font-medium" style={{
