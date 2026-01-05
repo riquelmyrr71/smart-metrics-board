@@ -54,6 +54,7 @@ interface DiamondEntry {
 }
 
 const CHART_DATA_ID = '00000000-0000-0000-0000-000000000002';
+const TEAM_STRUCTURE_ID = '00000000-0000-0000-0000-000000000003';
 
 const DEFAULT_TEAM_STRUCTURE: TeamStructure[] = [
   {
@@ -131,8 +132,8 @@ const SchedulingDashboard = () => {
       try {
         const monthStr = format(currentMonth, 'yyyy-MM');
         
-        // Load schedules and diamond data in parallel
-        const [schedulesResult, goalsResult, diamondsResult] = await Promise.all([
+        // Load schedules, diamond data, and team structure in parallel
+        const [schedulesResult, goalsResult, diamondsResult, teamResult] = await Promise.all([
           supabase
             .from('live_schedules')
             .select('*')
@@ -148,6 +149,11 @@ const SchedulingDashboard = () => {
             .from('dashboard_data')
             .select('*')
             .eq('id', CHART_DATA_ID)
+            .maybeSingle(),
+          supabase
+            .from('dashboard_data')
+            .select('*')
+            .eq('id', TEAM_STRUCTURE_ID)
             .maybeSingle()
         ]);
 
@@ -173,6 +179,14 @@ const SchedulingDashboard = () => {
           const parsed = diamondsResult.data.data as { entries?: DiamondEntry[] };
           if (parsed.entries) {
             setDiamondEntries(parsed.entries);
+          }
+        }
+
+        // Load team structure
+        if (teamResult.data?.data) {
+          const parsed = teamResult.data.data as { teamStructure?: TeamStructure[] };
+          if (parsed.teamStructure && parsed.teamStructure.length > 0) {
+            setTeamStructure(parsed.teamStructure);
           }
         }
       } catch (error) {
@@ -242,49 +256,75 @@ const SchedulingDashboard = () => {
     });
   };
 
+  // Save team structure to database
+  const saveTeamStructure = async (newStructure: TeamStructure[]) => {
+    try {
+      const { error } = await supabase
+        .from('dashboard_data')
+        .upsert(
+          {
+            id: TEAM_STRUCTURE_ID,
+            data: { teamStructure: newStructure } as any,
+          },
+          { onConflict: 'id' }
+        );
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error saving team structure:', error);
+      toast({
+        title: 'Erro ao salvar estrutura do time',
+        variant: 'destructive',
+      });
+    }
+  };
+
   // Add new executive
-  const addExecutive = () => {
+  const addExecutive = async () => {
     if (!newExecutiveName.trim()) return;
-    setTeamStructure((prev) => [
-      ...prev,
+    const newStructure = [
+      ...teamStructure,
       { executive: newExecutiveName.toUpperCase(), members: [] },
-    ]);
+    ];
+    setTeamStructure(newStructure);
     setNewExecutiveName('');
     setShowExecutiveDialog(false);
+    await saveTeamStructure(newStructure);
     toast({ title: 'Executivo adicionado!' });
   };
 
   // Add new associate
-  const addAssociate = () => {
+  const addAssociate = async () => {
     if (!newAssociateName.trim() || !selectedExecutive) return;
-    setTeamStructure((prev) =>
-      prev.map((team) =>
-        team.executive === selectedExecutive
-          ? { ...team, members: [...team.members, newAssociateName.toUpperCase()] }
-          : team
-      )
+    const newStructure = teamStructure.map((team) =>
+      team.executive === selectedExecutive
+        ? { ...team, members: [...team.members, newAssociateName.toUpperCase()] }
+        : team
     );
+    setTeamStructure(newStructure);
     setNewAssociateName('');
     setSelectedExecutive('');
     setShowAssociateDialog(false);
+    await saveTeamStructure(newStructure);
     toast({ title: 'Associado adicionado!' });
   };
 
   // Remove executive
-  const removeExecutive = (executiveName: string) => {
-    setTeamStructure((prev) => prev.filter((team) => team.executive !== executiveName));
+  const removeExecutive = async (executiveName: string) => {
+    const newStructure = teamStructure.filter((team) => team.executive !== executiveName);
+    setTeamStructure(newStructure);
+    await saveTeamStructure(newStructure);
     toast({ title: 'Executivo removido!' });
   };
 
   // Remove associate
-  const removeAssociate = (executiveName: string, memberName: string) => {
-    setTeamStructure((prev) =>
-      prev.map((team) =>
-        team.executive === executiveName
-          ? { ...team, members: team.members.filter((m) => m !== memberName) }
-          : team
-      )
+  const removeAssociate = async (executiveName: string, memberName: string) => {
+    const newStructure = teamStructure.map((team) =>
+      team.executive === executiveName
+        ? { ...team, members: team.members.filter((m) => m !== memberName) }
+        : team
     );
+    setTeamStructure(newStructure);
+    await saveTeamStructure(newStructure);
     toast({ title: 'Associado removido!' });
   };
 
@@ -326,6 +366,9 @@ const SchedulingDashboard = () => {
           { onConflict: 'month,year' }
         );
       if (goalError) throw goalError;
+
+      // Save team structure
+      await saveTeamStructure(teamStructure);
 
       toast({
         title: 'Dados salvos com sucesso!',
