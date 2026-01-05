@@ -44,6 +44,7 @@ interface ComparisonData {
   yesterdayTotal: number;
   yesterdayTime: string;
   dailyGoal: number;
+  rejectedStreamers: number;
 }
 
 const CREATORS_DATA_ID = '00000000-0000-0000-0000-000000000004';
@@ -69,7 +70,7 @@ const CreatorsAnalysisDashboard = () => {
   const [showExecutiveDialog, setShowExecutiveDialog] = useState(false);
   const [showAssociateDialog, setShowAssociateDialog] = useState(false);
   const [isExportingPDF, setIsExportingPDF] = useState(false);
-  const [comparisonData, setComparisonData] = useState<ComparisonData>({ yesterdayTotal: 0, yesterdayTime: '', dailyGoal: 50 });
+  const [comparisonData, setComparisonData] = useState<ComparisonData>({ yesterdayTotal: 0, yesterdayTime: '', dailyGoal: 50, rejectedStreamers: 0 });
   
   const reportRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -454,6 +455,37 @@ const CreatorsAnalysisDashboard = () => {
           </Card>
         </div>
 
+        {/* Rejected Streamers Card */}
+        <Card className="mb-4 border-red-200 dark:border-red-800 bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-950/30 dark:to-orange-950/30">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-red-100 dark:bg-red-900/50">
+                  <Trash2 className="h-6 w-6 text-red-500" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Streamers Reprovadas Hoje</p>
+                  <p className="text-xs text-muted-foreground">{format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Input
+                  type="number"
+                  min="0"
+                  value={comparisonData.rejectedStreamers || ''}
+                  onChange={(e) => setComparisonData(prev => ({
+                    ...prev,
+                    rejectedStreamers: parseInt(e.target.value) || 0
+                  }))}
+                  className="w-24 h-10 text-center text-xl font-bold border-red-200 dark:border-red-700"
+                  placeholder="0"
+                />
+                <span className="text-sm text-muted-foreground">reprovadas</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Quick Links */}
         <div className="flex gap-2 mb-4 flex-wrap">
           <Button variant="outline" size="sm" onClick={() => navigate('/graficos')}>
@@ -596,111 +628,140 @@ const CreatorsAnalysisDashboard = () => {
 
         {/* Hidden Report for PDF Export */}
         <div className="fixed -left-[9999px] top-0">
-          <div ref={reportRef} className="bg-white p-6 w-[550px]" style={{ fontFamily: 'Arial, sans-serif' }}>
-            {/* Header */}
-            <div className="flex items-center justify-between mb-4">
-              <img src={curliLogo} alt="Curli Logo" className="h-8 w-auto" />
-              <div className="text-right">
-                <p className="text-xs text-gray-500">{format(new Date(), "dd/MM/yyyy HH:mm", { locale: ptBR })}</p>
+          <div ref={reportRef} className="bg-gradient-to-br from-slate-50 to-purple-50 p-8 w-[600px]" style={{ fontFamily: 'Arial, sans-serif' }}>
+            {/* Header with gradient */}
+            <div className="bg-gradient-to-r from-purple-600 to-purple-800 rounded-2xl p-4 mb-6 shadow-lg">
+              <div className="flex items-center justify-between">
+                <img src={curliLogo} alt="Curli Logo" className="h-10 w-auto brightness-0 invert" />
+                <div className="text-right">
+                  <p className="text-purple-100 text-sm font-medium">{format(new Date(), "EEEE", { locale: ptBR })}</p>
+                  <p className="text-white text-xl font-bold">{format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</p>
+                  <p className="text-purple-200 text-xs">{format(new Date(), "HH:mm", { locale: ptBR })}</p>
+                </div>
               </div>
             </div>
 
             {/* Title */}
-            <div className="text-center mb-4">
-              <h1 className="text-xl font-bold text-gray-900">CRIADORES EM ANÁLISE</h1>
+            <div className="text-center mb-6">
+              <h1 className="text-2xl font-bold text-gray-800 tracking-tight">📊 RELATÓRIO DE ANÁLISE</h1>
+              <p className="text-gray-500 text-sm mt-1">Criadores em processo de avaliação</p>
             </div>
 
-            {/* Metrics Summary */}
-            <div className="grid grid-cols-4 gap-2 mb-4">
-              <div className="bg-purple-50 p-2 rounded text-center">
-                <p className="text-xs text-gray-600">Total Atual</p>
-                <p className="text-xl font-bold text-purple-700">{getGrandTotal()}</p>
+            {/* Metrics Summary - Styled cards */}
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              <div className="bg-gradient-to-br from-purple-500 to-purple-700 p-4 rounded-xl text-center shadow-md">
+                <p className="text-purple-100 text-xs font-medium mb-1">TOTAL EM ANÁLISE</p>
+                <p className="text-3xl font-bold text-white">{getGrandTotal()}</p>
               </div>
-              <div className="bg-gray-50 p-2 rounded text-center">
-                <p className="text-xs text-gray-600">Em análise ontem no mesmo período</p>
-                <p className="text-xl font-bold text-gray-700">{comparisonData.yesterdayTotal || '-'}</p>
+              <div className="bg-gradient-to-br from-gray-100 to-gray-200 p-4 rounded-xl text-center shadow-md border border-gray-300">
+                <p className="text-gray-500 text-xs font-medium mb-1">ONTEM (MESMO HORÁRIO)</p>
+                <p className="text-3xl font-bold text-gray-700">{comparisonData.yesterdayTotal || '-'}</p>
               </div>
-              <div className={`p-2 rounded text-center ${getComparisonDiff().diff >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
-                <p className="text-xs text-gray-600">Variação</p>
-                <p className={`text-xl font-bold ${getComparisonDiff().diff >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+              <div className={`p-4 rounded-xl text-center shadow-md ${getComparisonDiff().diff >= 0 ? 'bg-gradient-to-br from-green-400 to-emerald-600' : 'bg-gradient-to-br from-red-400 to-red-600'}`}>
+                <p className={`text-xs font-medium mb-1 ${getComparisonDiff().diff >= 0 ? 'text-green-100' : 'text-red-100'}`}>VARIAÇÃO</p>
+                <p className="text-3xl font-bold text-white">
                   {getComparisonDiff().diff >= 0 ? '+' : ''}{getComparisonDiff().diff}
                 </p>
               </div>
-              <div className="bg-blue-50 p-2 rounded text-center">
-                <p className="text-xs text-gray-600">Média/Assoc.</p>
-                <p className="text-xl font-bold text-blue-700">{getAveragePerAssociate()}</p>
+            </div>
+
+            {/* Second row metrics */}
+            <div className="grid grid-cols-2 gap-3 mb-5">
+              <div className="bg-white p-4 rounded-xl shadow-md border border-purple-200">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-lg">👥</span>
+                  <p className="text-gray-500 text-xs font-medium">MÉDIA POR ASSOCIADO</p>
+                </div>
+                <p className="text-2xl font-bold text-purple-700">{getAveragePerAssociate()}</p>
+                <p className="text-xs text-gray-400">{getTotalAssociates()} associados ativos</p>
+              </div>
+              <div className="bg-gradient-to-br from-red-50 to-orange-50 p-4 rounded-xl shadow-md border border-red-200">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-lg">❌</span>
+                  <p className="text-red-600 text-xs font-medium">REPROVADAS HOJE</p>
+                </div>
+                <p className="text-2xl font-bold text-red-600">{comparisonData.rejectedStreamers || 0}</p>
+                <p className="text-xs text-gray-400">streamers rejeitadas</p>
               </div>
             </div>
 
             {/* Daily Goal Progress */}
-            <div className="mb-4">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-bold text-gray-700">🎯 Meta Diária: {comparisonData.dailyGoal || 50}</span>
-                <span className="text-xs font-bold text-gray-700">{getGoalProgress().percentage}%</span>
+            <div className="bg-white rounded-xl p-4 shadow-md border border-purple-200 mb-5">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                  🎯 Meta Diária
+                </span>
+                <span className="text-sm font-bold text-purple-700">{getGrandTotal()} / {comparisonData.dailyGoal || 50}</span>
               </div>
-              <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
+              <div className="h-5 bg-gray-100 rounded-full overflow-hidden shadow-inner">
                 <div 
-                  className={`h-full rounded-full ${
+                  className={`h-full rounded-full transition-all ${
                     getGoalProgress().percentage >= 100 
-                      ? 'bg-green-500' 
+                      ? 'bg-gradient-to-r from-green-400 to-emerald-500' 
                       : getGoalProgress().percentage >= 75 
-                        ? 'bg-blue-500' 
+                        ? 'bg-gradient-to-r from-blue-400 to-blue-500' 
                         : getGoalProgress().percentage >= 50 
-                          ? 'bg-amber-500' 
-                          : 'bg-red-500'
+                          ? 'bg-gradient-to-r from-amber-400 to-orange-500' 
+                          : 'bg-gradient-to-r from-red-400 to-red-500'
                   }`}
                   style={{ width: `${Math.min(getGoalProgress().percentage, 100)}%` }}
                 />
               </div>
-              <p className="text-xs text-gray-500 text-center mt-1">
-                {getGoalProgress().percentage >= 100 
-                  ? `🎉 Meta atingida! (+${getGrandTotal() - (comparisonData.dailyGoal || 50)} acima)`
-                  : `Faltam ${getGoalProgress().remaining} criadores`}
-              </p>
+              <div className="flex justify-between mt-2">
+                <p className="text-xs text-gray-500">
+                  {getGoalProgress().percentage >= 100 
+                    ? `🎉 Meta atingida!`
+                    : `Faltam ${getGoalProgress().remaining} criadores`}
+                </p>
+                <p className="text-xs font-bold text-purple-700">{getGoalProgress().percentage}%</p>
+              </div>
             </div>
 
-
-            {/* Table */}
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b-2 border-gray-300">
-                  <th className="text-left py-2 font-bold text-gray-800">Executivo / Associado</th>
-                  <th className="text-right py-2 font-bold text-gray-800 w-16">Qtd</th>
-                </tr>
-              </thead>
-              <tbody>
-                {teamStructure.map((exec) => {
-                  const execTotal = getExecutiveTotal(exec.members);
-                  
-                  return (
-                    <React.Fragment key={exec.executive}>
-                      <tr className="bg-gray-100">
-                        <td className="py-1.5 font-bold text-gray-900">{exec.executive}</td>
-                        <td className="py-1.5 text-right font-bold text-gray-900">{execTotal}</td>
-                      </tr>
-                      {exec.members.map(member => {
-                        const count = getCreatorCount(member);
-                        return (
-                          <tr key={member} className="border-b border-gray-200">
-                            <td className="py-1 pl-4 text-gray-700">{member}</td>
-                            <td className="py-1 text-right text-gray-700">{count}</td>
-                          </tr>
-                        );
-                      })}
-                    </React.Fragment>
-                  );
-                })}
-                <tr className="border-t-2 border-gray-400">
-                  <td className="py-2 font-bold text-gray-900">TOTAL EM ANÁLISE</td>
-                  <td className="py-2 text-right font-bold text-xl text-purple-700">{getGrandTotal()}</td>
-                </tr>
-              </tbody>
-            </table>
+            {/* Table with styled header */}
+            <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gradient-to-r from-purple-600 to-purple-700">
+                    <th className="text-left py-3 px-4 font-bold text-white">Executivo / Associado</th>
+                    <th className="text-right py-3 px-4 font-bold text-white w-20">Qtd</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {teamStructure.map((exec, index) => {
+                    const execTotal = getExecutiveTotal(exec.members);
+                    
+                    return (
+                      <React.Fragment key={exec.executive}>
+                        <tr className={`${index % 2 === 0 ? 'bg-purple-50' : 'bg-purple-100/50'}`}>
+                          <td className="py-2 px-4 font-bold text-purple-900">{exec.executive}</td>
+                          <td className="py-2 px-4 text-right font-bold text-purple-900">{execTotal}</td>
+                        </tr>
+                        {exec.members.map(member => {
+                          const count = getCreatorCount(member);
+                          return (
+                            <tr key={member} className="border-b border-gray-100 hover:bg-gray-50">
+                              <td className="py-1.5 pl-8 pr-4 text-gray-600">{member}</td>
+                              <td className="py-1.5 px-4 text-right text-gray-600">{count}</td>
+                            </tr>
+                          );
+                        })}
+                      </React.Fragment>
+                    );
+                  })}
+                </tbody>
+                <tfoot>
+                  <tr className="bg-gradient-to-r from-purple-600 to-purple-800">
+                    <td className="py-3 px-4 font-bold text-white">TOTAL EM ANÁLISE</td>
+                    <td className="py-3 px-4 text-right font-bold text-2xl text-white">{getGrandTotal()}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
 
             {/* Footer */}
-            <div className="mt-4 pt-2 border-t border-gray-200 text-center">
+            <div className="mt-6 pt-3 border-t-2 border-purple-200 text-center">
               <p className="text-xs text-gray-400">
-                Relatório gerado automaticamente • {format(new Date(), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                📄 Relatório gerado automaticamente pelo Sistema Curli
               </p>
             </div>
           </div>
