@@ -628,120 +628,112 @@ const CreatorsAnalysisDashboard = () => {
 
         {/* Hidden Report for PDF Export */}
         <div className="fixed -left-[9999px] top-0">
-          <div ref={reportRef} className="bg-gradient-to-br from-slate-50 to-purple-50 p-8 w-[600px]" style={{ fontFamily: 'Arial, sans-serif' }}>
-            {/* Header with gradient */}
-            <div className="bg-gradient-to-r from-purple-600 to-purple-800 rounded-2xl p-4 mb-6 shadow-lg">
+          <div ref={reportRef} className="bg-gray-100 p-6 w-[550px]" style={{ fontFamily: 'Arial, sans-serif' }}>
+            {/* Header */}
+            <div className="bg-white rounded-lg p-3 mb-4 shadow-sm">
               <div className="flex items-center justify-between">
-                <img src={curliLogo} alt="Curli Logo" className="h-10 w-auto brightness-0 invert" />
+                <img src={curliLogo} alt="Curli Logo" className="h-7 w-auto" />
                 <div className="text-right">
-                  <p className="text-purple-100 text-sm font-medium">{format(new Date(), "EEEE", { locale: ptBR })}</p>
-                  <p className="text-white text-xl font-bold">{format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</p>
-                  <p className="text-purple-200 text-xs">{format(new Date(), "HH:mm", { locale: ptBR })}</p>
+                  <p className="text-gray-400 text-xs">{format(new Date(), "EEEE", { locale: ptBR })}</p>
+                  <p className="text-gray-700 text-sm font-semibold">{format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</p>
+                  <p className="text-gray-400 text-xs">{format(new Date(), "HH:mm", { locale: ptBR })}</p>
                 </div>
               </div>
             </div>
 
             {/* Title */}
-            <div className="text-center mb-6">
-              <h1 className="text-2xl font-bold text-gray-800 tracking-tight">📊 RELATÓRIO DE ANÁLISE</h1>
-              <p className="text-gray-500 text-sm mt-1">Criadores em processo de avaliação</p>
+            <div className="text-center mb-4">
+              <h1 className="text-lg font-bold text-gray-700">RELATÓRIO DE ANÁLISE</h1>
+              <p className="text-gray-400 text-xs">Criadores em processo de avaliação</p>
             </div>
 
-            {/* Metrics Summary - Styled cards */}
-            <div className="grid grid-cols-3 gap-3 mb-4">
-              <div className="bg-gradient-to-br from-purple-500 to-purple-700 p-4 rounded-xl text-center shadow-md">
-                <p className="text-purple-100 text-xs font-medium mb-1">TOTAL EM ANÁLISE</p>
-                <p className="text-3xl font-bold text-white">{getGrandTotal()}</p>
+            {/* Metrics Summary */}
+            <div className="grid grid-cols-3 gap-2 mb-3">
+              <div className="bg-white p-3 rounded-lg shadow-sm text-center">
+                <p className="text-purple-500 text-xs font-medium mb-1">TOTAL EM ANÁLISE</p>
+                <p className="text-2xl font-bold text-gray-800">{getGrandTotal()}</p>
               </div>
-              <div className="bg-gradient-to-br from-gray-100 to-gray-200 p-4 rounded-xl text-center shadow-md border border-gray-300">
-                <p className="text-gray-500 text-xs font-medium mb-1">ONTEM (MESMO HORÁRIO)</p>
-                <p className="text-3xl font-bold text-gray-700">{comparisonData.yesterdayTotal || '-'}</p>
+              <div className="bg-white p-3 rounded-lg shadow-sm text-center">
+                <p className="text-gray-400 text-xs font-medium mb-1">ONTEM</p>
+                <p className="text-2xl font-bold text-gray-600">{comparisonData.yesterdayTotal || '-'}</p>
               </div>
-              <div className={`p-4 rounded-xl text-center shadow-md ${getComparisonDiff().diff >= 0 ? 'bg-gradient-to-br from-green-400 to-emerald-600' : 'bg-gradient-to-br from-red-400 to-red-600'}`}>
-                <p className={`text-xs font-medium mb-1 ${getComparisonDiff().diff >= 0 ? 'text-green-100' : 'text-red-100'}`}>VARIAÇÃO</p>
-                <p className="text-3xl font-bold text-white">
+              <div className="bg-white p-3 rounded-lg shadow-sm text-center">
+                <p className={`text-xs font-medium mb-1 ${getComparisonDiff().diff >= 0 ? 'text-green-500' : 'text-red-500'}`}>VARIAÇÃO</p>
+                <p className={`text-2xl font-bold ${getComparisonDiff().diff >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                   {getComparisonDiff().diff >= 0 ? '+' : ''}{getComparisonDiff().diff}
                 </p>
               </div>
             </div>
 
             {/* Second row metrics */}
-            <div className="grid grid-cols-2 gap-3 mb-5">
-              <div className="bg-white p-4 rounded-xl shadow-md border border-purple-200">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-lg">👥</span>
-                  <p className="text-gray-500 text-xs font-medium">MÉDIA POR ASSOCIADO</p>
-                </div>
-                <p className="text-2xl font-bold text-purple-700">{getAveragePerAssociate()}</p>
-                <p className="text-xs text-gray-400">{getTotalAssociates()} associados ativos</p>
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              <div className="bg-white p-3 rounded-lg shadow-sm">
+                <p className="text-blue-500 text-xs font-medium mb-1">MÉDIA / ASSOCIADO</p>
+                <p className="text-xl font-bold text-gray-800">{getAveragePerAssociate()}</p>
+                <p className="text-xs text-gray-400">{getTotalAssociates()} associados</p>
               </div>
-              <div className="bg-gradient-to-br from-red-50 to-orange-50 p-4 rounded-xl shadow-md border border-red-200">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-lg">❌</span>
-                  <p className="text-red-600 text-xs font-medium">REPROVADAS HOJE</p>
-                </div>
-                <p className="text-2xl font-bold text-red-600">{comparisonData.rejectedStreamers || 0}</p>
-                <p className="text-xs text-gray-400">streamers rejeitadas</p>
+              <div className="bg-white p-3 rounded-lg shadow-sm">
+                <p className="text-red-500 text-xs font-medium mb-1">REPROVADAS HOJE</p>
+                <p className="text-xl font-bold text-gray-800">{comparisonData.rejectedStreamers || 0}</p>
+                <p className="text-xs text-gray-400">streamers</p>
               </div>
             </div>
 
             {/* Daily Goal Progress */}
-            <div className="bg-white rounded-xl p-4 shadow-md border border-purple-200 mb-5">
+            <div className="bg-white rounded-lg p-3 shadow-sm mb-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-bold text-gray-700 flex items-center gap-2">
-                  🎯 Meta Diária
-                </span>
-                <span className="text-sm font-bold text-purple-700">{getGrandTotal()} / {comparisonData.dailyGoal || 50}</span>
+                <span className="text-xs font-medium text-amber-500">META DIÁRIA</span>
+                <span className="text-xs font-bold text-gray-700">{getGrandTotal()} / {comparisonData.dailyGoal || 50}</span>
               </div>
-              <div className="h-5 bg-gray-100 rounded-full overflow-hidden shadow-inner">
+              <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
                 <div 
-                  className={`h-full rounded-full transition-all ${
+                  className={`h-full rounded-full ${
                     getGoalProgress().percentage >= 100 
-                      ? 'bg-gradient-to-r from-green-400 to-emerald-500' 
+                      ? 'bg-green-400' 
                       : getGoalProgress().percentage >= 75 
-                        ? 'bg-gradient-to-r from-blue-400 to-blue-500' 
+                        ? 'bg-blue-400' 
                         : getGoalProgress().percentage >= 50 
-                          ? 'bg-gradient-to-r from-amber-400 to-orange-500' 
-                          : 'bg-gradient-to-r from-red-400 to-red-500'
+                          ? 'bg-amber-400' 
+                          : 'bg-red-400'
                   }`}
                   style={{ width: `${Math.min(getGoalProgress().percentage, 100)}%` }}
                 />
               </div>
-              <div className="flex justify-between mt-2">
-                <p className="text-xs text-gray-500">
+              <div className="flex justify-between mt-1">
+                <p className="text-xs text-gray-400">
                   {getGoalProgress().percentage >= 100 
-                    ? `🎉 Meta atingida!`
-                    : `Faltam ${getGoalProgress().remaining} criadores`}
+                    ? `Meta atingida!`
+                    : `Faltam ${getGoalProgress().remaining}`}
                 </p>
-                <p className="text-xs font-bold text-purple-700">{getGoalProgress().percentage}%</p>
+                <p className="text-xs font-bold text-gray-600">{getGoalProgress().percentage}%</p>
               </div>
             </div>
 
-            {/* Table with styled header */}
-            <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
-              <table className="w-full text-sm">
+            {/* Table */}
+            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+              <table className="w-full text-xs">
                 <thead>
-                  <tr className="bg-gradient-to-r from-purple-600 to-purple-700">
-                    <th className="text-left py-3 px-4 font-bold text-white">Executivo / Associado</th>
-                    <th className="text-right py-3 px-4 font-bold text-white w-20">Qtd</th>
+                  <tr className="bg-gray-50 border-b border-gray-200">
+                    <th className="text-left py-2 px-3 font-semibold text-gray-500">Executivo / Associado</th>
+                    <th className="text-right py-2 px-3 font-semibold text-gray-500 w-16">Qtd</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {teamStructure.map((exec, index) => {
+                  {teamStructure.map((exec) => {
                     const execTotal = getExecutiveTotal(exec.members);
                     
                     return (
                       <React.Fragment key={exec.executive}>
-                        <tr className={`${index % 2 === 0 ? 'bg-purple-50' : 'bg-purple-100/50'}`}>
-                          <td className="py-2 px-4 font-bold text-purple-900">{exec.executive}</td>
-                          <td className="py-2 px-4 text-right font-bold text-purple-900">{execTotal}</td>
+                        <tr className="bg-gray-50">
+                          <td className="py-1.5 px-3 font-semibold text-gray-700">{exec.executive}</td>
+                          <td className="py-1.5 px-3 text-right font-bold text-purple-600">{execTotal}</td>
                         </tr>
                         {exec.members.map(member => {
                           const count = getCreatorCount(member);
                           return (
-                            <tr key={member} className="border-b border-gray-100 hover:bg-gray-50">
-                              <td className="py-1.5 pl-8 pr-4 text-gray-600">{member}</td>
-                              <td className="py-1.5 px-4 text-right text-gray-600">{count}</td>
+                            <tr key={member} className="border-b border-gray-100">
+                              <td className="py-1 pl-6 pr-3 text-gray-500">{member}</td>
+                              <td className="py-1 px-3 text-right text-gray-600">{count}</td>
                             </tr>
                           );
                         })}
@@ -750,18 +742,18 @@ const CreatorsAnalysisDashboard = () => {
                   })}
                 </tbody>
                 <tfoot>
-                  <tr className="bg-gradient-to-r from-purple-600 to-purple-800">
-                    <td className="py-3 px-4 font-bold text-white">TOTAL EM ANÁLISE</td>
-                    <td className="py-3 px-4 text-right font-bold text-2xl text-white">{getGrandTotal()}</td>
+                  <tr className="bg-gray-50 border-t border-gray-200">
+                    <td className="py-2 px-3 font-semibold text-gray-600">TOTAL EM ANÁLISE</td>
+                    <td className="py-2 px-3 text-right font-bold text-lg text-purple-600">{getGrandTotal()}</td>
                   </tr>
                 </tfoot>
               </table>
             </div>
 
             {/* Footer */}
-            <div className="mt-6 pt-3 border-t-2 border-purple-200 text-center">
+            <div className="mt-4 text-center">
               <p className="text-xs text-gray-400">
-                📄 Relatório gerado automaticamente pelo Sistema Curli
+                Relatório gerado pelo Sistema Curli
               </p>
             </div>
           </div>
