@@ -256,6 +256,56 @@ const SchedulingDashboard = () => {
     });
   };
 
+  // Sync member names in live_schedules table
+  const syncMemberNames = async (oldName: string, newName: string, executiveName: string) => {
+    try {
+      const { error } = await supabase
+        .from('live_schedules')
+        .update({ member_name: newName, executive_name: executiveName })
+        .eq('member_name', oldName);
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error syncing member names:', error);
+    }
+  };
+
+  // Sync executive names in live_schedules table
+  const syncExecutiveNames = async (oldName: string, newName: string) => {
+    try {
+      const { error } = await supabase
+        .from('live_schedules')
+        .update({ executive_name: newName })
+        .eq('executive_name', oldName);
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error syncing executive names:', error);
+    }
+  };
+
+  // Delete member schedules from live_schedules table
+  const deleteMemberSchedules = async (memberName: string) => {
+    try {
+      const { error } = await supabase
+        .from('live_schedules')
+        .delete()
+        .eq('member_name', memberName);
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error deleting member schedules:', error);
+    }
+  };
+
+  // Delete all schedules for an executive's members
+  const deleteExecutiveSchedules = async (executiveName: string, members: string[]) => {
+    try {
+      for (const member of members) {
+        await deleteMemberSchedules(member);
+      }
+    } catch (error) {
+      console.error('Error deleting executive schedules:', error);
+    }
+  };
+
   // Save team structure to database
   const saveTeamStructure = async (newStructure: TeamStructure[]) => {
     try {
@@ -308,15 +358,22 @@ const SchedulingDashboard = () => {
     toast({ title: 'Associado adicionado!' });
   };
 
-  // Remove executive
+  // Remove executive and sync with live_schedules
   const removeExecutive = async (executiveName: string) => {
+    const teamToRemove = teamStructure.find((team) => team.executive === executiveName);
     const newStructure = teamStructure.filter((team) => team.executive !== executiveName);
     setTeamStructure(newStructure);
     await saveTeamStructure(newStructure);
+    
+    // Delete all schedules for this executive's members
+    if (teamToRemove) {
+      await deleteExecutiveSchedules(executiveName, teamToRemove.members);
+    }
+    
     toast({ title: 'Executivo removido!' });
   };
 
-  // Remove associate
+  // Remove associate and sync with live_schedules
   const removeAssociate = async (executiveName: string, memberName: string) => {
     const newStructure = teamStructure.map((team) =>
       team.executive === executiveName
@@ -325,6 +382,17 @@ const SchedulingDashboard = () => {
     );
     setTeamStructure(newStructure);
     await saveTeamStructure(newStructure);
+    
+    // Delete schedules for this member
+    await deleteMemberSchedules(memberName);
+    
+    // Remove from local schedule data
+    setScheduleData((prev) => {
+      const newData = { ...prev };
+      delete newData[memberName];
+      return newData;
+    });
+    
     toast({ title: 'Associado removido!' });
   };
 
