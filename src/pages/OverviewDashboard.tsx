@@ -2030,56 +2030,50 @@ const OverviewDashboard: React.FC = () => {
               <h2 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
                 🏆 Rankings do Mês
               </h2>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-3 gap-3">
                 {/* Diamonds Ranking */}
-                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                  <h3 className="font-bold text-purple-800 mb-3 text-sm flex items-center gap-1">
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                  <h3 className="font-bold text-purple-800 mb-2 text-xs flex items-center gap-1">
                     💎 Top Diamantes
                   </h3>
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     {monthlyData?.rankings.diamonds.slice(0, 5).map((item, index) => (
-                      <div key={item.name} className="flex items-center justify-between py-1.5 text-xs border-b border-purple-200 last:border-0">
-                        <div className="flex items-center gap-2 min-w-0 flex-1">
-                          <span className="font-bold text-purple-700 w-4 shrink-0">{index + 1}.</span>
-                          <span className="truncate text-gray-800" title={item.name}>{item.name}</span>
-                        </div>
-                        <span className="font-bold text-purple-700 shrink-0 ml-2 bg-purple-100 px-2 py-0.5 rounded">{formatCompact(item.value)}</span>
+                      <div key={item.name} className="flex items-center gap-1 py-1 border-b border-purple-200 last:border-0" style={{ fontSize: '10px' }}>
+                        <span className="font-bold text-purple-700 w-3 shrink-0">{index + 1}.</span>
+                        <span className="truncate text-gray-800 flex-1" style={{ maxWidth: '70px' }} title={item.name}>{item.name}</span>
+                        <span className="font-bold text-purple-700 shrink-0 bg-purple-100 px-1.5 py-0.5 rounded text-right" style={{ minWidth: '40px' }}>{formatCompact(item.value)}</span>
                       </div>
                     ))}
                   </div>
                 </div>
 
                 {/* Scheduling Ranking */}
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <h3 className="font-bold text-green-800 mb-3 text-sm flex items-center gap-1">
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                  <h3 className="font-bold text-green-800 mb-2 text-xs flex items-center gap-1">
                     📅 Top Agendamento
                   </h3>
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     {monthlyData?.rankings.scheduling.slice(0, 5).map((item, index) => (
-                      <div key={item.name} className="flex items-center justify-between py-1.5 text-xs border-b border-green-200 last:border-0">
-                        <div className="flex items-center gap-2 min-w-0 flex-1">
-                          <span className="font-bold text-green-700 w-4 shrink-0">{index + 1}.</span>
-                          <span className="truncate text-gray-800" title={item.name}>{item.name}</span>
-                        </div>
-                        <span className="font-bold text-green-700 shrink-0 ml-2 bg-green-100 px-2 py-0.5 rounded">{item.value}%</span>
+                      <div key={item.name} className="flex items-center gap-1 py-1 border-b border-green-200 last:border-0" style={{ fontSize: '10px' }}>
+                        <span className="font-bold text-green-700 w-3 shrink-0">{index + 1}.</span>
+                        <span className="truncate text-gray-800 flex-1" style={{ maxWidth: '70px' }} title={item.name}>{item.name}</span>
+                        <span className="font-bold text-green-700 shrink-0 bg-green-100 px-1.5 py-0.5 rounded text-right" style={{ minWidth: '40px' }}>{item.value}%</span>
                       </div>
                     ))}
                   </div>
                 </div>
 
                 {/* Battles Ranking */}
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <h3 className="font-bold text-red-800 mb-3 text-sm flex items-center gap-1">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <h3 className="font-bold text-red-800 mb-2 text-xs flex items-center gap-1">
                     ⚔️ Top Batalhas
                   </h3>
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     {monthlyData?.rankings.battles.slice(0, 5).map((item, index) => (
-                      <div key={item.name} className="flex items-center justify-between py-1.5 text-xs border-b border-red-200 last:border-0">
-                        <div className="flex items-center gap-2 min-w-0 flex-1">
-                          <span className="font-bold text-red-700 w-4 shrink-0">{index + 1}.</span>
-                          <span className="truncate text-gray-800" title={item.name}>{item.name}</span>
-                        </div>
-                        <span className="font-bold text-red-700 shrink-0 ml-2 bg-red-100 px-2 py-0.5 rounded">{item.value}</span>
+                      <div key={item.name} className="flex items-center gap-1 py-1 border-b border-red-200 last:border-0" style={{ fontSize: '10px' }}>
+                        <span className="font-bold text-red-700 w-3 shrink-0">{index + 1}.</span>
+                        <span className="truncate text-gray-800 flex-1" style={{ maxWidth: '70px' }} title={item.name}>{item.name}</span>
+                        <span className="font-bold text-red-700 shrink-0 bg-red-100 px-1.5 py-0.5 rounded text-right" style={{ minWidth: '40px' }}>{item.value}</span>
                       </div>
                     ))}
                   </div>
