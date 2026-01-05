@@ -132,18 +132,21 @@ const BattlesDashboard = () => {
   const [showReportDialog, setShowReportDialog] = useState(false);
   const [hidePastDays, setHidePastDays] = useState(false);
   const [showMetricsReport, setShowMetricsReport] = useState(false);
-  const [reportConfig, setReportConfig] = useState<ReportConfig>({
-    startDate: format(startOfMonth(new Date()), 'yyyy-MM-dd'),
-    endDate: format(new Date(), 'yyyy-MM-dd'),
-    selectedMembers: [],
-    metrics: {
-      totalBattles: true,
-      dailyBreakdown: true,
-      memberTotals: true,
-      impactAnalysis: true,
-      topPerformers: true,
-      lowPerformers: false,
-    },
+  const [reportConfig, setReportConfig] = useState<ReportConfig>(() => {
+    const now = new Date();
+    return {
+      startDate: format(startOfMonth(now), 'yyyy-MM-dd'),
+      endDate: format(now, 'yyyy-MM-dd'),
+      selectedMembers: [],
+      metrics: {
+        totalBattles: true,
+        dailyBreakdown: true,
+        memberTotals: true,
+        impactAnalysis: true,
+        topPerformers: true,
+        lowPerformers: false,
+      },
+    };
   });
   
   const reportRef = useRef<HTMLDivElement>(null);
