@@ -2040,7 +2040,7 @@ const OverviewDashboard: React.FC = () => {
                     {monthlyData?.rankings.diamonds.slice(0, 5).map((item, index) => (
                       <div key={item.name} className="flex items-center gap-1 py-1 border-b border-purple-200 last:border-0" style={{ fontSize: '10px' }}>
                         <span className="font-bold text-purple-700 w-3 shrink-0">{index + 1}.</span>
-                        <span className="truncate text-gray-800 flex-1" style={{ maxWidth: '70px' }} title={item.name}>{item.name}</span>
+                        <span className="truncate text-gray-800 flex-1" style={{ maxWidth: '80px' }} title={item.name}>{item.name}</span>
                         <span className="font-bold text-purple-700 shrink-0 bg-purple-100 px-1.5 py-0.5 rounded text-right" style={{ minWidth: '40px' }}>{formatCompact(item.value)}</span>
                       </div>
                     ))}
@@ -2056,7 +2056,7 @@ const OverviewDashboard: React.FC = () => {
                     {monthlyData?.rankings.scheduling.slice(0, 5).map((item, index) => (
                       <div key={item.name} className="flex items-center gap-1 py-1 border-b border-green-200 last:border-0" style={{ fontSize: '10px' }}>
                         <span className="font-bold text-green-700 w-3 shrink-0">{index + 1}.</span>
-                        <span className="truncate text-gray-800 flex-1" style={{ maxWidth: '70px' }} title={item.name}>{item.name}</span>
+                        <span className="truncate text-gray-800 flex-1" style={{ maxWidth: '80px' }} title={item.name}>{item.name}</span>
                         <span className="font-bold text-green-700 shrink-0 bg-green-100 px-1.5 py-0.5 rounded text-right" style={{ minWidth: '40px' }}>{item.value}%</span>
                       </div>
                     ))}
@@ -2072,7 +2072,7 @@ const OverviewDashboard: React.FC = () => {
                     {monthlyData?.rankings.battles.slice(0, 5).map((item, index) => (
                       <div key={item.name} className="flex items-center gap-1 py-1 border-b border-red-200 last:border-0" style={{ fontSize: '10px' }}>
                         <span className="font-bold text-red-700 w-3 shrink-0">{index + 1}.</span>
-                        <span className="truncate text-gray-800 flex-1" style={{ maxWidth: '70px' }} title={item.name}>{item.name}</span>
+                        <span className="truncate text-gray-800 flex-1" style={{ maxWidth: '80px' }} title={item.name}>{item.name}</span>
                         <span className="font-bold text-red-700 shrink-0 bg-red-100 px-1.5 py-0.5 rounded text-right" style={{ minWidth: '40px' }}>{item.value}</span>
                       </div>
                     ))}
