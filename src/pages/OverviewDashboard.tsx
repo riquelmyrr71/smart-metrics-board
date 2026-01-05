@@ -67,6 +67,7 @@ interface MonthlyData {
 
 interface ComparisonData {
   month: string;
+  monthKey: string;
   diamonds: number;
   diamondsChange?: number;
   creators: number;
@@ -77,6 +78,8 @@ interface ComparisonData {
   battlesChange?: number;
   creatorsAnalysis: number;
   creatorsAnalysisChange?: number;
+  diamondsProjection?: number;
+  creatorsProjection?: number;
 }
 
 const OverviewDashboard: React.FC = () => {
@@ -380,6 +383,27 @@ const OverviewDashboard: React.FC = () => {
           battles: battlesRanking
         }
       });
+
+      // Save projection to database for the current month
+      const monthKeyToSave = format(currentMonth, 'yyyy-MM');
+      const currentYear = currentMonth.getFullYear();
+      const currentMonthNum = currentMonth.getMonth() + 1;
+      
+      if (diamondsProjection > 0 || creatorsProjection > 0) {
+        // Upsert projection data
+        await supabase
+          .from('monthly_projections')
+          .upsert({
+            month_key: monthKeyToSave,
+            year: currentYear,
+            month: currentMonthNum,
+            diamonds_projection: diamondsProjection,
+            creators_projection: creatorsProjection,
+            diamonds_actual: diamondsTotal,
+            creators_actual: creatorsTotal,
+            projection_date: format(new Date(), 'yyyy-MM-dd')
+          }, { onConflict: 'month_key' });
+      }
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -390,6 +414,21 @@ const OverviewDashboard: React.FC = () => {
   // Load comparison data for last 6 months
   const loadComparisonData = async () => {
     const months: ComparisonData[] = [];
+    
+    // First, fetch all saved projections
+    const { data: savedProjections } = await supabase
+      .from('monthly_projections')
+      .select('*');
+    
+    const projectionsMap: Record<string, { diamonds: number; creators: number }> = {};
+    if (savedProjections) {
+      savedProjections.forEach((proj: any) => {
+        projectionsMap[proj.month_key] = {
+          diamonds: proj.diamonds_projection,
+          creators: proj.creators_projection
+        };
+      });
+    }
     
     for (let i = 0; i < 6; i++) {
       const monthDate = subMonths(currentMonth, i);
@@ -457,13 +496,19 @@ const OverviewDashboard: React.FC = () => {
           }
         }
 
+        // Get saved projection for this month
+        const savedProj = projectionsMap[monthKey];
+
         months.push({
           month: format(monthDate, 'MMM yyyy', { locale: ptBR }),
+          monthKey,
           diamonds: diamondsTotal,
           creators: creatorsTotal,
           schedulingRate,
           battles: battlesTotal,
-          creatorsAnalysis: creatorsAnalysisTotal
+          creatorsAnalysis: creatorsAnalysisTotal,
+          diamondsProjection: savedProj?.diamonds,
+          creatorsProjection: savedProj?.creators
         });
       } catch (error) {
         console.error(`Error loading data for ${monthKey}:`, error);
@@ -1694,21 +1739,54 @@ const OverviewDashboard: React.FC = () => {
             </div>
 
             {/* Projections */}
-            <h2 className="text-base font-bold text-gray-900 mb-3">Projeções</h2>
+            <h2 className="text-base font-bold text-gray-900 mb-3">Projeções Estimadas</h2>
             <div className="grid grid-cols-3 gap-4 mb-6">
               <div className="bg-purple-50 rounded-lg p-3">
                 <p className="text-xs text-purple-700 mb-1">Projeção Diamantes</p>
                 <p className="text-xl font-bold text-purple-900">{formatNumber(monthlyData?.diamonds.projection || 0)}</p>
+                <p className="text-xs text-gray-500 mt-1">Estimativa final do mês</p>
               </div>
               <div className="bg-blue-50 rounded-lg p-3">
                 <p className="text-xs text-blue-700 mb-1">Projeção Criadores</p>
                 <p className="text-xl font-bold text-blue-900">{formatNumber(monthlyData?.creators.projection || 0)}</p>
+                <p className="text-xs text-gray-500 mt-1">Estimativa final do mês</p>
               </div>
               <div className="bg-red-50 rounded-lg p-3">
                 <p className="text-xs text-red-700 mb-1">Média Batalhas/Dia</p>
                 <p className="text-xl font-bold text-red-900">{monthlyData?.battles.average || 0}</p>
               </div>
             </div>
+
+            {/* Historical Projections */}
+            {comparisonData.some(d => d.diamondsProjection || d.creatorsProjection) && (
+              <>
+                <h2 className="text-base font-bold text-gray-900 mb-3">Histórico de Projeções Salvas</h2>
+                <div className="border border-gray-200 rounded-lg overflow-hidden mb-6">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-100">
+                      <tr>
+                        <th className="text-left p-2 font-bold text-gray-700">Mês</th>
+                        <th className="text-center p-2 font-bold text-gray-700">Proj. Diamantes</th>
+                        <th className="text-center p-2 font-bold text-gray-700">Real Diamantes</th>
+                        <th className="text-center p-2 font-bold text-gray-700">Proj. Criadores</th>
+                        <th className="text-center p-2 font-bold text-gray-700">Real Criadores</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {comparisonData.filter(d => d.diamondsProjection || d.creatorsProjection).slice(0, 4).map((data, index) => (
+                        <tr key={data.month} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                          <td className="p-2 font-medium capitalize">{data.month}</td>
+                          <td className="p-2 text-center text-purple-700 font-bold">{data.diamondsProjection ? formatNumber(data.diamondsProjection) : '-'}</td>
+                          <td className="p-2 text-center">{formatNumber(data.diamonds)}</td>
+                          <td className="p-2 text-center text-blue-700 font-bold">{data.creatorsProjection ? formatNumber(data.creatorsProjection) : '-'}</td>
+                          <td className="p-2 text-center">{formatNumber(data.creators)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
 
             {/* Rankings */}
             <h2 className="text-base font-bold text-gray-900 mb-3">Rankings do Mês</h2>
@@ -1781,7 +1859,7 @@ const OverviewDashboard: React.FC = () => {
             {/* Projections */}
             <div className="mb-6">
               <h2 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
-                🎯 Projeções
+                🎯 Projeções Estimadas
               </h2>
               <div className="grid grid-cols-3 gap-4">
                 <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
@@ -1801,6 +1879,39 @@ const OverviewDashboard: React.FC = () => {
                 </div>
               </div>
             </div>
+
+            {/* Historical Projections Section */}
+            {comparisonData.some(d => d.diamondsProjection || d.creatorsProjection) && (
+              <div className="mb-6">
+                <h2 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
+                  📊 Histórico de Projeções Salvas
+                </h2>
+                <div className="border border-gray-200 rounded-lg overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead className="bg-purple-100">
+                      <tr>
+                        <th className="text-left p-2 font-bold text-gray-700">Mês</th>
+                        <th className="text-center p-2 font-bold text-purple-700">Proj. Diamantes</th>
+                        <th className="text-center p-2 font-bold text-gray-700">Real Diamantes</th>
+                        <th className="text-center p-2 font-bold text-blue-700">Proj. Criadores</th>
+                        <th className="text-center p-2 font-bold text-gray-700">Real Criadores</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {comparisonData.filter(d => d.diamondsProjection || d.creatorsProjection).slice(0, 4).map((data, index) => (
+                        <tr key={data.month} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                          <td className="p-2 font-medium capitalize">{data.month}</td>
+                          <td className="p-2 text-center text-purple-700 font-bold">{data.diamondsProjection ? formatNumber(data.diamondsProjection) : '-'}</td>
+                          <td className="p-2 text-center">{formatNumber(data.diamonds)}</td>
+                          <td className="p-2 text-center text-blue-700 font-bold">{data.creatorsProjection ? formatNumber(data.creatorsProjection) : '-'}</td>
+                          <td className="p-2 text-center">{formatNumber(data.creators)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
 
             {/* Month Comparison */}
             <div className="mb-6">

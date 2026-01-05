@@ -65,6 +65,48 @@ export type Database = {
         }
         Relationships: []
       }
+      monthly_projections: {
+        Row: {
+          created_at: string
+          creators_actual: number
+          creators_projection: number
+          diamonds_actual: number
+          diamonds_projection: number
+          id: string
+          month: number
+          month_key: string
+          projection_date: string
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          creators_actual?: number
+          creators_projection?: number
+          diamonds_actual?: number
+          diamonds_projection?: number
+          id?: string
+          month: number
+          month_key: string
+          projection_date: string
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          creators_actual?: number
+          creators_projection?: number
+          diamonds_actual?: number
+          diamonds_projection?: number
+          id?: string
+          month?: number
+          month_key?: string
+          projection_date?: string
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
       notes: {
         Row: {
           content: string | null
