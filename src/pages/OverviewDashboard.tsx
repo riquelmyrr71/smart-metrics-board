@@ -176,22 +176,30 @@ const OverviewDashboard: React.FC = () => {
         dailyMap[date].creatorsAccum = creatorsAccum;
       });
 
-      // Process scheduling data
+      // Process scheduling data - Calculate rate based on (scheduled days / total days in month) per member
       let scheduledCount = 0;
-      let totalSchedules = 0;
       const schedulingByMember: Record<string, { scheduled: number; total: number; executive: string }> = {};
       const daysWithScheduling = new Set<string>();
+      const uniqueMembers = new Set<string>();
 
       if (schedulingData) {
+        // First pass: identify all unique members
+        schedulingData.forEach((schedule: any) => {
+          uniqueMembers.add(schedule.member_name);
+        });
+        
+        // Initialize all members with total days in month
+        schedulingData.forEach((schedule: any) => {
+          const member = schedule.member_name;
+          if (!schedulingByMember[member]) {
+            schedulingByMember[member] = { scheduled: 0, total: totalDaysInMonth, executive: schedule.executive_name };
+          }
+        });
+        
+        // Second pass: count scheduled days per member
         schedulingData.forEach((schedule: any) => {
           const member = schedule.member_name;
           const date = schedule.schedule_date;
-          
-          if (!schedulingByMember[member]) {
-            schedulingByMember[member] = { scheduled: 0, total: 0, executive: schedule.executive_name };
-          }
-          schedulingByMember[member].total++;
-          totalSchedules++;
           
           if (schedule.is_scheduled) {
             schedulingByMember[member].scheduled++;
@@ -206,6 +214,9 @@ const OverviewDashboard: React.FC = () => {
           }
         });
       }
+      
+      // Calculate total possible schedules: members × days in month
+      const totalPossibleSchedules = uniqueMembers.size * totalDaysInMonth;
 
       // Process battles data - NEW CORRECT FORMAT
       let battlesTotal = 0;
@@ -349,8 +360,8 @@ const OverviewDashboard: React.FC = () => {
         creators: { total: creatorsTotal, entries: creatorsEntries, projection: creatorsProjection },
         scheduling: { 
           scheduled: scheduledCount, 
-          total: totalSchedules, 
-          rate: totalSchedules > 0 ? Math.round((scheduledCount / totalSchedules) * 100) : 0,
+          total: totalPossibleSchedules, 
+          rate: totalPossibleSchedules > 0 ? Math.round((scheduledCount / totalPossibleSchedules) * 100) : 0,
           daysWithScheduling: daysWithScheduling.size
         },
         battles: { 
@@ -407,16 +418,19 @@ const OverviewDashboard: React.FC = () => {
           });
         }
 
-        // Process scheduling
+        // Process scheduling - Calculate rate as (scheduled days / total possible days)
         let scheduled = 0;
-        let total = 0;
+        const uniqueMembersInMonth = new Set<string>();
+        const daysInComparisonMonth = getDaysInMonth(monthDate);
+        
         if (schedulingResult.data) {
           schedulingResult.data.forEach((s: any) => {
-            total++;
+            uniqueMembersInMonth.add(s.member_name);
             if (s.is_scheduled) scheduled++;
           });
         }
-        const schedulingRate = total > 0 ? Math.round((scheduled / total) * 100) : 0;
+        const totalPossible = uniqueMembersInMonth.size * daysInComparisonMonth;
+        const schedulingRate = totalPossible > 0 ? Math.round((scheduled / totalPossible) * 100) : 0;
 
         // Process battles
         let battlesTotal = 0;
@@ -954,7 +968,7 @@ const OverviewDashboard: React.FC = () => {
       value: `${monthlyData.scheduling.rate}%`, 
       icon: <Radio className="h-5 w-5" />,
       color: 'bg-green-100 text-green-700',
-      subtext: `${monthlyData.scheduling.daysWithScheduling}/${daysElapsed} dias`
+      subtext: `${formatNumber(monthlyData.scheduling.scheduled)}/${formatNumber(monthlyData.scheduling.total)} agendamentos`
     },
     { 
       label: 'Batalhas', 
