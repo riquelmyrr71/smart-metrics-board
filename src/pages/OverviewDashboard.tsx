@@ -991,6 +991,17 @@ const OverviewDashboard: React.FC = () => {
     loadFilteredSchedulingRanking();
   }, [periodFilter, customDateRange, monthStart, monthEnd]);
 
+  // Calculate additional metrics
+  const avgDiamondsPerDay = monthlyData && monthlyData.diamonds.entries > 0 
+    ? Math.round(monthlyData.diamonds.total / monthlyData.diamonds.entries) 
+    : 0;
+  const avgCreatorsPerDay = monthlyData && monthlyData.creators.entries > 0 
+    ? Math.round(monthlyData.creators.total / monthlyData.creators.entries) 
+    : 0;
+  const avgDiamondsPerCreator = monthlyData && monthlyData.creators.total > 0 
+    ? Math.round(monthlyData.diamonds.total / monthlyData.creators.total) 
+    : 0;
+
   const metrics: MetricSummary[] = monthlyData ? [
     { 
       label: 'Diamantes', 
@@ -1022,15 +1033,47 @@ const OverviewDashboard: React.FC = () => {
       color: 'bg-red-100 text-red-700',
       projection: `Taxa: ${monthlyData.battles.battleRate}%`,
       subtext: `Média: ${monthlyData.battles.average}/dia | ${monthlyData.battles.daysWithBattles} dias`
+    }
+  ] : [];
+
+  // Métricas do PDF consolidado (sem criadores em análise, com métricas adicionais)
+  const consolidatedMetrics: MetricSummary[] = monthlyData ? [
+    { 
+      label: 'Diamantes', 
+      value: formatNumber(monthlyData.diamonds.total), 
+      icon: <Gem className="h-5 w-5" />,
+      color: 'bg-purple-100 text-purple-700',
+      projection: `Proj: ${formatCompact(monthlyData.diamonds.projection)}`,
+      subtext: `${monthlyData.diamonds.entries} dias`
     },
     { 
-      label: 'Criadores Análise', 
-      value: formatNumber(monthlyData.creatorsAnalysis.total), 
+      label: 'Criadores', 
+      value: formatNumber(monthlyData.creators.total), 
+      icon: <Users className="h-5 w-5" />,
+      color: 'bg-blue-100 text-blue-700',
+      projection: `Proj: ${formatNumber(monthlyData.creators.projection)}`,
+      subtext: `${monthlyData.creators.entries} dias`
+    },
+    { 
+      label: 'Méd. Diamantes/Dia', 
+      value: formatCompact(avgDiamondsPerDay), 
+      icon: <Gem className="h-5 w-5" />,
+      color: 'bg-purple-50 text-purple-600',
+      subtext: 'Por dia ativo'
+    },
+    { 
+      label: 'Méd. Criadores/Dia', 
+      value: avgCreatorsPerDay.toString(), 
+      icon: <Users className="h-5 w-5" />,
+      color: 'bg-blue-50 text-blue-600',
+      subtext: 'Por dia ativo'
+    },
+    { 
+      label: 'Diamantes/Criador', 
+      value: formatCompact(avgDiamondsPerCreator), 
       icon: <TrendingUp className="h-5 w-5" />,
-      color: 'bg-orange-100 text-orange-700',
-      subtext: monthlyData.creatorsAnalysis.lastUpdated 
-        ? `Atualizado: ${format(new Date(monthlyData.creatorsAnalysis.lastUpdated), 'dd/MM HH:mm')}`
-        : 'Hoje'
+      color: 'bg-emerald-50 text-emerald-600',
+      subtext: 'Eficiência média'
     }
   ] : [];
 
@@ -1727,12 +1770,15 @@ const OverviewDashboard: React.FC = () => {
 
             {/* Metrics Grid */}
             <div className="grid grid-cols-5 gap-3 mb-6">
-              {metrics.map((metric, index) => (
+              {consolidatedMetrics.map((metric, index) => (
                 <div key={index} className="bg-gray-50 rounded-lg p-3 text-center">
                   <p className="text-xs text-gray-600 mb-1">{metric.label}</p>
                   <p className="text-lg font-bold text-gray-900">{metric.value}</p>
                   {metric.projection && (
                     <p className="text-xs text-gray-500">{metric.projection}</p>
+                  )}
+                  {metric.subtext && !metric.projection && (
+                    <p className="text-xs text-gray-400">{metric.subtext}</p>
                   )}
                 </div>
               ))}
@@ -1795,29 +1841,33 @@ const OverviewDashboard: React.FC = () => {
               {/* Scheduling Ranking */}
               <div className="bg-gray-50 rounded-lg p-4">
                 <h3 className="font-bold text-gray-800 mb-3 text-sm">Top Agendamento</h3>
-                {monthlyData?.rankings.scheduling.map((item, index) => (
-                  <div key={item.name} className="flex justify-between py-1.5 border-b border-gray-200 last:border-0">
-                    <span className="text-sm">
-                      <span className="font-bold mr-2">{index + 1}.</span>
-                      {item.name}
-                    </span>
-                    <span className="font-bold text-green-700">{item.value}%</span>
-                  </div>
-                ))}
+                <div className="space-y-1.5">
+                  {monthlyData?.rankings.scheduling.map((item, index) => (
+                    <div key={item.name} className="flex items-center justify-between py-1.5 border-b border-gray-200 last:border-0">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <span className="font-bold text-gray-600 w-4 shrink-0">{index + 1}.</span>
+                        <span className="truncate text-sm text-gray-800" title={item.name}>{item.name}</span>
+                      </div>
+                      <span className="font-bold text-green-700 shrink-0 ml-2">{item.value}%</span>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {/* Battles Ranking */}
               <div className="bg-gray-50 rounded-lg p-4">
                 <h3 className="font-bold text-gray-800 mb-3 text-sm">Top Batalhas</h3>
-                {monthlyData?.rankings.battles.map((item, index) => (
-                  <div key={item.name} className="flex justify-between py-1.5 border-b border-gray-200 last:border-0">
-                    <span className="text-sm">
-                      <span className="font-bold mr-2">{index + 1}.</span>
-                      {item.name}
-                    </span>
-                    <span className="font-bold text-red-700">{item.value}</span>
-                  </div>
-                ))}
+                <div className="space-y-1.5">
+                  {monthlyData?.rankings.battles.map((item, index) => (
+                    <div key={item.name} className="flex items-center justify-between py-1.5 border-b border-gray-200 last:border-0">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <span className="font-bold text-gray-600 w-4 shrink-0">{index + 1}.</span>
+                        <span className="truncate text-sm text-gray-800" title={item.name}>{item.name}</span>
+                      </div>
+                      <span className="font-bold text-red-700 shrink-0 ml-2">{item.value}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -1844,12 +1894,15 @@ const OverviewDashboard: React.FC = () => {
                 📊 Resumo do Mês
               </h2>
               <div className="grid grid-cols-5 gap-3">
-                {metrics.map((metric, index) => (
+                {consolidatedMetrics.map((metric, index) => (
                   <div key={index} className="bg-white rounded-lg p-3 text-center shadow-sm">
                     <p className="text-xs text-gray-600 mb-1 font-medium">{metric.label}</p>
                     <p className="text-xl font-bold text-gray-900">{metric.value}</p>
                     {metric.projection && (
                       <p className="text-xs text-blue-600 mt-1">{metric.projection}</p>
+                    )}
+                    {metric.subtext && !metric.projection && (
+                      <p className="text-xs text-gray-500 mt-1">{metric.subtext}</p>
                     )}
                   </div>
                 ))}
@@ -1979,51 +2032,57 @@ const OverviewDashboard: React.FC = () => {
               </h2>
               <div className="grid grid-cols-3 gap-4">
                 {/* Diamonds Ranking */}
-                <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
-                  <h3 className="font-bold text-purple-800 mb-2 text-sm flex items-center gap-1">
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                  <h3 className="font-bold text-purple-800 mb-3 text-sm flex items-center gap-1">
                     💎 Top Diamantes
                   </h3>
-                  {monthlyData?.rankings.diamonds.slice(0, 5).map((item, index) => (
-                    <div key={item.name} className="flex justify-between py-1 text-xs border-b border-purple-200 last:border-0">
-                      <span className="truncate">
-                        <span className="font-bold mr-1">{index + 1}.</span>
-                        {item.name}
-                      </span>
-                      <span className="font-bold text-purple-700 ml-1">{formatCompact(item.value)}</span>
-                    </div>
-                  ))}
+                  <div className="space-y-2">
+                    {monthlyData?.rankings.diamonds.slice(0, 5).map((item, index) => (
+                      <div key={item.name} className="flex items-center justify-between py-1.5 text-xs border-b border-purple-200 last:border-0">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <span className="font-bold text-purple-700 w-4 shrink-0">{index + 1}.</span>
+                          <span className="truncate text-gray-800" title={item.name}>{item.name}</span>
+                        </div>
+                        <span className="font-bold text-purple-700 shrink-0 ml-2 bg-purple-100 px-2 py-0.5 rounded">{formatCompact(item.value)}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Scheduling Ranking */}
-                <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                  <h3 className="font-bold text-green-800 mb-2 text-sm flex items-center gap-1">
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <h3 className="font-bold text-green-800 mb-3 text-sm flex items-center gap-1">
                     📅 Top Agendamento
                   </h3>
-                  {monthlyData?.rankings.scheduling.slice(0, 5).map((item, index) => (
-                    <div key={item.name} className="flex justify-between py-1 text-xs border-b border-green-200 last:border-0">
-                      <span className="truncate">
-                        <span className="font-bold mr-1">{index + 1}.</span>
-                        {item.name}
-                      </span>
-                      <span className="font-bold text-green-700 ml-1">{item.value}%</span>
-                    </div>
-                  ))}
+                  <div className="space-y-2">
+                    {monthlyData?.rankings.scheduling.slice(0, 5).map((item, index) => (
+                      <div key={item.name} className="flex items-center justify-between py-1.5 text-xs border-b border-green-200 last:border-0">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <span className="font-bold text-green-700 w-4 shrink-0">{index + 1}.</span>
+                          <span className="truncate text-gray-800" title={item.name}>{item.name}</span>
+                        </div>
+                        <span className="font-bold text-green-700 shrink-0 ml-2 bg-green-100 px-2 py-0.5 rounded">{item.value}%</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Battles Ranking */}
-                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                  <h3 className="font-bold text-red-800 mb-2 text-sm flex items-center gap-1">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <h3 className="font-bold text-red-800 mb-3 text-sm flex items-center gap-1">
                     ⚔️ Top Batalhas
                   </h3>
-                  {monthlyData?.rankings.battles.slice(0, 5).map((item, index) => (
-                    <div key={item.name} className="flex justify-between py-1 text-xs border-b border-red-200 last:border-0">
-                      <span className="truncate">
-                        <span className="font-bold mr-1">{index + 1}.</span>
-                        {item.name}
-                      </span>
-                      <span className="font-bold text-red-700 ml-1">{item.value}</span>
-                    </div>
-                  ))}
+                  <div className="space-y-2">
+                    {monthlyData?.rankings.battles.slice(0, 5).map((item, index) => (
+                      <div key={item.name} className="flex items-center justify-between py-1.5 text-xs border-b border-red-200 last:border-0">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <span className="font-bold text-red-700 w-4 shrink-0">{index + 1}.</span>
+                          <span className="truncate text-gray-800" title={item.name}>{item.name}</span>
+                        </div>
+                        <span className="font-bold text-red-700 shrink-0 ml-2 bg-red-100 px-2 py-0.5 rounded">{item.value}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
