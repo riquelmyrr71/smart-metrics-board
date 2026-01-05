@@ -675,7 +675,6 @@ const CreatorsAnalysisDashboard = () => {
               <div className="bg-white p-3 rounded-lg shadow-sm">
                 <p className="text-red-500 text-xs font-medium mb-1">REPROVADAS HOJE</p>
                 <p className="text-xl font-bold text-gray-800">{comparisonData.rejectedStreamers || 0}</p>
-                <p className="text-xs text-gray-400">streamers</p>
               </div>
             </div>
 
@@ -709,7 +708,7 @@ const CreatorsAnalysisDashboard = () => {
               </div>
             </div>
 
-            {/* Table */}
+            {/* Table - Sorted by ranking */}
             <div className="bg-white rounded-lg shadow-sm overflow-hidden">
               <table className="w-full text-xs">
                 <thead>
@@ -719,27 +718,28 @@ const CreatorsAnalysisDashboard = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {teamStructure.map((exec) => {
-                    const execTotal = getExecutiveTotal(exec.members);
-                    
-                    return (
-                      <React.Fragment key={exec.executive}>
-                        <tr className="bg-gray-50">
-                          <td className="py-1.5 px-3 font-semibold text-gray-700">{exec.executive}</td>
-                          <td className="py-1.5 px-3 text-right font-bold text-purple-600">{execTotal}</td>
-                        </tr>
-                        {exec.members.map(member => {
-                          const count = getCreatorCount(member);
-                          return (
-                            <tr key={member} className="border-b border-gray-100">
-                              <td className="py-1 pl-6 pr-3 text-gray-500">{member}</td>
-                              <td className="py-1 px-3 text-right text-gray-600">{count}</td>
-                            </tr>
-                          );
-                        })}
-                      </React.Fragment>
-                    );
-                  })}
+                  {[...teamStructure]
+                    .map(exec => ({ ...exec, total: getExecutiveTotal(exec.members) }))
+                    .sort((a, b) => b.total - a.total)
+                    .map((exec) => {
+                      return (
+                        <React.Fragment key={exec.executive}>
+                          <tr className="bg-gray-50">
+                            <td className="py-2 px-3 font-bold text-sm text-gray-800">{exec.executive}</td>
+                            <td className="py-2 px-3 text-right font-bold text-sm text-red-600">{exec.total}</td>
+                          </tr>
+                          {exec.members.map(member => {
+                            const count = getCreatorCount(member);
+                            return (
+                              <tr key={member} className="border-b border-gray-100">
+                                <td className="py-1 pl-5 pr-2 text-gray-500">{member}</td>
+                                <td className="py-1 px-3 text-right font-semibold text-gray-700">{count}</td>
+                              </tr>
+                            );
+                          })}
+                        </React.Fragment>
+                      );
+                    })}
                 </tbody>
                 <tfoot>
                   <tr className="bg-gray-50 border-t border-gray-200">
