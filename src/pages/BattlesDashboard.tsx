@@ -1290,14 +1290,11 @@ const BattlesDashboard = () => {
         <div ref={customReportRef} className="p-4" style={{ backgroundColor: '#fff', width: `${Math.max(800, 140 + reportData.dailyTotals.length * 40)}px` }}>
           {/* Header */}
           <div className="flex items-center justify-between mb-4 pb-2" style={{ borderBottom: '2px solid #dc2626' }}>
-            <div className="flex items-center gap-3">
-              <span className="text-xl font-bold" style={{ color: '#dc2626' }}>{branding.companyShortName}</span>
-              <div>
-                <h1 className="text-lg font-bold" style={{ color: '#1a1a1a' }}>Relatório de Batalhas</h1>
-                <p className="text-xs" style={{ color: '#555' }}>
-                  {format(parseISO(reportConfig.startDate), "dd/MM/yyyy")} - {format(parseISO(reportConfig.endDate), "dd/MM/yyyy")}
-                </p>
-              </div>
+            <div>
+              <h1 className="text-lg font-bold" style={{ color: '#1a1a1a' }}>Relatório de Batalhas</h1>
+              <p className="text-xs" style={{ color: '#555' }}>
+                {format(parseISO(reportConfig.startDate), "dd/MM/yyyy")} - {format(parseISO(reportConfig.endDate), "dd/MM/yyyy")}
+              </p>
             </div>
             <div className="text-right text-xs" style={{ color: '#666' }}>
               Gerado em {format(new Date(), "dd/MM/yyyy 'às' HH:mm")}

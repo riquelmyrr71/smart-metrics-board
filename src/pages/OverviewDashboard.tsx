@@ -575,10 +575,6 @@ const OverviewDashboard: React.FC = () => {
       pdf.setFillColor(250, 250, 250);
       pdf.rect(0, 0, pageWidth, pageHeight, 'F');
       
-      // Logo placeholder
-      pdf.setFontSize(14);
-      pdf.setTextColor(220, 38, 38);
-      pdf.text(branding.companyShortName.toUpperCase(), 10, 16);
       
       // Title
       pdf.setFontSize(16);
@@ -1664,8 +1660,7 @@ const OverviewDashboard: React.FC = () => {
           <div ref={reportRef} className="bg-white p-8 w-[800px]" style={{ fontFamily: 'Arial, sans-serif' }}>
             {/* PDF Header */}
             <div className="flex items-center justify-between mb-6 pb-4 border-b-2 border-gray-300">
-              <span className="text-2xl font-bold text-primary">{branding.companyShortName}</span>
-              <div className="text-right">
+              <div>
                 <h1 className="text-xl font-bold text-gray-900">OVERVIEW MENSAL</h1>
                 <p className="text-sm text-gray-600 capitalize">{format(currentMonth, 'MMMM yyyy', { locale: ptBR })}</p>
               </div>
@@ -1744,8 +1739,7 @@ const OverviewDashboard: React.FC = () => {
           <div ref={consolidatedReportRef} className="bg-white p-8 w-[800px]" style={{ fontFamily: 'Arial, sans-serif' }}>
             {/* PDF Header */}
             <div className="flex items-center justify-between mb-6 pb-4 border-b-2 border-primary">
-              <span className="text-3xl font-bold text-primary">{branding.companyShortName}</span>
-              <div className="text-right">
+              <div>
                 <h1 className="text-2xl font-bold text-gray-900">RELATÓRIO CONSOLIDADO</h1>
                 <p className="text-sm text-gray-600 capitalize">{format(currentMonth, 'MMMM yyyy', { locale: ptBR })}</p>
                 <p className="text-xs text-gray-500">Gerado em {format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
