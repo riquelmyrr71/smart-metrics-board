@@ -90,7 +90,7 @@ const CATEGORY_CONFIG: { key: BattleCategory; label: string; color: string; bgCo
   { key: 'oficial', label: 'OFICIAL', color: '#2563eb', bgColor: 'bg-blue-500', textColor: 'text-white' },
 ];
 
-const BATTLES_DATA_ID = '00000000-0000-0000-0000-000000000003';
+const BATTLES_DATA_ID = '00000000-0000-0000-0000-000000000005'; // Changed from 003 to avoid conflict with TEAM_STRUCTURE_ID
 const CHART_DATA_ID = '00000000-0000-0000-0000-000000000002';
 
 const DEFAULT_TEAM_STRUCTURE: TeamStructure[] = [
