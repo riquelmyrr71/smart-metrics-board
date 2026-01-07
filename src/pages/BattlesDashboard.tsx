@@ -138,6 +138,9 @@ const BattlesDashboard = () => {
   const [showMetricsReport, setShowMetricsReport] = useState(false);
   const [calendarViewMode, setCalendarViewMode] = useState(false);
   const [selectedCalendarDays, setSelectedCalendarDays] = useState<Date[]>([]);
+  const [showCalendarExportDialog, setShowCalendarExportDialog] = useState(false);
+  const [exportStartDate, setExportStartDate] = useState<Date | undefined>(undefined);
+  const [exportEndDate, setExportEndDate] = useState<Date | undefined>(undefined);
   const [reportConfig, setReportConfig] = useState<ReportConfig>(() => {
     const now = new Date();
     return {
@@ -316,6 +319,25 @@ const BattlesDashboard = () => {
   // Calculate grand total
   const getGrandTotal = (): number => {
     return teamStructure.reduce((sum, exec) => sum + getExecutiveTotal(exec.members), 0);
+  };
+
+  // Calculate member total for export period
+  const getMemberTotalForExport = (member: string): number => {
+    if (!battleData[member]) return 0;
+    return exportDays.reduce((sum, day) => {
+      const dateStr = format(day, 'yyyy-MM-dd');
+      return sum + (battleData[member][dateStr] || 0);
+    }, 0);
+  };
+
+  // Calculate executive total for export
+  const getExecutiveTotalForExport = (members: string[]): number => {
+    return members.reduce((sum, member) => sum + getMemberTotalForExport(member), 0);
+  };
+
+  // Calculate grand total for export
+  const getGrandTotalForExport = (): number => {
+    return teamStructure.reduce((sum, exec) => sum + getExecutiveTotalForExport(exec.members), 0);
   };
 
   // Impact Analysis
@@ -599,6 +621,16 @@ const BattlesDashboard = () => {
     }
   };
 
+  // Days for export based on selected date range
+  const exportDays = useMemo(() => {
+    if (!exportStartDate || !exportEndDate) return days;
+    return eachDayOfInterval({ start: exportStartDate, end: exportEndDate }).filter(day => {
+      const dayMonth = format(day, 'yyyy-MM');
+      const currentMonthStr = format(currentMonth, 'yyyy-MM');
+      return dayMonth === currentMonthStr;
+    });
+  }, [exportStartDate, exportEndDate, days, currentMonth]);
+
   // Export Calendar Only PDF
   const handleExportCalendarPDF = async () => {
     if (!calendarExportRef.current) return;
@@ -657,15 +689,25 @@ const BattlesDashboard = () => {
         }
       }
       
-      const monthStr = format(currentMonth, 'MMMM-yyyy', { locale: ptBR });
-      pdf.save(`calendario-batalhas-${monthStr}.pdf`);
+      let fileName = `calendario-batalhas-${format(currentMonth, 'MMMM-yyyy', { locale: ptBR })}`;
+      if (exportStartDate && exportEndDate) {
+        fileName = `calendario-batalhas-${format(exportStartDate, 'dd-MM')}-a-${format(exportEndDate, 'dd-MM-yyyy')}`;
+      }
+      pdf.save(`${fileName}.pdf`);
       toast({ title: 'Calendário exportado!' });
+      setShowCalendarExportDialog(false);
     } catch (error) {
       console.error('Erro ao exportar calendário:', error);
       toast({ title: 'Erro', description: 'Falha ao exportar calendário', variant: 'destructive' });
     } finally {
       setIsExportingPDF(false);
     }
+  };
+
+  const openCalendarExportDialog = () => {
+    setExportStartDate(startOfMonth(currentMonth));
+    setExportEndDate(addDays(startOfMonth(currentMonth), daysInMonth - 1));
+    setShowCalendarExportDialog(true);
   };
   const getExecutiveForMember = (memberName: string): string => {
     const exec = teamStructure.find(e => e.members.includes(memberName));
@@ -858,16 +900,89 @@ const BattlesDashboard = () => {
               {showMetricsReport ? 'Ocultar Métricas' : 'Ver Métricas'}
             </Button>
 
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleExportCalendarPDF}
-              disabled={isExportingPDF}
-              className="gap-2"
-            >
-              {isExportingPDF ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-              Exportar Calendário
-            </Button>
+            <Dialog open={showCalendarExportDialog} onOpenChange={setShowCalendarExportDialog}>
+              <DialogTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={openCalendarExportDialog}
+                  className="gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  Exportar Calendário
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Exportar Calendário de Batalhas</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <p className="text-sm text-muted-foreground">
+                    Selecione o período que deseja exportar:
+                  </p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Data Início</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !exportStartDate && "text-muted-foreground")}>
+                            <CalendarDays className="mr-2 h-4 w-4" />
+                            {exportStartDate ? format(exportStartDate, 'dd/MM/yyyy') : 'Selecione'}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={exportStartDate}
+                            onSelect={setExportStartDate}
+                            initialFocus
+                            className="pointer-events-auto"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Data Fim</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !exportEndDate && "text-muted-foreground")}>
+                            <CalendarDays className="mr-2 h-4 w-4" />
+                            {exportEndDate ? format(exportEndDate, 'dd/MM/yyyy') : 'Selecione'}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={exportEndDate}
+                            onSelect={setExportEndDate}
+                            initialFocus
+                            className="pointer-events-auto"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </div>
+                  {exportStartDate && exportEndDate && (
+                    <div className="text-sm text-muted-foreground bg-muted p-3 rounded-lg">
+                      <strong>{exportDays.length}</strong> dias selecionados para exportação
+                    </div>
+                  )}
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setShowCalendarExportDialog(false)}>
+                    Cancelar
+                  </Button>
+                  <Button 
+                    onClick={handleExportCalendarPDF} 
+                    disabled={isExportingPDF || !exportStartDate || !exportEndDate}
+                    className="gap-2"
+                  >
+                    {isExportingPDF ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                    Exportar PDF
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
 
             <Dialog open={showReportDialog} onOpenChange={setShowReportDialog}>
               <DialogTrigger asChild>
@@ -1692,19 +1807,22 @@ const BattlesDashboard = () => {
 
       {/* Hidden Calendar Export for PDF */}
       <div className="fixed left-[-9999px] top-0">
-        <div ref={calendarExportRef} style={{ backgroundColor: '#fff', padding: '24px', width: `${Math.max(800, 180 + days.length * 32)}px` }}>
+        <div ref={calendarExportRef} style={{ backgroundColor: '#fff', padding: '24px', width: `${Math.max(800, 180 + exportDays.length * 32)}px` }}>
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', paddingBottom: '16px', borderBottom: '3px solid #dc2626' }}>
             <div>
               <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#1a1a1a', margin: 0 }}>📊 Calendário de Batalhas</h1>
               <p style={{ fontSize: '16px', color: '#666', margin: '4px 0 0 0', fontWeight: '500' }}>
-                {format(currentMonth, "MMMM 'de' yyyy", { locale: ptBR }).toUpperCase()}
+                {exportStartDate && exportEndDate 
+                  ? `${format(exportStartDate, 'dd/MM/yyyy')} - ${format(exportEndDate, 'dd/MM/yyyy')}`
+                  : format(currentMonth, "MMMM 'de' yyyy", { locale: ptBR }).toUpperCase()
+                }
               </p>
             </div>
             <div style={{ textAlign: 'right' }}>
               <p style={{ fontSize: '11px', color: '#888', margin: 0 }}>Gerado em {format(new Date(), "dd/MM/yyyy 'às' HH:mm")}</p>
               <p style={{ fontSize: '14px', color: '#dc2626', fontWeight: 'bold', margin: '4px 0 0 0' }}>
-                Total: {getGrandTotal()} batalhas
+                Total: {getGrandTotalForExport()} batalhas
               </p>
             </div>
           </div>
@@ -1725,7 +1843,7 @@ const BattlesDashboard = () => {
                   }}>
                     ASSOCIADO
                   </th>
-                  {days.map(day => {
+                  {exportDays.map(day => {
                     const isWeekend = day.getDay() === 0 || day.getDay() === 6;
                     const dayOfWeek = format(day, 'EEE', { locale: ptBR }).replace('.', '').toUpperCase();
                     return (
@@ -1765,7 +1883,7 @@ const BattlesDashboard = () => {
                     {/* Executive Header Row */}
                     <tr style={{ backgroundColor: '#374151' }}>
                       <td 
-                        colSpan={days.length + 2} 
+                        colSpan={exportDays.length + 2} 
                         style={{ 
                           padding: '8px 12px', 
                           fontWeight: 'bold', 
@@ -1781,7 +1899,7 @@ const BattlesDashboard = () => {
                     
                     {/* Member Rows */}
                     {exec.members.map((member, memberIdx) => {
-                      const memberTotal = getMemberTotal(member);
+                      const memberTotal = getMemberTotalForExport(member);
                       const isLastMember = memberIdx === exec.members.length - 1;
                       
                       return (
@@ -1801,7 +1919,7 @@ const BattlesDashboard = () => {
                           }}>
                             {member}
                           </td>
-                          {days.map(day => {
+                          {exportDays.map(day => {
                             const count = getBattleCount(member, day);
                             let bgColor = '#fff';
                             let textColor = '#374151';
@@ -1859,7 +1977,7 @@ const BattlesDashboard = () => {
                       }}>
                         SUBTOTAL
                       </td>
-                      {days.map(day => {
+                      {exportDays.map(day => {
                         const dateStr = format(day, 'yyyy-MM-dd');
                         const dayTotal = exec.members.reduce((sum, m) => sum + (battleData[m]?.[dateStr] || 0), 0);
                         return (
@@ -1886,7 +2004,7 @@ const BattlesDashboard = () => {
                         color: '#1f2937',
                         backgroundColor: '#e5e7eb'
                       }}>
-                        {getExecutiveTotal(exec.members)}
+                        {getExecutiveTotalForExport(exec.members)}
                       </td>
                     </tr>
                   </React.Fragment>
@@ -1902,7 +2020,7 @@ const BattlesDashboard = () => {
                   }}>
                     TOTAL GERAL
                   </td>
-                  {days.map(day => {
+                  {exportDays.map(day => {
                     const dateStr = format(day, 'yyyy-MM-dd');
                     let dayTotal = 0;
                     teamStructure.forEach(exec => exec.members.forEach(m => { dayTotal += battleData[m]?.[dateStr] || 0; }));
@@ -1929,7 +2047,7 @@ const BattlesDashboard = () => {
                     color: '#fff',
                     backgroundColor: '#dc2626'
                   }}>
-                    {getGrandTotal()}
+                    {getGrandTotalForExport()}
                   </td>
                 </tr>
               </tbody>
@@ -1975,7 +2093,7 @@ const BattlesDashboard = () => {
               borderRadius: '8px',
               border: '1px solid #fecaca'
             }}>
-              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#dc2626' }}>{getGrandTotal()}</div>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#dc2626' }}>{getGrandTotalForExport()}</div>
               <div style={{ fontSize: '10px', color: '#666', fontWeight: '500' }}>TOTAL BATALHAS</div>
             </div>
             <div style={{ 
@@ -1996,7 +2114,7 @@ const BattlesDashboard = () => {
               border: '1px solid #bbf7d0'
             }}>
               <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#16a34a' }}>
-                {(getGrandTotal() / Math.max(1, allMembers.length)).toFixed(1)}
+                {(getGrandTotalForExport() / Math.max(1, allMembers.length)).toFixed(1)}
               </div>
               <div style={{ fontSize: '10px', color: '#666', fontWeight: '500' }}>MÉDIA/ASSOCIADO</div>
             </div>
@@ -2008,7 +2126,7 @@ const BattlesDashboard = () => {
               border: '1px solid #e9d5ff'
             }}>
               <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#9333ea' }}>
-                {(getGrandTotal() / Math.max(1, days.length)).toFixed(1)}
+                {(getGrandTotalForExport() / Math.max(1, exportDays.length)).toFixed(1)}
               </div>
               <div style={{ fontSize: '10px', color: '#666', fontWeight: '500' }}>MÉDIA/DIA</div>
             </div>
