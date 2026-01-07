@@ -41,6 +41,7 @@ import jsPDF from 'jspdf';
 import { BrandLogo } from '@/components/BrandLogo';
 import { branding, getReportFooter } from '@/config/branding';
 import { BattlesMetricsReport } from '@/components/BattlesMetricsReport';
+import curliLogo from '@/assets/logo-curli.png';
 
 interface BattleData {
   [memberName: string]: {
@@ -1807,24 +1808,28 @@ const BattlesDashboard = () => {
 
       {/* Hidden Calendar Export for PDF */}
       <div className="fixed left-[-9999px] top-0">
-        <div ref={calendarExportRef} style={{ backgroundColor: '#fff', padding: '24px', width: `${Math.max(800, 180 + exportDays.length * 32)}px` }}>
+        <div ref={calendarExportRef} style={{ backgroundColor: '#f3f4f6', padding: '24px', width: `${Math.max(800, 180 + exportDays.length * 32)}px`, fontFamily: 'Arial, sans-serif' }}>
           {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', paddingBottom: '16px', borderBottom: '3px solid #dc2626' }}>
-            <div>
-              <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#1a1a1a', margin: 0 }}>📊 Calendário de Batalhas</h1>
-              <p style={{ fontSize: '16px', color: '#666', margin: '4px 0 0 0', fontWeight: '500' }}>
-                {exportStartDate && exportEndDate 
-                  ? `${format(exportStartDate, 'dd/MM/yyyy')} - ${format(exportEndDate, 'dd/MM/yyyy')}`
-                  : format(currentMonth, "MMMM 'de' yyyy", { locale: ptBR }).toUpperCase()
-                }
-              </p>
+          <div style={{ backgroundColor: '#fff', borderRadius: '12px', padding: '16px', marginBottom: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <img src={curliLogo} alt="Curli Logo" style={{ height: '28px', width: 'auto' }} />
+              <div style={{ textAlign: 'right' }}>
+                <p style={{ fontSize: '11px', color: '#9ca3af', margin: 0 }}>{format(new Date(), "EEEE", { locale: ptBR })}</p>
+                <p style={{ fontSize: '13px', color: '#374151', fontWeight: '600', margin: '2px 0' }}>{format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</p>
+                <p style={{ fontSize: '11px', color: '#9ca3af', margin: 0 }}>{format(new Date(), "HH:mm", { locale: ptBR })}</p>
+              </div>
             </div>
-            <div style={{ textAlign: 'right' }}>
-              <p style={{ fontSize: '11px', color: '#888', margin: 0 }}>Gerado em {format(new Date(), "dd/MM/yyyy 'às' HH:mm")}</p>
-              <p style={{ fontSize: '14px', color: '#dc2626', fontWeight: 'bold', margin: '4px 0 0 0' }}>
-                Total: {getGrandTotalForExport()} batalhas
-              </p>
-            </div>
+          </div>
+
+          {/* Title */}
+          <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+            <h1 style={{ fontSize: '18px', fontWeight: 'bold', color: '#374151', margin: 0 }}>CALENDÁRIO DE BATALHAS</h1>
+            <p style={{ fontSize: '12px', color: '#9ca3af', margin: '4px 0 0 0' }}>
+              {exportStartDate && exportEndDate 
+                ? `${format(exportStartDate, 'dd/MM/yyyy')} - ${format(exportEndDate, 'dd/MM/yyyy')}`
+                : format(currentMonth, "MMMM 'de' yyyy", { locale: ptBR })
+              }
+            </p>
           </div>
 
           {/* Main Calendar Table */}
@@ -1957,8 +1962,8 @@ const BattlesDashboard = () => {
                             textAlign: 'center',
                             fontWeight: 'bold',
                             fontSize: '12px',
-                            color: memberTotal >= 10 ? '#16a34a' : '#dc2626',
-                            backgroundColor: '#fef2f2'
+                            color: '#4b5563',
+                            backgroundColor: '#f9fafb'
                           }}>
                             {memberTotal}
                           </td>
@@ -2043,9 +2048,9 @@ const BattlesDashboard = () => {
                     padding: '10px 8px', 
                     textAlign: 'center',
                     fontWeight: 'bold',
-                    fontSize: '16px',
-                    color: '#fff',
-                    backgroundColor: '#dc2626'
+                    fontSize: '14px',
+                    color: '#374151',
+                    backgroundColor: '#e5e7eb'
                   }}>
                     {getGrandTotalForExport()}
                   </td>
@@ -2082,54 +2087,49 @@ const BattlesDashboard = () => {
           {/* Summary Stats */}
           <div style={{ 
             display: 'grid', 
-            gridTemplateColumns: 'repeat(4, 1fr)', 
+            gridTemplateColumns: 'repeat(3, 1fr)', 
             gap: '12px', 
             marginTop: '16px'
           }}>
             <div style={{ 
               textAlign: 'center', 
               padding: '12px', 
-              backgroundColor: '#fef2f2', 
+              backgroundColor: '#fff', 
               borderRadius: '8px',
-              border: '1px solid #fecaca'
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
             }}>
-              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#dc2626' }}>{getGrandTotalForExport()}</div>
-              <div style={{ fontSize: '10px', color: '#666', fontWeight: '500' }}>TOTAL BATALHAS</div>
+              <div style={{ fontSize: '10px', color: '#a855f7', fontWeight: '500', marginBottom: '4px' }}>TOTAL BATALHAS</div>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#374151' }}>{getGrandTotalForExport()}</div>
             </div>
             <div style={{ 
               textAlign: 'center', 
               padding: '12px', 
-              backgroundColor: '#eff6ff', 
+              backgroundColor: '#fff', 
               borderRadius: '8px',
-              border: '1px solid #bfdbfe'
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
             }}>
-              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#2563eb' }}>{allMembers.length}</div>
-              <div style={{ fontSize: '10px', color: '#666', fontWeight: '500' }}>ASSOCIADOS</div>
-            </div>
-            <div style={{ 
-              textAlign: 'center', 
-              padding: '12px', 
-              backgroundColor: '#f0fdf4', 
-              borderRadius: '8px',
-              border: '1px solid #bbf7d0'
-            }}>
-              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#16a34a' }}>
+              <div style={{ fontSize: '10px', color: '#3b82f6', fontWeight: '500', marginBottom: '4px' }}>MÉDIA/ASSOCIADO</div>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#374151' }}>
                 {(getGrandTotalForExport() / Math.max(1, allMembers.length)).toFixed(1)}
               </div>
-              <div style={{ fontSize: '10px', color: '#666', fontWeight: '500' }}>MÉDIA/ASSOCIADO</div>
             </div>
             <div style={{ 
               textAlign: 'center', 
               padding: '12px', 
-              backgroundColor: '#faf5ff', 
+              backgroundColor: '#fff', 
               borderRadius: '8px',
-              border: '1px solid #e9d5ff'
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
             }}>
-              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#9333ea' }}>
+              <div style={{ fontSize: '10px', color: '#f59e0b', fontWeight: '500', marginBottom: '4px' }}>MÉDIA/DIA</div>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#374151' }}>
                 {(getGrandTotalForExport() / Math.max(1, exportDays.length)).toFixed(1)}
               </div>
-              <div style={{ fontSize: '10px', color: '#666', fontWeight: '500' }}>MÉDIA/DIA</div>
             </div>
+          </div>
+
+          {/* Footer */}
+          <div style={{ marginTop: '16px', textAlign: 'center' }}>
+            <p style={{ fontSize: '11px', color: '#9ca3af' }}>Relatório gerado pelo Sistema Curli</p>
           </div>
         </div>
       </div>
