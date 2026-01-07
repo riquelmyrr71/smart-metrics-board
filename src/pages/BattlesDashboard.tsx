@@ -20,7 +20,8 @@ import {
   Eye,
   EyeOff,
   BarChart3,
-  CalendarDays
+  CalendarDays,
+  Download
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -156,6 +157,7 @@ const BattlesDashboard = () => {
   
   const reportRef = useRef<HTMLDivElement>(null);
   const customReportRef = useRef<HTMLDivElement>(null);
+  const calendarExportRef = useRef<HTMLDivElement>(null);
   
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -597,7 +599,74 @@ const BattlesDashboard = () => {
     }
   };
 
-  // Get executive name for a member
+  // Export Calendar Only PDF
+  const handleExportCalendarPDF = async () => {
+    if (!calendarExportRef.current) return;
+    setIsExportingPDF(true);
+    try {
+      toast({ title: 'Gerando calendário...', description: 'Aguarde' });
+      
+      const canvas = await html2canvas(calendarExportRef.current, { 
+        scale: 2, 
+        backgroundColor: '#ffffff',
+        logging: false,
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({ 
+        orientation: 'landscape', 
+        unit: 'mm', 
+        format: 'a4' 
+      });
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const ratio = Math.min((pdfWidth - 10) / imgWidth, (pdfHeight - 10) / imgHeight);
+      
+      const x = (pdfWidth - imgWidth * ratio) / 2;
+      const totalHeight = imgHeight * ratio;
+      
+      if (totalHeight <= pdfHeight - 10) {
+        pdf.addImage(imgData, 'PNG', x, 5, imgWidth * ratio, imgHeight * ratio);
+      } else {
+        const pageContentHeight = pdfHeight - 10;
+        let remainingHeight = totalHeight;
+        let sourceY = 0;
+        let page = 0;
+        
+        while (remainingHeight > 0) {
+          if (page > 0) pdf.addPage();
+          
+          const sliceHeight = Math.min(pageContentHeight, remainingHeight);
+          const sliceCanvas = document.createElement('canvas');
+          sliceCanvas.width = canvas.width;
+          sliceCanvas.height = (sliceHeight / ratio);
+          
+          const ctx = sliceCanvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(canvas, 0, sourceY / ratio, canvas.width, sliceCanvas.height, 0, 0, canvas.width, sliceCanvas.height);
+            const sliceImg = sliceCanvas.toDataURL('image/png');
+            pdf.addImage(sliceImg, 'PNG', x, 5, imgWidth * ratio, sliceHeight);
+          }
+          
+          sourceY += sliceHeight;
+          remainingHeight -= sliceHeight;
+          page++;
+        }
+      }
+      
+      const monthStr = format(currentMonth, 'MMMM-yyyy', { locale: ptBR });
+      pdf.save(`calendario-batalhas-${monthStr}.pdf`);
+      toast({ title: 'Calendário exportado!' });
+    } catch (error) {
+      console.error('Erro ao exportar calendário:', error);
+      toast({ title: 'Erro', description: 'Falha ao exportar calendário', variant: 'destructive' });
+    } finally {
+      setIsExportingPDF(false);
+    }
+  };
   const getExecutiveForMember = (memberName: string): string => {
     const exec = teamStructure.find(e => e.members.includes(memberName));
     return exec ? exec.executive.split('(')[0].trim() : '-';
@@ -787,6 +856,17 @@ const BattlesDashboard = () => {
             >
               <BarChart3 className="h-4 w-4" />
               {showMetricsReport ? 'Ocultar Métricas' : 'Ver Métricas'}
+            </Button>
+
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleExportCalendarPDF}
+              disabled={isExportingPDF}
+              className="gap-2"
+            >
+              {isExportingPDF ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              Exportar Calendário
             </Button>
 
             <Dialog open={showReportDialog} onOpenChange={setShowReportDialog}>
@@ -1605,6 +1685,332 @@ const BattlesDashboard = () => {
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 rounded" style={{ backgroundColor: '#22c55e' }}></div>
               <span>4+ batalhas</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Hidden Calendar Export for PDF */}
+      <div className="fixed left-[-9999px] top-0">
+        <div ref={calendarExportRef} style={{ backgroundColor: '#fff', padding: '24px', width: `${Math.max(800, 180 + days.length * 32)}px` }}>
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', paddingBottom: '16px', borderBottom: '3px solid #dc2626' }}>
+            <div>
+              <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#1a1a1a', margin: 0 }}>📊 Calendário de Batalhas</h1>
+              <p style={{ fontSize: '16px', color: '#666', margin: '4px 0 0 0', fontWeight: '500' }}>
+                {format(currentMonth, "MMMM 'de' yyyy", { locale: ptBR }).toUpperCase()}
+              </p>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <p style={{ fontSize: '11px', color: '#888', margin: 0 }}>Gerado em {format(new Date(), "dd/MM/yyyy 'às' HH:mm")}</p>
+              <p style={{ fontSize: '14px', color: '#dc2626', fontWeight: 'bold', margin: '4px 0 0 0' }}>
+                Total: {getGrandTotal()} batalhas
+              </p>
+            </div>
+          </div>
+
+          {/* Main Calendar Table */}
+          <div style={{ border: '2px solid #1a1a1a', borderRadius: '8px', overflow: 'hidden' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ backgroundColor: '#1a1a1a' }}>
+                  <th style={{ 
+                    padding: '10px 12px', 
+                    textAlign: 'left', 
+                    color: '#fff', 
+                    fontWeight: 'bold',
+                    fontSize: '12px',
+                    minWidth: '140px',
+                    borderRight: '1px solid #333'
+                  }}>
+                    ASSOCIADO
+                  </th>
+                  {days.map(day => {
+                    const isWeekend = day.getDay() === 0 || day.getDay() === 6;
+                    const dayOfWeek = format(day, 'EEE', { locale: ptBR }).replace('.', '').toUpperCase();
+                    return (
+                      <th 
+                        key={day.toISOString()} 
+                        style={{ 
+                          padding: '6px 2px', 
+                          textAlign: 'center', 
+                          color: isWeekend ? '#fca5a5' : '#fff',
+                          fontWeight: 'bold',
+                          fontSize: '11px',
+                          minWidth: '30px',
+                          borderRight: '1px solid #333'
+                        }}
+                      >
+                        <div style={{ fontSize: '14px', lineHeight: '1.2' }}>{format(day, 'd')}</div>
+                        <div style={{ fontSize: '9px', opacity: 0.8 }}>{dayOfWeek}</div>
+                      </th>
+                    );
+                  })}
+                  <th style={{ 
+                    padding: '10px 8px', 
+                    textAlign: 'center', 
+                    color: '#fff', 
+                    fontWeight: 'bold',
+                    fontSize: '11px',
+                    minWidth: '50px',
+                    backgroundColor: '#dc2626'
+                  }}>
+                    TOTAL
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {teamStructure.map((exec) => (
+                  <React.Fragment key={exec.executive}>
+                    {/* Executive Header Row */}
+                    <tr style={{ backgroundColor: '#374151' }}>
+                      <td 
+                        colSpan={days.length + 2} 
+                        style={{ 
+                          padding: '8px 12px', 
+                          fontWeight: 'bold', 
+                          color: '#fff',
+                          fontSize: '11px',
+                          textAlign: 'center',
+                          letterSpacing: '0.5px'
+                        }}
+                      >
+                        {exec.executive}
+                      </td>
+                    </tr>
+                    
+                    {/* Member Rows */}
+                    {exec.members.map((member, memberIdx) => {
+                      const memberTotal = getMemberTotal(member);
+                      const isLastMember = memberIdx === exec.members.length - 1;
+                      
+                      return (
+                        <tr 
+                          key={member} 
+                          style={{ 
+                            backgroundColor: memberIdx % 2 === 0 ? '#fff' : '#f9fafb',
+                            borderBottom: isLastMember ? '2px solid #d1d5db' : '1px solid #e5e7eb'
+                          }}
+                        >
+                          <td style={{ 
+                            padding: '6px 12px', 
+                            fontWeight: '600', 
+                            color: '#1f2937',
+                            fontSize: '11px',
+                            borderRight: '1px solid #d1d5db'
+                          }}>
+                            {member}
+                          </td>
+                          {days.map(day => {
+                            const count = getBattleCount(member, day);
+                            let bgColor = '#fff';
+                            let textColor = '#374151';
+                            
+                            if (count === 0) {
+                              bgColor = '#fef2f2';
+                              textColor = '#dc2626';
+                            } else if (count >= 3) {
+                              bgColor = '#f0fdf4';
+                              textColor = '#16a34a';
+                            } else if (count >= 1) {
+                              bgColor = '#fffbeb';
+                              textColor = '#d97706';
+                            }
+                            
+                            return (
+                              <td 
+                                key={day.toISOString()} 
+                                style={{ 
+                                  padding: '4px 2px', 
+                                  textAlign: 'center',
+                                  fontSize: '12px',
+                                  fontWeight: count > 0 ? 'bold' : 'normal',
+                                  backgroundColor: memberIdx % 2 === 0 ? bgColor : bgColor,
+                                  color: textColor,
+                                  borderRight: '1px solid #e5e7eb'
+                                }}
+                              >
+                                {count}
+                              </td>
+                            );
+                          })}
+                          <td style={{ 
+                            padding: '6px 8px', 
+                            textAlign: 'center',
+                            fontWeight: 'bold',
+                            fontSize: '12px',
+                            color: memberTotal >= 10 ? '#16a34a' : '#dc2626',
+                            backgroundColor: '#fef2f2'
+                          }}>
+                            {memberTotal}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    
+                    {/* Executive Subtotal */}
+                    <tr style={{ backgroundColor: '#f3f4f6' }}>
+                      <td style={{ 
+                        padding: '6px 12px', 
+                        fontWeight: 'bold', 
+                        color: '#4b5563',
+                        fontSize: '10px',
+                        borderRight: '1px solid #d1d5db'
+                      }}>
+                        SUBTOTAL
+                      </td>
+                      {days.map(day => {
+                        const dateStr = format(day, 'yyyy-MM-dd');
+                        const dayTotal = exec.members.reduce((sum, m) => sum + (battleData[m]?.[dateStr] || 0), 0);
+                        return (
+                          <td 
+                            key={day.toISOString()} 
+                            style={{ 
+                              padding: '4px 2px', 
+                              textAlign: 'center',
+                              fontSize: '10px',
+                              fontWeight: 'bold',
+                              color: '#4b5563',
+                              borderRight: '1px solid #e5e7eb'
+                            }}
+                          >
+                            {dayTotal}
+                          </td>
+                        );
+                      })}
+                      <td style={{ 
+                        padding: '6px 8px', 
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        fontSize: '11px',
+                        color: '#1f2937',
+                        backgroundColor: '#e5e7eb'
+                      }}>
+                        {getExecutiveTotal(exec.members)}
+                      </td>
+                    </tr>
+                  </React.Fragment>
+                ))}
+                
+                {/* Grand Total Row */}
+                <tr style={{ backgroundColor: '#1a1a1a' }}>
+                  <td style={{ 
+                    padding: '10px 12px', 
+                    fontWeight: 'bold', 
+                    color: '#fff',
+                    fontSize: '12px'
+                  }}>
+                    TOTAL GERAL
+                  </td>
+                  {days.map(day => {
+                    const dateStr = format(day, 'yyyy-MM-dd');
+                    let dayTotal = 0;
+                    teamStructure.forEach(exec => exec.members.forEach(m => { dayTotal += battleData[m]?.[dateStr] || 0; }));
+                    return (
+                      <td 
+                        key={day.toISOString()} 
+                        style={{ 
+                          padding: '6px 2px', 
+                          textAlign: 'center',
+                          fontSize: '11px',
+                          fontWeight: 'bold',
+                          color: '#fff'
+                        }}
+                      >
+                        {dayTotal}
+                      </td>
+                    );
+                  })}
+                  <td style={{ 
+                    padding: '10px 8px', 
+                    textAlign: 'center',
+                    fontWeight: 'bold',
+                    fontSize: '16px',
+                    color: '#fff',
+                    backgroundColor: '#dc2626'
+                  }}>
+                    {getGrandTotal()}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Legend */}
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            gap: '24px', 
+            marginTop: '16px',
+            padding: '12px',
+            backgroundColor: '#f9fafb',
+            borderRadius: '8px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ width: '16px', height: '16px', borderRadius: '4px', backgroundColor: '#fef2f2', border: '1px solid #fecaca' }}></div>
+              <span style={{ fontSize: '11px', color: '#666' }}>0 batalhas</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ width: '16px', height: '16px', borderRadius: '4px', backgroundColor: '#fffbeb', border: '1px solid #fde68a' }}></div>
+              <span style={{ fontSize: '11px', color: '#666' }}>1-2 batalhas</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ width: '16px', height: '16px', borderRadius: '4px', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0' }}></div>
+              <span style={{ fontSize: '11px', color: '#666' }}>3+ batalhas</span>
+            </div>
+          </div>
+
+          {/* Summary Stats */}
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(4, 1fr)', 
+            gap: '12px', 
+            marginTop: '16px'
+          }}>
+            <div style={{ 
+              textAlign: 'center', 
+              padding: '12px', 
+              backgroundColor: '#fef2f2', 
+              borderRadius: '8px',
+              border: '1px solid #fecaca'
+            }}>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#dc2626' }}>{getGrandTotal()}</div>
+              <div style={{ fontSize: '10px', color: '#666', fontWeight: '500' }}>TOTAL BATALHAS</div>
+            </div>
+            <div style={{ 
+              textAlign: 'center', 
+              padding: '12px', 
+              backgroundColor: '#eff6ff', 
+              borderRadius: '8px',
+              border: '1px solid #bfdbfe'
+            }}>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#2563eb' }}>{allMembers.length}</div>
+              <div style={{ fontSize: '10px', color: '#666', fontWeight: '500' }}>ASSOCIADOS</div>
+            </div>
+            <div style={{ 
+              textAlign: 'center', 
+              padding: '12px', 
+              backgroundColor: '#f0fdf4', 
+              borderRadius: '8px',
+              border: '1px solid #bbf7d0'
+            }}>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#16a34a' }}>
+                {(getGrandTotal() / Math.max(1, allMembers.length)).toFixed(1)}
+              </div>
+              <div style={{ fontSize: '10px', color: '#666', fontWeight: '500' }}>MÉDIA/ASSOCIADO</div>
+            </div>
+            <div style={{ 
+              textAlign: 'center', 
+              padding: '12px', 
+              backgroundColor: '#faf5ff', 
+              borderRadius: '8px',
+              border: '1px solid #e9d5ff'
+            }}>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#9333ea' }}>
+                {(getGrandTotal() / Math.max(1, days.length)).toFixed(1)}
+              </div>
+              <div style={{ fontSize: '10px', color: '#666', fontWeight: '500' }}>MÉDIA/DIA</div>
             </div>
           </div>
         </div>
