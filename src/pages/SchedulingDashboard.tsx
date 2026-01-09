@@ -15,6 +15,7 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { BrandLogo } from '@/components/BrandLogo';
 import { branding, getReportFooter } from '@/config/branding';
+import curliLogo from '@/assets/logo-curli.png';
 import {
   LineChart,
   Line,
@@ -1480,18 +1481,31 @@ const SchedulingDashboard = () => {
         style={{ fontFamily: 'Arial, sans-serif' }}
       >
         {/* Header */}
-        <div className="bg-gradient-to-r from-rose-800 to-rose-700 text-white p-6">
+        <div className="bg-white rounded-lg p-3 mb-4 shadow-sm mx-6 mt-6">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-bold tracking-wide">AGENDAMENTO LIVE</h1>
-              <p className="text-rose-200 text-sm mt-1">
+            <img src={curliLogo} alt="Curli Logo" className="h-7 w-auto" />
+            <div className="text-right">
+              <p className="text-gray-400 text-xs">
                 {reportType === 'daily' 
-                  ? format(reportDate, "dd/MM/yyyy", { locale: ptBR })
+                  ? format(reportDate, "EEEE", { locale: ptBR })
+                  : 'Período'
+                }
+              </p>
+              <p className="text-gray-700 text-sm font-semibold">
+                {reportType === 'daily' 
+                  ? format(reportDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
                   : `${format(reportDateRange.start, "dd/MM")} - ${format(reportDateRange.end, "dd/MM/yyyy")}`
                 }
               </p>
+              <p className="text-gray-400 text-xs">{format(new Date(), "HH:mm", { locale: ptBR })}</p>
             </div>
           </div>
+        </div>
+
+        {/* Title */}
+        <div className="text-center mb-4 mx-6">
+          <h1 className="text-lg font-bold text-gray-700">RELATÓRIO DE AGENDAMENTO</h1>
+          <p className="text-gray-400 text-xs">Agendamento de lives dos associados</p>
         </div>
 
         <div className="p-6">
