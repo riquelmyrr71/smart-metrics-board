@@ -1481,9 +1481,9 @@ const SchedulingDashboard = () => {
         style={{ fontFamily: 'Arial, sans-serif' }}
       >
         {/* Header */}
-        <div className="bg-white rounded-lg p-3 mb-4 shadow-sm mx-6 mt-6">
+        <div className="bg-[#f5f5f5] p-4 mx-6 mt-6 rounded-lg">
           <div className="flex items-center justify-between">
-            <img src={curliLogo} alt="Curli Logo" className="h-7 w-auto" />
+            <img src={curliLogo} alt="Curli Logo" className="h-8 w-auto" />
             <div className="text-right">
               <p className="text-gray-400 text-xs">
                 {reportType === 'daily' 
@@ -1503,7 +1503,7 @@ const SchedulingDashboard = () => {
         </div>
 
         {/* Title */}
-        <div className="text-center mb-4 mx-6">
+        <div className="text-center my-6 mx-6">
           <h1 className="text-lg font-bold text-gray-700">RELATÓRIO DE AGENDAMENTO</h1>
           <p className="text-gray-400 text-xs">Agendamento de lives dos associados</p>
         </div>
