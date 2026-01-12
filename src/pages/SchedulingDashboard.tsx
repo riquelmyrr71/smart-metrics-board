@@ -99,7 +99,7 @@ const SchedulingDashboard = () => {
   const [selectedExecutive, setSelectedExecutive] = useState('');
   const [showExecutiveDialog, setShowExecutiveDialog] = useState(false);
   const [showAssociateDialog, setShowAssociateDialog] = useState(false);
-  const [reportType, setReportType] = useState<'daily' | 'weekly' | 'monthly'>('daily');
+  const [reportType, setReportType] = useState<'daily' | 'weekly' | 'monthly' | 'upToToday'>('daily');
   const [diamondEntries, setDiamondEntries] = useState<DiamondEntry[]>([]);
   const [isExportingImpactPDF, setIsExportingImpactPDF] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
@@ -809,6 +809,9 @@ const SchedulingDashboard = () => {
       return { start: reportDate, end: reportDate };
     } else if (reportType === 'weekly') {
       return { start: subDays(reportDate, 6), end: reportDate };
+    } else if (reportType === 'upToToday') {
+      // From start of current month to today
+      return { start: startOfMonth(new Date()), end: new Date() };
     } else {
       return { start: startOfMonth(reportDate), end: reportDate };
     }
@@ -928,7 +931,7 @@ const SchedulingDashboard = () => {
               <span className="font-medium">Relatório de Agendamentos</span>
             </div>
             <div className="flex items-center gap-3">
-              <Select value={reportType} onValueChange={(v: 'daily' | 'weekly' | 'monthly') => setReportType(v)}>
+              <Select value={reportType} onValueChange={(v: 'daily' | 'weekly' | 'monthly' | 'upToToday') => setReportType(v)}>
                 <SelectTrigger className="w-[150px]">
                   <SelectValue />
                 </SelectTrigger>
@@ -936,6 +939,7 @@ const SchedulingDashboard = () => {
                   <SelectItem value="daily">Diário</SelectItem>
                   <SelectItem value="weekly">Últimos 7 dias</SelectItem>
                   <SelectItem value="monthly">Mês completo</SelectItem>
+                  <SelectItem value="upToToday">Até hoje</SelectItem>
                 </SelectContent>
               </Select>
               <Input
@@ -1488,7 +1492,9 @@ const SchedulingDashboard = () => {
               <p className="text-gray-400 text-xs">
                 {reportType === 'daily' 
                   ? format(reportDate, "EEEE", { locale: ptBR })
-                  : 'Período'
+                  : reportType === 'upToToday'
+                    ? 'Até hoje'
+                    : 'Período'
                 }
               </p>
               <p className="text-gray-700 text-sm font-semibold">
