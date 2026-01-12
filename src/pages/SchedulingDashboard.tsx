@@ -99,7 +99,9 @@ const SchedulingDashboard = () => {
   const [selectedExecutive, setSelectedExecutive] = useState('');
   const [showExecutiveDialog, setShowExecutiveDialog] = useState(false);
   const [showAssociateDialog, setShowAssociateDialog] = useState(false);
-  const [reportType, setReportType] = useState<'daily' | 'weekly' | 'monthly' | 'upToToday'>('daily');
+  const [reportType, setReportType] = useState<'daily' | 'weekly' | 'monthly' | 'upToToday' | 'mapUpToToday'>('daily');
+  const mapReportRef = useRef<HTMLDivElement>(null);
+  const [isExportingMapPDF, setIsExportingMapPDF] = useState(false);
   const [diamondEntries, setDiamondEntries] = useState<DiamondEntry[]>([]);
   const [isExportingImpactPDF, setIsExportingImpactPDF] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
@@ -803,13 +805,67 @@ const SchedulingDashboard = () => {
     }
   };
 
+  // Get days up to today for map report
+  const daysUpToToday = useMemo(() => {
+    const today = new Date();
+    const todayDay = today.getDate();
+    // Only show days up to today if we're in the current month
+    const isCurrentMonth = currentMonth.getMonth() === today.getMonth() && currentMonth.getFullYear() === today.getFullYear();
+    const maxDay = isCurrentMonth ? todayDay : daysInMonth;
+    return days.filter((_, idx) => idx < maxDay);
+  }, [days, currentMonth, daysInMonth]);
+
+  // Export Map PDF report
+  const handleExportMapPDF = async () => {
+    if (!mapReportRef.current) return;
+    setIsExportingMapPDF(true);
+
+    try {
+      const canvas = await html2canvas(mapReportRef.current, {
+        scale: 2,
+        backgroundColor: '#fafafa',
+        useCORS: true,
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('l', 'mm', 'a4'); // landscape
+      const imgWidth = 297;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      if (imgHeight > 210) {
+        let heightLeft = imgHeight;
+        let position = 0;
+
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= 210;
+
+        while (heightLeft > 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+          heightLeft -= 210;
+        }
+      } else {
+        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      }
+
+      pdf.save(`mapa-agendamentos-${format(new Date(), 'dd-MM-yyyy')}.pdf`);
+      toast({ title: 'Mapa exportado com sucesso!' });
+    } catch (error) {
+      console.error('Error exporting Map PDF:', error);
+      toast({ title: 'Erro ao exportar mapa', variant: 'destructive' });
+    } finally {
+      setIsExportingMapPDF(false);
+    }
+  };
+
   // Get date range based on report type
   const getReportDateRange = () => {
     if (reportType === 'daily') {
       return { start: reportDate, end: reportDate };
     } else if (reportType === 'weekly') {
       return { start: subDays(reportDate, 6), end: reportDate };
-    } else if (reportType === 'upToToday') {
+    } else if (reportType === 'upToToday' || reportType === 'mapUpToToday') {
       // From start of current month to today
       return { start: startOfMonth(new Date()), end: new Date() };
     } else {
@@ -931,8 +987,8 @@ const SchedulingDashboard = () => {
               <span className="font-medium">Relatório de Agendamentos</span>
             </div>
             <div className="flex items-center gap-3">
-              <Select value={reportType} onValueChange={(v: 'daily' | 'weekly' | 'monthly' | 'upToToday') => setReportType(v)}>
-                <SelectTrigger className="w-[150px]">
+              <Select value={reportType} onValueChange={(v: 'daily' | 'weekly' | 'monthly' | 'upToToday' | 'mapUpToToday') => setReportType(v)}>
+                <SelectTrigger className="w-[180px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -940,17 +996,23 @@ const SchedulingDashboard = () => {
                   <SelectItem value="weekly">Últimos 7 dias</SelectItem>
                   <SelectItem value="monthly">Mês completo</SelectItem>
                   <SelectItem value="upToToday">Até hoje</SelectItem>
+                  <SelectItem value="mapUpToToday">Mapa até hoje</SelectItem>
                 </SelectContent>
               </Select>
-              <Input
-                type="date"
-                value={format(reportDate, 'yyyy-MM-dd')}
-                onChange={(e) => e.target.value && setReportDate(new Date(e.target.value + 'T12:00:00'))}
-                className="w-[180px]"
-              />
-              <Button onClick={handleExportPDF} disabled={isExportingPDF}>
+              {reportType !== 'mapUpToToday' && (
+                <Input
+                  type="date"
+                  value={format(reportDate, 'yyyy-MM-dd')}
+                  onChange={(e) => e.target.value && setReportDate(new Date(e.target.value + 'T12:00:00'))}
+                  className="w-[180px]"
+                />
+              )}
+              <Button 
+                onClick={reportType === 'mapUpToToday' ? handleExportMapPDF : handleExportPDF} 
+                disabled={isExportingPDF || isExportingMapPDF}
+              >
                 <FileText className="h-4 w-4 mr-2" />
-                {isExportingPDF ? 'Gerando...' : 'Exportar PDF'}
+                {(isExportingPDF || isExportingMapPDF) ? 'Gerando...' : 'Exportar PDF'}
               </Button>
             </div>
           </div>
@@ -1647,6 +1709,125 @@ const SchedulingDashboard = () => {
                 </div>
               );
             })}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="bg-gray-100 px-6 py-3 text-center text-xs text-gray-500 border-t border-gray-200">
+          Gerado em {format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+        </div>
+      </div>
+
+      {/* Hidden Map PDF Report */}
+      <div
+        ref={mapReportRef}
+        className={cn("absolute left-[-9999px] top-0 w-[1100px] bg-[#fafafa]", isExportingMapPDF && "left-0")}
+        style={{ fontFamily: 'Arial, sans-serif' }}
+      >
+        {/* Header */}
+        <div className="bg-[#f5f5f5] p-4 mx-6 mt-6 rounded-lg">
+          <div className="flex items-center justify-between">
+            <img src={curliLogo} alt="Curli Logo" className="h-8 w-auto" />
+            <div className="text-right">
+              <p className="text-gray-400 text-xs">Mapa de Agendamentos</p>
+              <p className="text-gray-700 text-sm font-semibold">
+                {format(startOfMonth(new Date()), "dd/MM")} - {format(new Date(), "dd/MM/yyyy")}
+              </p>
+              <p className="text-gray-400 text-xs">{format(new Date(), "HH:mm", { locale: ptBR })}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Title */}
+        <div className="text-center my-4 mx-6">
+          <h1 className="text-lg font-bold text-gray-700">MAPA DE AGENDAMENTOS</h1>
+          <p className="text-gray-400 text-xs">Visualização até {format(new Date(), "dd 'de' MMMM", { locale: ptBR })}</p>
+        </div>
+
+        {/* Legend */}
+        <div className="flex items-center justify-center gap-6 mb-4 mx-6">
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded-full bg-emerald-500" />
+            <span className="text-xs text-gray-600">Agendou</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded-full bg-red-500" />
+            <span className="text-xs text-gray-600">Não Agendou</span>
+          </div>
+        </div>
+
+        {/* Map Table */}
+        <div className="px-6 pb-6">
+          <table className="w-full text-xs border-collapse bg-white rounded-lg overflow-hidden shadow-sm">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="text-left p-2 min-w-[140px] border-b border-gray-200 font-semibold text-gray-700">Membro</th>
+                {daysUpToToday.map((day) => (
+                  <th key={day.toISOString()} className="p-1 text-center min-w-[24px] border-b border-gray-200 font-medium text-gray-600">
+                    {format(day, 'dd')}
+                  </th>
+                ))}
+                <th className="p-2 text-center min-w-[50px] border-b border-gray-200 font-semibold text-gray-700">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {teamStructure.map((team) => (
+                <React.Fragment key={team.executive}>
+                  {/* Executive Header */}
+                  <tr className="bg-gray-800">
+                    <td colSpan={daysUpToToday.length + 2} className="p-2 font-bold text-white text-center text-xs">
+                      {team.executive}
+                    </td>
+                  </tr>
+                  {/* Team Members */}
+                  {team.members.map((member) => {
+                    const memberScheduledCount = daysUpToToday.filter(day => {
+                      const dateStr = format(day, 'yyyy-MM-dd');
+                      return scheduleData[member]?.[dateStr] || false;
+                    }).length;
+                    return (
+                      <tr key={member} className="border-b border-gray-100">
+                        <td className="p-1.5 font-medium text-gray-700 text-xs border-r border-gray-100">
+                          {member}
+                        </td>
+                        {daysUpToToday.map((day) => {
+                          const dateStr = format(day, 'yyyy-MM-dd');
+                          const isScheduled = scheduleData[member]?.[dateStr] || false;
+                          return (
+                            <td key={dateStr} className="p-0.5 text-center">
+                              <div 
+                                className={`w-4 h-4 rounded-full mx-auto ${
+                                  isScheduled ? 'bg-emerald-500' : 'bg-red-500'
+                                }`}
+                              />
+                            </td>
+                          );
+                        })}
+                        <td className="p-1.5 text-center font-bold text-gray-700 border-l border-gray-100">
+                          {memberScheduledCount}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </React.Fragment>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Summary */}
+        <div className="flex items-center justify-center gap-8 mx-6 mb-4 bg-gray-100 rounded-lg p-3">
+          <div className="text-center">
+            <div className="text-lg font-bold text-emerald-600">{reportTotals.totalScheduled}</div>
+            <div className="text-xs text-gray-500">Total Agendados</div>
+          </div>
+          <div className="text-center">
+            <div className="text-lg font-bold text-red-600">{reportTotals.totalNotScheduled}</div>
+            <div className="text-xs text-gray-500">Total Faltas</div>
+          </div>
+          <div className="text-center">
+            <div className="text-lg font-bold text-gray-700">{reportTotals.rate.toFixed(0)}%</div>
+            <div className="text-xs text-gray-500">Taxa de Agendamento</div>
           </div>
         </div>
 
