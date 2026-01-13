@@ -11,6 +11,8 @@ import SchedulingDashboard from "./pages/SchedulingDashboard";
 import BattlesDashboard from "./pages/BattlesDashboard";
 import CreatorsAnalysisDashboard from "./pages/CreatorsAnalysisDashboard";
 import OverviewDashboard from "./pages/OverviewDashboard";
+import Login from "./pages/Login";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -21,13 +23,14 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<OverviewDashboard />} />
-          <Route path="/painel" element={<Index />} />
-          <Route path="/graficos" element={<ChartsDashboard />} />
-          <Route path="/anotacoes" element={<NotesPage />} />
-          <Route path="/agendamentos" element={<SchedulingDashboard />} />
-          <Route path="/batalhas" element={<BattlesDashboard />} />
-          <Route path="/criadores-analise" element={<CreatorsAnalysisDashboard />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<ProtectedRoute><OverviewDashboard /></ProtectedRoute>} />
+          <Route path="/painel" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+          <Route path="/graficos" element={<ProtectedRoute><ChartsDashboard /></ProtectedRoute>} />
+          <Route path="/anotacoes" element={<ProtectedRoute><NotesPage /></ProtectedRoute>} />
+          <Route path="/agendamentos" element={<ProtectedRoute><SchedulingDashboard /></ProtectedRoute>} />
+          <Route path="/batalhas" element={<ProtectedRoute><BattlesDashboard /></ProtectedRoute>} />
+          <Route path="/criadores-analise" element={<ProtectedRoute><CreatorsAnalysisDashboard /></ProtectedRoute>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
