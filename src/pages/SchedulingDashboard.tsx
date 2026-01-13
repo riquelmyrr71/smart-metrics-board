@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { format, getDaysInMonth, startOfMonth, addDays, getDay, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Calendar as CalendarIcon, BarChart3, Target, TrendingUp, TrendingDown, Users, ChevronLeft, ChevronRight, Save, Home, CheckCircle2, XCircle, FileText, Plus, Trash2, AlertTriangle, Activity, Trophy } from 'lucide-react';
+import { Calendar as CalendarIcon, BarChart3, Target, TrendingUp, TrendingDown, Users, ChevronLeft, ChevronRight, Save, CheckCircle2, XCircle, FileText, Plus, Trash2, AlertTriangle, Activity, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,7 @@ import jsPDF from 'jspdf';
 import { BrandLogo } from '@/components/BrandLogo';
 import { branding, getReportFooter } from '@/config/branding';
 import curliLogo from '@/assets/logo-curli.png';
+import { StandardPageHeader } from '@/components/StandardPageHeader';
 import {
   LineChart,
   Line,
@@ -888,36 +889,32 @@ const SchedulingDashboard = () => {
   }, [reportRangeData]);
 
   return (
-    <div className="min-h-screen bg-background p-4">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" onClick={() => navigate('/')}>
-            <Home className="h-4 w-4" />
-          </Button>
-          <div className="flex items-center gap-2">
-            <CalendarIcon className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold">Agendamento de Lives</h1>
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" onClick={prevMonth}>
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <span className="text-lg font-medium min-w-[150px] text-center capitalize">
-              {format(currentMonth, 'MMMM yyyy', { locale: ptBR })}
-            </span>
-            <Button variant="outline" size="icon" onClick={nextMonth}>
-              <ChevronRight className="h-4 w-4" />
+    <div className="min-h-screen bg-background">
+      <StandardPageHeader 
+        title="Agendamento de Lives"
+        icon={<CalendarIcon className="h-6 w-6" />}
+        actions={
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="icon" onClick={prevMonth}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-sm font-medium min-w-[120px] text-center capitalize">
+                {format(currentMonth, 'MMMM yyyy', { locale: ptBR })}
+              </span>
+              <Button variant="outline" size="icon" onClick={nextMonth}>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+            <Button onClick={saveData} disabled={isSaving} className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground">
+              <Save className="h-4 w-4" />
+              {isSaving ? 'Salvando...' : 'Salvar'}
             </Button>
           </div>
-          <Button onClick={saveData} disabled={isSaving}>
-            <Save className="h-4 w-4 mr-2" />
-            {isSaving ? 'Salvando...' : 'Salvar'}
-          </Button>
-        </div>
-      </div>
+        }
+      />
+      
+      <div className="p-4">
 
       {/* Management Buttons */}
       <div className="flex items-center gap-3 mb-6">
@@ -2028,6 +2025,7 @@ const SchedulingDashboard = () => {
         <div className="bg-gray-100 px-6 py-3 text-center text-xs text-gray-500 border-t border-gray-200">
           Gerado em {format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
         </div>
+      </div>
       </div>
     </div>
   );

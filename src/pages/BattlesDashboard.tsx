@@ -10,7 +10,6 @@ import {
   ChevronLeft, 
   ChevronRight, 
   Save, 
-  Home, 
   FileText, 
   Plus, 
   Trash2, 
@@ -23,6 +22,7 @@ import {
   CalendarDays,
   Download
 } from 'lucide-react';
+import { StandardPageHeader } from '@/components/StandardPageHeader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -794,17 +794,10 @@ const BattlesDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-card border-b border-border px-4 py-3 sticky top-0 z-20">
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
-              <Home className="h-5 w-5" />
-            </Button>
-            <Swords className="h-6 w-6 text-red-500" />
-            <h1 className="text-xl font-bold">Painel de Batalhas</h1>
-          </div>
-          
+      <StandardPageHeader 
+        title="Painel de Batalhas"
+        icon={<Swords className="h-6 w-6" />}
+        actions={
           <div className="flex items-center gap-2 flex-wrap">
             {/* Month Navigation */}
             <div className="flex items-center gap-2 border rounded-lg px-2 py-1 bg-background">
@@ -901,204 +894,14 @@ const BattlesDashboard = () => {
               {showMetricsReport ? 'Ocultar Métricas' : 'Ver Métricas'}
             </Button>
 
-            <Dialog open={showCalendarExportDialog} onOpenChange={setShowCalendarExportDialog}>
-              <DialogTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={openCalendarExportDialog}
-                  className="gap-2"
-                >
-                  <Download className="h-4 w-4" />
-                  Exportar Calendário
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Exportar Calendário de Batalhas</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <p className="text-sm text-muted-foreground">
-                    Selecione o período que deseja exportar:
-                  </p>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Data Início</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !exportStartDate && "text-muted-foreground")}>
-                            <CalendarDays className="mr-2 h-4 w-4" />
-                            {exportStartDate ? format(exportStartDate, 'dd/MM/yyyy') : 'Selecione'}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={exportStartDate}
-                            onSelect={setExportStartDate}
-                            initialFocus
-                            className="pointer-events-auto"
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Data Fim</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !exportEndDate && "text-muted-foreground")}>
-                            <CalendarDays className="mr-2 h-4 w-4" />
-                            {exportEndDate ? format(exportEndDate, 'dd/MM/yyyy') : 'Selecione'}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={exportEndDate}
-                            onSelect={setExportEndDate}
-                            initialFocus
-                            className="pointer-events-auto"
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                  </div>
-                  {exportStartDate && exportEndDate && (
-                    <div className="text-sm text-muted-foreground bg-muted p-3 rounded-lg">
-                      <strong>{exportDays.length}</strong> dias selecionados para exportação
-                    </div>
-                  )}
-                </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setShowCalendarExportDialog(false)}>
-                    Cancelar
-                  </Button>
-                  <Button 
-                    onClick={handleExportCalendarPDF} 
-                    disabled={isExportingPDF || !exportStartDate || !exportEndDate}
-                    className="gap-2"
-                  >
-                    {isExportingPDF ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                    Exportar PDF
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-
-            <Dialog open={showReportDialog} onOpenChange={setShowReportDialog}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Settings2 className="h-4 w-4 mr-2" />
-                  Gerar Relatório
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Configurar Relatório Personalizado</DialogTitle>
-                </DialogHeader>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
-                  {/* Period Selection */}
-                  <div className="space-y-4">
-                    <h3 className="font-semibold text-sm flex items-center gap-2">
-                      <FileText className="h-4 w-4" />
-                      Período
-                    </h3>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-2">
-                        <Label htmlFor="startDate">Data Início</Label>
-                        <Input
-                          id="startDate"
-                          type="date"
-                          value={reportConfig.startDate}
-                          onChange={(e) => setReportConfig(prev => ({ ...prev, startDate: e.target.value }))}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="endDate">Data Fim</Label>
-                        <Input
-                          id="endDate"
-                          type="date"
-                          value={reportConfig.endDate}
-                          onChange={(e) => setReportConfig(prev => ({ ...prev, endDate: e.target.value }))}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Metrics Selection */}
-                  <div className="space-y-4">
-                    <h3 className="font-semibold text-sm flex items-center gap-2">
-                      <Target className="h-4 w-4" />
-                      Métricas
-                    </h3>
-                    <div className="space-y-2">
-                      {[
-                        { key: 'totalBattles', label: 'Total de Batalhas' },
-                        { key: 'dailyBreakdown', label: 'Detalhamento Diário' },
-                        { key: 'memberTotals', label: 'Totais por Membro' },
-                        { key: 'impactAnalysis', label: 'Análise de Impacto' },
-                        { key: 'topPerformers', label: 'Top Performers' },
-                        { key: 'lowPerformers', label: 'Baixo Desempenho' },
-                      ].map(({ key, label }) => (
-                        <div key={key} className="flex items-center gap-2">
-                          <Checkbox
-                            id={key}
-                            checked={reportConfig.metrics[key as keyof ReportConfig['metrics']]}
-                            onCheckedChange={() => toggleMetric(key as keyof ReportConfig['metrics'])}
-                          />
-                          <Label htmlFor={key} className="text-sm cursor-pointer">{label}</Label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Associates Selection */}
-                <div className="space-y-4 border-t pt-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold text-sm flex items-center gap-2">
-                      <Users className="h-4 w-4" />
-                      Associados ({reportConfig.selectedMembers.length}/{allMembers.length})
-                    </h3>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={selectAllMembers}>Todos</Button>
-                      <Button variant="outline" size="sm" onClick={deselectAllMembers}>Nenhum</Button>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 max-h-[200px] overflow-y-auto p-2 border rounded-lg bg-muted/30">
-                    {allMembers.map(member => (
-                      <div key={member} className="flex items-center gap-2">
-                        <Checkbox
-                          id={`member-${member}`}
-                          checked={reportConfig.selectedMembers.includes(member)}
-                          onCheckedChange={() => toggleMemberSelection(member)}
-                        />
-                        <Label htmlFor={`member-${member}`} className="text-xs cursor-pointer truncate">{member}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <DialogFooter className="mt-4">
-                  <Button variant="outline" onClick={() => setShowReportDialog(false)}>Cancelar</Button>
-                  <Button onClick={handleExportCustomPDF} disabled={isExportingPDF || reportConfig.selectedMembers.length === 0}>
-                    {isExportingPDF ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <FileText className="h-4 w-4 mr-2" />}
-                    Gerar PDF
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-            
-            <Button onClick={handleSave} disabled={isSaving}>
-              {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+            <Button onClick={handleSave} disabled={isSaving} size="sm" className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground">
+              {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
               Salvar
             </Button>
           </div>
-        </div>
-      </header>
-
+        }
+      />
+      
       <main className="p-4">
         {/* Metrics Report */}
         {showMetricsReport && (
