@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, LogIn, BarChart3 } from "lucide-react";
+import { Eye, EyeOff, LogIn, TrendingUp } from "lucide-react";
+import { branding } from "@/config/branding";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -63,25 +64,31 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-gray-800/50 border-gray-700 backdrop-blur-sm">
+    <div className="min-h-screen bg-gradient-to-br from-background via-accent to-background flex items-center justify-center p-4">
+      {/* Background decoration */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/10 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/10 rounded-full blur-3xl" />
+      </div>
+
+      <Card className="w-full max-w-md bg-card/95 backdrop-blur-sm border-border shadow-2xl relative z-10">
         <CardHeader className="text-center space-y-4">
           <div className="flex justify-center">
-            <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-              <BarChart3 className="h-8 w-8 text-white" />
+            <div className="h-16 w-16 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
+              <TrendingUp className="h-8 w-8 text-primary-foreground" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold text-white">
-            LiveMetrics
+          <CardTitle className="text-2xl font-bold text-foreground">
+            {branding.companyName}
           </CardTitle>
-          <CardDescription className="text-gray-400">
-            Plataforma de gestão para agências de live
+          <CardDescription className="text-muted-foreground">
+            {branding.companyTagline}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-gray-200">
+              <Label htmlFor="email" className="text-foreground">
                 Email
               </Label>
               <Input
@@ -91,11 +98,11 @@ const Login = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-400 focus:border-purple-500"
+                className="bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-gray-200">
+              <Label htmlFor="password" className="text-foreground">
                 Senha
               </Label>
               <div className="relative">
@@ -106,12 +113,12 @@ const Login = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-400 focus:border-purple-500 pr-10"
+                  className="bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary pr-10"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
@@ -120,7 +127,7 @@ const Login = () => {
             <Button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all"
             >
               {isLoading ? (
                 "Entrando..."
@@ -132,6 +139,13 @@ const Login = () => {
               )}
             </Button>
           </form>
+          
+          {/* Footer */}
+          <div className="mt-6 pt-6 border-t border-border text-center">
+            <p className="text-xs text-muted-foreground">
+              © {new Date().getFullYear()} {branding.companyName}. Todos os direitos reservados.
+            </p>
+          </div>
         </CardContent>
       </Card>
     </div>
