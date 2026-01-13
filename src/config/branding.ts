@@ -54,22 +54,22 @@ export interface BrandingConfig {
 
 // Default branding configuration - customize as needed
 export const branding: BrandingConfig = {
-  companyName: 'Sua Empresa',
-  companyShortName: 'Empresa',
-  companyTagline: 'Dashboard de Performance',
+  companyName: 'LiveMetrics',
+  companyShortName: 'LiveMetrics',
+  companyTagline: 'Plataforma de Gestão para Agências de Live',
   
   logo: {
     src: null, // Set to logo path like '/logo.png' or import
-    alt: 'Logo',
+    alt: 'LiveMetrics',
     width: 120,
     height: 40,
   },
   
   colors: {
-    primary: '333 71% 50%',
-    primaryForeground: '327 73% 97%',
-    accent: '355 100% 97%',
-    accentForeground: '349 89% 60%',
+    primary: '270 70% 50%',
+    primaryForeground: '0 0% 100%',
+    accent: '270 100% 97%',
+    accentForeground: '270 70% 50%',
   },
   
   reports: {
@@ -89,8 +89,8 @@ export const branding: BrandingConfig = {
   },
   
   contact: {
-    email: 'contato@suaempresa.com',
-    website: 'https://suaempresa.com',
+    email: 'contato@livemetrics.com',
+    website: 'https://livemetrics.com',
   },
 };
 

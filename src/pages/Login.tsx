@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -6,8 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, LogIn } from "lucide-react";
-import logo from "@/assets/logo-curli.png";
+import { Eye, EyeOff, LogIn, BarChart3 } from "lucide-react";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -16,6 +15,15 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Check if already logged in
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        navigate("/");
+      }
+    });
+  }, [navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,13 +67,15 @@ const Login = () => {
       <Card className="w-full max-w-md bg-gray-800/50 border-gray-700 backdrop-blur-sm">
         <CardHeader className="text-center space-y-4">
           <div className="flex justify-center">
-            <img src={logo} alt="Curli Logo" className="h-16 w-auto" />
+            <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+              <BarChart3 className="h-8 w-8 text-white" />
+            </div>
           </div>
           <CardTitle className="text-2xl font-bold text-white">
-            Bem-vindo ao Painel
+            LiveMetrics
           </CardTitle>
           <CardDescription className="text-gray-400">
-            Faça login para acessar o dashboard
+            Plataforma de gestão para agências de live
           </CardDescription>
         </CardHeader>
         <CardContent>

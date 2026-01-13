@@ -11,8 +11,10 @@ import SchedulingDashboard from "./pages/SchedulingDashboard";
 import BattlesDashboard from "./pages/BattlesDashboard";
 import CreatorsAnalysisDashboard from "./pages/CreatorsAnalysisDashboard";
 import OverviewDashboard from "./pages/OverviewDashboard";
+import AdminDashboard from "./pages/AdminDashboard";
 import Login from "./pages/Login";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { AgencyProvider } from "./contexts/AgencyContext";
 
 const queryClient = new QueryClient();
 
@@ -22,18 +24,21 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/" element={<ProtectedRoute><OverviewDashboard /></ProtectedRoute>} />
-          <Route path="/painel" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-          <Route path="/graficos" element={<ProtectedRoute><ChartsDashboard /></ProtectedRoute>} />
-          <Route path="/anotacoes" element={<ProtectedRoute><NotesPage /></ProtectedRoute>} />
-          <Route path="/agendamentos" element={<ProtectedRoute><SchedulingDashboard /></ProtectedRoute>} />
-          <Route path="/batalhas" element={<ProtectedRoute><BattlesDashboard /></ProtectedRoute>} />
-          <Route path="/criadores-analise" element={<ProtectedRoute><CreatorsAnalysisDashboard /></ProtectedRoute>} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AgencyProvider>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/" element={<ProtectedRoute><OverviewDashboard /></ProtectedRoute>} />
+            <Route path="/painel" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+            <Route path="/graficos" element={<ProtectedRoute><ChartsDashboard /></ProtectedRoute>} />
+            <Route path="/anotacoes" element={<ProtectedRoute><NotesPage /></ProtectedRoute>} />
+            <Route path="/agendamentos" element={<ProtectedRoute><SchedulingDashboard /></ProtectedRoute>} />
+            <Route path="/batalhas" element={<ProtectedRoute><BattlesDashboard /></ProtectedRoute>} />
+            <Route path="/criadores-analise" element={<ProtectedRoute><CreatorsAnalysisDashboard /></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AgencyProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
