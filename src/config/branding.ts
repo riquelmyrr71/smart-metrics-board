@@ -52,10 +52,10 @@ export interface BrandingConfig {
   };
 }
 
-// Default branding configuration - customize as needed
+// Default branding configuration - Red and White theme
 export const branding: BrandingConfig = {
   companyName: 'LiveMetrics',
-  companyShortName: 'LiveMetrics',
+  companyShortName: 'LM',
   companyTagline: 'Plataforma de Gestão para Agências de Live',
   
   logo: {
@@ -66,10 +66,10 @@ export const branding: BrandingConfig = {
   },
   
   colors: {
-    primary: '270 70% 50%',
-    primaryForeground: '0 0% 100%',
-    accent: '270 100% 97%',
-    accentForeground: '270 70% 50%',
+    primary: '0 84% 60%', // Red
+    primaryForeground: '0 0% 100%', // White
+    accent: '0 100% 97%',
+    accentForeground: '0 84% 50%',
   },
   
   reports: {

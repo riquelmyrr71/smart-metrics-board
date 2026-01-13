@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, Users, Plus, Edit, Trash2, Check, X, Shield } from 'lucide-react';
+import { Building2, Users, Plus, Check, Shield, Activity, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -185,7 +185,10 @@ const AdminDashboard: React.FC = () => {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-white">Carregando...</div>
+          <div className="flex items-center gap-3 text-muted-foreground">
+            <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            Carregando...
+          </div>
         </div>
       </DashboardLayout>
     );
@@ -197,54 +200,70 @@ const AdminDashboard: React.FC = () => {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-              <Shield className="h-7 w-7 text-purple-500" />
+            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+              <Shield className="h-7 w-7 text-primary" />
               Painel Administrativo
             </h1>
-            <p className="text-gray-400 mt-1">Gerencie agências e usuários da plataforma</p>
+            <p className="text-muted-foreground mt-1">Gerencie agências e usuários da plataforma</p>
           </div>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="bg-gray-800 border-gray-700">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card className="bg-card border-border hover-lift">
             <CardContent className="p-6">
               <div className="flex items-center gap-4">
-                <div className="p-3 rounded-lg bg-purple-600/20">
-                  <Building2 className="h-6 w-6 text-purple-400" />
+                <div className="p-3 rounded-xl bg-primary/10">
+                  <Building2 className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <p className="text-gray-400 text-sm">Agências</p>
-                  <p className="text-2xl font-bold text-white">{agencies.length}</p>
+                  <p className="text-muted-foreground text-sm">Agências</p>
+                  <p className="text-2xl font-bold text-foreground">{agencies.length}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
           
-          <Card className="bg-gray-800 border-gray-700">
+          <Card className="bg-card border-border hover-lift">
             <CardContent className="p-6">
               <div className="flex items-center gap-4">
-                <div className="p-3 rounded-lg bg-blue-600/20">
-                  <Users className="h-6 w-6 text-blue-400" />
+                <div className="p-3 rounded-xl bg-blue-500/10">
+                  <Users className="h-6 w-6 text-blue-500" />
                 </div>
                 <div>
-                  <p className="text-gray-400 text-sm">Usuários</p>
-                  <p className="text-2xl font-bold text-white">{users.length}</p>
+                  <p className="text-muted-foreground text-sm">Usuários</p>
+                  <p className="text-2xl font-bold text-foreground">{users.length}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
           
-          <Card className="bg-gray-800 border-gray-700">
+          <Card className="bg-card border-border hover-lift">
             <CardContent className="p-6">
               <div className="flex items-center gap-4">
-                <div className="p-3 rounded-lg bg-green-600/20">
-                  <Check className="h-6 w-6 text-green-400" />
+                <div className="p-3 rounded-xl bg-success/10">
+                  <Check className="h-6 w-6 text-success" />
                 </div>
                 <div>
-                  <p className="text-gray-400 text-sm">Agências Ativas</p>
-                  <p className="text-2xl font-bold text-white">
+                  <p className="text-muted-foreground text-sm">Agências Ativas</p>
+                  <p className="text-2xl font-bold text-foreground">
                     {agencies.filter(a => a.is_active).length}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card border-border hover-lift">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl bg-warning/10">
+                  <Activity className="h-6 w-6 text-warning" />
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-sm">Taxa de Ativação</p>
+                  <p className="text-2xl font-bold text-foreground">
+                    {agencies.length > 0 ? Math.round((agencies.filter(a => a.is_active).length / agencies.length) * 100) : 0}%
                   </p>
                 </div>
               </div>
@@ -253,52 +272,52 @@ const AdminDashboard: React.FC = () => {
         </div>
 
         {/* Agencies Table */}
-        <Card className="bg-gray-800 border-gray-700">
+        <Card className="bg-card border-border">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-white flex items-center gap-2">
-              <Building2 className="h-5 w-5" />
+            <CardTitle className="text-foreground flex items-center gap-2">
+              <Building2 className="h-5 w-5 text-primary" />
               Agências
             </CardTitle>
             <Dialog open={showAddAgency} onOpenChange={setShowAddAgency}>
               <DialogTrigger asChild>
-                <Button className="bg-purple-600 hover:bg-purple-700">
+                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25">
                   <Plus className="h-4 w-4 mr-2" />
                   Nova Agência
                 </Button>
               </DialogTrigger>
-              <DialogContent className="bg-gray-800 border-gray-700">
+              <DialogContent className="bg-card border-border">
                 <DialogHeader>
-                  <DialogTitle className="text-white">Criar Nova Agência</DialogTitle>
+                  <DialogTitle className="text-foreground">Criar Nova Agência</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 mt-4">
                   <div>
-                    <Label className="text-gray-300">Nome</Label>
+                    <Label className="text-foreground">Nome</Label>
                     <Input
                       value={newAgency.name}
                       onChange={(e) => setNewAgency({ ...newAgency, name: e.target.value })}
-                      className="bg-gray-700 border-gray-600 text-white"
+                      className="bg-background border-border text-foreground"
                       placeholder="Nome da agência"
                     />
                   </div>
                   <div>
-                    <Label className="text-gray-300">Slug (identificador único)</Label>
+                    <Label className="text-foreground">Slug (identificador único)</Label>
                     <Input
                       value={newAgency.slug}
                       onChange={(e) => setNewAgency({ ...newAgency, slug: e.target.value })}
-                      className="bg-gray-700 border-gray-600 text-white"
+                      className="bg-background border-border text-foreground"
                       placeholder="nome-agencia"
                     />
                   </div>
                   <div>
-                    <Label className="text-gray-300">URL do Logo (opcional)</Label>
+                    <Label className="text-foreground">URL do Logo (opcional)</Label>
                     <Input
                       value={newAgency.logo_url}
                       onChange={(e) => setNewAgency({ ...newAgency, logo_url: e.target.value })}
-                      className="bg-gray-700 border-gray-600 text-white"
+                      className="bg-background border-border text-foreground"
                       placeholder="https://..."
                     />
                   </div>
-                  <Button onClick={handleAddAgency} className="w-full bg-purple-600 hover:bg-purple-700">
+                  <Button onClick={handleAddAgency} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
                     Criar Agência
                   </Button>
                 </div>
@@ -308,30 +327,32 @@ const AdminDashboard: React.FC = () => {
           <CardContent>
             <Table>
               <TableHeader>
-                <TableRow className="border-gray-700">
-                  <TableHead className="text-gray-400">Nome</TableHead>
-                  <TableHead className="text-gray-400">Slug</TableHead>
-                  <TableHead className="text-gray-400">Status</TableHead>
-                  <TableHead className="text-gray-400">Ações</TableHead>
+                <TableRow className="border-border">
+                  <TableHead className="text-muted-foreground">Nome</TableHead>
+                  <TableHead className="text-muted-foreground">Slug</TableHead>
+                  <TableHead className="text-muted-foreground">Status</TableHead>
+                  <TableHead className="text-muted-foreground">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {agencies.map((agency) => (
-                  <TableRow key={agency.id} className="border-gray-700">
-                    <TableCell className="text-white font-medium">
+                  <TableRow key={agency.id} className="border-border hover:bg-accent/50">
+                    <TableCell className="text-foreground font-medium">
                       <div className="flex items-center gap-2">
                         {agency.logo_url ? (
                           <img src={agency.logo_url} alt="" className="h-6 w-6 rounded object-contain" />
                         ) : (
-                          <Building2 className="h-5 w-5 text-gray-500" />
+                          <div className="h-6 w-6 rounded bg-primary/10 flex items-center justify-center">
+                            <Building2 className="h-4 w-4 text-primary" />
+                          </div>
                         )}
                         {agency.name}
                       </div>
                     </TableCell>
-                    <TableCell className="text-gray-400">{agency.slug}</TableCell>
+                    <TableCell className="text-muted-foreground">{agency.slug}</TableCell>
                     <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        agency.is_active ? 'bg-green-600/20 text-green-400' : 'bg-red-600/20 text-red-400'
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        agency.is_active ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'
                       }`}>
                         {agency.is_active ? 'Ativa' : 'Inativa'}
                       </span>
@@ -350,50 +371,50 @@ const AdminDashboard: React.FC = () => {
         </Card>
 
         {/* Users Table */}
-        <Card className="bg-gray-800 border-gray-700">
+        <Card className="bg-card border-border">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-white flex items-center gap-2">
-              <Users className="h-5 w-5" />
+            <CardTitle className="text-foreground flex items-center gap-2">
+              <Users className="h-5 w-5 text-blue-500" />
               Usuários
             </CardTitle>
             <Dialog open={showAddUser} onOpenChange={setShowAddUser}>
               <DialogTrigger asChild>
-                <Button className="bg-blue-600 hover:bg-blue-700">
+                <Button className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/25">
                   <Plus className="h-4 w-4 mr-2" />
                   Novo Usuário
                 </Button>
               </DialogTrigger>
-              <DialogContent className="bg-gray-800 border-gray-700">
+              <DialogContent className="bg-card border-border">
                 <DialogHeader>
-                  <DialogTitle className="text-white">Criar Novo Usuário</DialogTitle>
+                  <DialogTitle className="text-foreground">Criar Novo Usuário</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 mt-4">
                   <div>
-                    <Label className="text-gray-300">Email</Label>
+                    <Label className="text-foreground">Email</Label>
                     <Input
                       type="email"
                       value={newUser.email}
                       onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                      className="bg-gray-700 border-gray-600 text-white"
+                      className="bg-background border-border text-foreground"
                       placeholder="email@exemplo.com"
                     />
                   </div>
                   <div>
-                    <Label className="text-gray-300">Senha</Label>
+                    <Label className="text-foreground">Senha</Label>
                     <Input
                       type="password"
                       value={newUser.password}
                       onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                      className="bg-gray-700 border-gray-600 text-white"
+                      className="bg-background border-border text-foreground"
                       placeholder="••••••••"
                     />
                   </div>
                   <div>
-                    <Label className="text-gray-300">Agência</Label>
+                    <Label className="text-foreground">Agência</Label>
                     <select
                       value={newUser.agency_id}
                       onChange={(e) => setNewUser({ ...newUser, agency_id: e.target.value })}
-                      className="w-full h-10 px-3 rounded-md bg-gray-700 border border-gray-600 text-white"
+                      className="w-full h-10 px-3 rounded-md bg-background border border-border text-foreground"
                     >
                       <option value="">Selecione uma agência</option>
                       {agencies.map((agency) => (
@@ -403,7 +424,7 @@ const AdminDashboard: React.FC = () => {
                       ))}
                     </select>
                   </div>
-                  <Button onClick={handleAddUser} className="w-full bg-blue-600 hover:bg-blue-700">
+                  <Button onClick={handleAddUser} className="w-full bg-blue-600 hover:bg-blue-700 text-white">
                     Criar Usuário
                   </Button>
                 </div>
@@ -413,20 +434,20 @@ const AdminDashboard: React.FC = () => {
           <CardContent>
             <Table>
               <TableHeader>
-                <TableRow className="border-gray-700">
-                  <TableHead className="text-gray-400">Email</TableHead>
-                  <TableHead className="text-gray-400">Agência</TableHead>
-                  <TableHead className="text-gray-400">Tipo</TableHead>
+                <TableRow className="border-border">
+                  <TableHead className="text-muted-foreground">Email</TableHead>
+                  <TableHead className="text-muted-foreground">Agência</TableHead>
+                  <TableHead className="text-muted-foreground">Tipo</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {users.map((user) => (
-                  <TableRow key={user.id} className="border-gray-700">
-                    <TableCell className="text-white">{user.email}</TableCell>
-                    <TableCell className="text-gray-400">{user.agency_name || '-'}</TableCell>
+                  <TableRow key={user.id} className="border-border hover:bg-accent/50">
+                    <TableCell className="text-foreground">{user.email}</TableCell>
+                    <TableCell className="text-muted-foreground">{user.agency_name || '-'}</TableCell>
                     <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        user.is_super_admin ? 'bg-purple-600/20 text-purple-400' : 'bg-gray-600/20 text-gray-400'
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        user.is_super_admin ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
                       }`}>
                         {user.is_super_admin ? 'Super Admin' : 'Usuário'}
                       </span>
