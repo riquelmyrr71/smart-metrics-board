@@ -47,9 +47,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-background dark">
+    <div className="min-h-screen bg-gray-100">
       {/* Top Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-md border-b border-border shadow-sm">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-sm">
         <div className="flex items-center justify-between px-4 h-16">
           {/* Logo & Agency Name */}
           <div className="flex items-center gap-3">
@@ -68,17 +68,17 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                   className="h-9 w-auto object-contain"
                 />
               ) : (
-                <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/25 group-hover:shadow-primary/40 transition-shadow">
-                  <span className="text-primary-foreground font-bold text-lg">
+                <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/25">
+                  <span className="text-white font-bold text-lg">
                     {branding.companyShortName}
                   </span>
                 </div>
               )}
               <div className="hidden sm:block">
-                <h1 className="text-foreground font-bold text-lg leading-tight group-hover:text-primary transition-colors">
+                <h1 className="text-gray-900 font-bold text-lg leading-tight group-hover:text-primary transition-colors">
                   {agency?.name || branding.companyName}
                 </h1>
-                <p className="text-muted-foreground text-xs">{branding.companyTagline}</p>
+                <p className="text-gray-500 text-xs">{branding.companyTagline}</p>
               </div>
             </Link>
           </div>
@@ -94,8 +94,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                   className={cn(
                     "px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200",
                     isActive 
-                      ? "bg-primary text-primary-foreground shadow-md shadow-primary/25" 
-                      : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                      ? "bg-primary text-white shadow-md" 
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
                   )}
                 >
                   <item.icon className="inline-block h-4 w-4 mr-1.5" />
@@ -108,32 +108,32 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
           {/* User Menu */}
           <div className="flex items-center gap-2">
             {/* Notifications Bell */}
-            <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-foreground">
+            <Button variant="ghost" size="icon" className="relative text-gray-500 hover:text-gray-700">
               <Bell className="h-5 w-5" />
               <span className="absolute top-1 right-1 h-2 w-2 bg-primary rounded-full animate-pulse" />
             </Button>
 
             {isSuperAdmin && (
               <Link to="/admin">
-                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+                <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700">
                   <Settings className="h-4 w-4 mr-1" />
                   <span className="hidden sm:inline">Admin</span>
                 </Button>
               </Link>
             )}
             
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-accent/50">
-              <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-medium shadow-sm">
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100">
+              <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white font-medium shadow-sm">
                 {profile?.email?.charAt(0).toUpperCase() || 'U'}
               </div>
-              <span className="text-foreground text-sm max-w-32 truncate">{profile?.email}</span>
+              <span className="text-gray-700 text-sm max-w-32 truncate">{profile?.email}</span>
             </div>
             
             <Button 
               variant="ghost" 
               size="sm" 
               onClick={handleSignOut}
-              className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+              className="text-gray-500 hover:text-red-600 hover:bg-red-50"
             >
               <LogOut className="h-4 w-4" />
               <span className="hidden sm:inline ml-1">Sair</span>
@@ -143,7 +143,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
 
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <nav className="lg:hidden border-t border-border bg-card py-2 animate-fade-in">
+          <nav className="lg:hidden border-t border-gray-200 bg-white py-2">
             {navigation.map((item) => {
               const isActive = location.pathname === item.href;
               return (
@@ -154,8 +154,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors",
                     isActive 
-                      ? "bg-primary/10 text-primary border-l-2 border-primary" 
-                      : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                      ? "bg-red-50 text-primary border-l-2 border-primary" 
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                   )}
                 >
                   <item.icon className="h-5 w-5" />
@@ -167,7 +167,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
               <Link
                 to="/admin"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 border-t border-border mt-2"
+                className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 border-t border-gray-200 mt-2"
               >
                 <Settings className="h-5 w-5" />
                 Administração
