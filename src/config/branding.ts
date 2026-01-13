@@ -1,8 +1,7 @@
 /**
- * White-label Branding Configuration
+ * AgencyHub - Platform Configuration
  * 
- * Customize this file to rebrand the entire platform.
- * All branding elements are centralized here for easy customization.
+ * Multi-tenant CRM for Live Streaming Agencies
  */
 
 export interface BrandingConfig {
@@ -52,29 +51,29 @@ export interface BrandingConfig {
   };
 }
 
-// Default branding configuration - customize as needed
+// AgencyHub branding configuration
 export const branding: BrandingConfig = {
-  companyName: 'Sua Empresa',
-  companyShortName: 'Empresa',
-  companyTagline: 'Dashboard de Performance',
+  companyName: 'AgencyHub',
+  companyShortName: 'AgencyHub',
+  companyTagline: 'Plataforma de Gestão para Agências de Live',
   
   logo: {
-    src: null, // Set to logo path like '/logo.png' or import
-    alt: 'Logo',
+    src: null,
+    alt: 'AgencyHub Logo',
     width: 120,
     height: 40,
   },
   
   colors: {
-    primary: '333 71% 50%',
-    primaryForeground: '327 73% 97%',
-    accent: '355 100% 97%',
-    accentForeground: '349 89% 60%',
+    primary: '220 70% 50%',
+    primaryForeground: '220 10% 98%',
+    accent: '220 80% 95%',
+    accentForeground: '220 70% 45%',
   },
   
   reports: {
     headerText: 'Relatório de Performance',
-    footerText: 'Relatório Gerado Automaticamente',
+    footerText: 'Relatório gerado pelo AgencyHub',
     showLogo: true,
   },
   
@@ -89,8 +88,8 @@ export const branding: BrandingConfig = {
   },
   
   contact: {
-    email: 'contato@suaempresa.com',
-    website: 'https://suaempresa.com',
+    email: 'contato@agencyhub.com',
+    website: 'https://agencyhub.com',
   },
 };
 
