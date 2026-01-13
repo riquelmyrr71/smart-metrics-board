@@ -15,6 +15,8 @@ import { cn } from '@/lib/utils';
 import { BrandLogo } from '@/components/BrandLogo';
 import { branding, getReportFooter } from '@/config/branding';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import DashboardLayout from '@/components/DashboardLayout';
+import { useAgency } from '@/contexts/AgencyContext';
 
 // Data IDs from other dashboards
 const DASHBOARD_ID = '00000000-0000-0000-0000-000000000001';
@@ -1161,17 +1163,20 @@ const OverviewDashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Carregando dados...</p>
+      <DashboardLayout>
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Carregando dados...</p>
+          </div>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <DashboardLayout>
+      <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="bg-card border-b border-border px-6 py-4">
         <div className="flex items-center justify-between">
@@ -2226,6 +2231,7 @@ const OverviewDashboard: React.FC = () => {
         </div>
       </main>
     </div>
+    </DashboardLayout>
   );
 };
 
