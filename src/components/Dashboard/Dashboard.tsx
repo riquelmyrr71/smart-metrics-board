@@ -321,7 +321,7 @@ export const Dashboard: React.FC = () => {
   }, [rows, columns, updateCell]);
   
   return (
-    <div className="flex flex-col h-full min-h-screen bg-background">
+    <div className="flex flex-col h-full min-h-screen bg-gray-100">
       <DashboardHeader
         title="Painel de Performance"
         settings={settings}
@@ -355,7 +355,7 @@ export const Dashboard: React.FC = () => {
           </Button>
         </div>
         
-        <div className="bg-card rounded-lg border border-border overflow-hidden shadow-sm">
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
           <DashboardTable
             columns={columns}
             columnGroups={columnGroups}
@@ -381,21 +381,21 @@ export const Dashboard: React.FC = () => {
         </div>
         
         {/* Legend */}
-        <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+        <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-gray-600">
           <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded bg-success" />
+            <span className="w-3 h-3 rounded bg-green-500" />
             <span>≥80%</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded bg-warning" />
+            <span className="w-3 h-3 rounded bg-amber-500" />
             <span>50-79%</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded bg-destructive" />
+            <span className="w-3 h-3 rounded bg-red-500" />
             <span>&lt;50%</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded bg-dashboard-over100" />
+            <span className="w-3 h-3 rounded bg-red-600" />
             <span>&gt;100% (destaque)</span>
           </div>
           <div className="flex items-center gap-2">
@@ -407,8 +407,8 @@ export const Dashboard: React.FC = () => {
         </div>
         
         {/* Formula explanation */}
-        <div className="mt-4 p-3 bg-muted/50 rounded-lg text-xs text-muted-foreground">
-          <p className="font-semibold mb-1">Fórmulas de cálculo:</p>
+        <div className="mt-4 p-3 bg-gray-50 rounded-lg text-xs text-gray-600 border border-gray-200">
+          <p className="font-semibold mb-1 text-gray-900">Fórmulas de cálculo:</p>
           <ul className="space-y-1 list-disc list-inside">
             <li><strong>Projeção</strong> = (Valor Atual ÷ Dias Decorridos) × Total de Dias do Período</li>
             <li><strong>ATG %</strong> = (Valor Atual ÷ Meta) × 100</li>

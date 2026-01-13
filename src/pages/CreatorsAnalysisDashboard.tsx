@@ -4,7 +4,6 @@ import { ptBR } from 'date-fns/locale';
 import { 
   Users, 
   Save, 
-  Home, 
   FileText, 
   Plus, 
   Trash2,
@@ -30,6 +29,7 @@ import { useNavigate } from 'react-router-dom';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import curliLogo from '@/assets/logo-curli.png';
+import { StandardPageHeader } from '@/components/StandardPageHeader';
 
 interface CreatorsData {
   [memberName: string]: number;
@@ -261,40 +261,35 @@ const CreatorsAnalysisDashboard = () => {
     );
   }
 
+  const headerActions = (
+    <>
+      <Button variant="outline" size="sm" onClick={handleExportPDF} disabled={isExportingPDF} className="border-gray-300 text-gray-700 hover:bg-gray-50">
+        {isExportingPDF ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <FileText className="h-4 w-4 mr-2" />}
+        Exportar PDF
+      </Button>
+      
+      <Button onClick={handleSave} disabled={isSaving} className="bg-primary text-white hover:bg-primary/90">
+        {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+        Salvar
+      </Button>
+    </>
+  );
+
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-card border-b border-border px-4 py-3 sticky top-0 z-20">
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
-              <Home className="h-5 w-5" />
-            </Button>
-            <UserSearch className="h-6 w-6 text-purple-500" />
-            <h1 className="text-xl font-bold">Criadores em Análise</h1>
-          </div>
-          
-          <div className="flex items-center gap-2 flex-wrap">
-            <Button variant="outline" size="sm" onClick={handleExportPDF} disabled={isExportingPDF}>
-              {isExportingPDF ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <FileText className="h-4 w-4 mr-2" />}
-              Exportar PDF
-            </Button>
-            
-            <Button onClick={handleSave} disabled={isSaving}>
-              {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-              Salvar
-            </Button>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-gray-100">
+      <StandardPageHeader 
+        title="Criadores em Análise" 
+        icon={<UserSearch className="h-6 w-6" />}
+        actions={headerActions}
+      />
 
       <main className="p-4 max-w-4xl mx-auto">
         {/* Last Updated Banner */}
-        <Card className="mb-4 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800">
+        <Card className="mb-4 bg-amber-50 border-amber-200">
           <CardContent className="p-3">
             <div className="flex items-center justify-center gap-2">
               <Clock className="h-4 w-4 text-amber-600" />
-              <span className="text-sm font-medium text-amber-800 dark:text-amber-200">
+              <span className="text-sm font-medium text-amber-800">
                 Última atualização: {lastUpdated 
                   ? format(new Date(lastUpdated), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
                   : 'Nunca salvo'}
@@ -304,11 +299,11 @@ const CreatorsAnalysisDashboard = () => {
         </Card>
 
         {/* Daily Goal Progress */}
-        <Card className="mb-4 border-purple-200 dark:border-purple-800">
+        <Card className="mb-4 bg-white border-gray-200 shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <Target className="h-5 w-5 text-purple-500" />
+                <Target className="h-5 w-5 text-primary" />
                 <span className="font-semibold">Meta Diária</span>
               </div>
               <div className="flex items-center gap-2">
@@ -369,23 +364,23 @@ const CreatorsAnalysisDashboard = () => {
         {/* Metrics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
           {/* Total Card */}
-          <Card>
+          <Card className="bg-white border-gray-200 shadow-sm">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <Users className="h-8 w-8 text-purple-500" />
+                <Users className="h-8 w-8 text-primary" />
                 <div>
-                  <p className="text-xs text-muted-foreground">Total Atual</p>
-                  <p className="text-2xl font-bold">{getGrandTotal()}</p>
+                  <p className="text-xs text-gray-500">Total Atual</p>
+                  <p className="text-2xl font-bold text-gray-900">{getGrandTotal()}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           {/* Yesterday Comparison */}
-          <Card>
+          <Card className="bg-white border-gray-200 shadow-sm">
             <CardContent className="p-4">
               <div className="flex flex-col gap-2">
-                <p className="text-xs text-muted-foreground">Ontem (mesmo horário)</p>
+                <p className="text-xs text-gray-500">Ontem (mesmo horário)</p>
                 <div className="flex items-center gap-2">
                   <Input
                     type="number"
@@ -396,12 +391,12 @@ const CreatorsAnalysisDashboard = () => {
                       yesterdayTotal: parseInt(e.target.value) || 0,
                       yesterdayTime: format(new Date(), 'HH:mm')
                     }))}
-                    className="w-20 h-8 text-center font-bold"
+                    className="w-20 h-8 text-center font-bold border-gray-300"
                     placeholder="0"
                   />
                   {(() => {
                     const { diff, percentage } = getComparisonDiff();
-                    if (diff === 0) return <Minus className="h-4 w-4 text-muted-foreground" />;
+                    if (diff === 0) return <Minus className="h-4 w-4 text-gray-400" />;
                     if (diff > 0) return (
                       <span className="flex items-center text-green-600 text-sm font-medium">
                         <TrendingUp className="h-4 w-4 mr-1" />+{diff} ({percentage}%)
@@ -419,33 +414,33 @@ const CreatorsAnalysisDashboard = () => {
           </Card>
 
           {/* Average per Associate */}
-          <Card>
+          <Card className="bg-white border-gray-200 shadow-sm">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <BarChart3 className="h-8 w-8 text-blue-500" />
                 <div>
-                  <p className="text-xs text-muted-foreground">Média por Associado</p>
-                  <p className="text-2xl font-bold">{getAveragePerAssociate()}</p>
-                  <p className="text-xs text-muted-foreground">{getTotalAssociates()} associados</p>
+                  <p className="text-xs text-gray-500">Média por Associado</p>
+                  <p className="text-2xl font-bold text-gray-900">{getAveragePerAssociate()}</p>
+                  <p className="text-xs text-gray-500">{getTotalAssociates()} associados</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           {/* Top Performer */}
-          <Card>
+          <Card className="bg-white border-gray-200 shadow-sm">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <Trophy className="h-8 w-8 text-amber-500" />
                 <div>
-                  <p className="text-xs text-muted-foreground">Top Performer</p>
+                  <p className="text-xs text-gray-500">Top Performer</p>
                   {(() => {
                     const top = getTopPerformer();
-                    if (!top || top.count === 0) return <p className="text-sm text-muted-foreground">-</p>;
+                    if (!top || top.count === 0) return <p className="text-sm text-gray-500">-</p>;
                     return (
                       <>
-                        <p className="text-sm font-bold">{top.name}</p>
-                        <p className="text-xs text-muted-foreground">{top.count} criadores</p>
+                        <p className="text-sm font-bold text-gray-900">{top.name}</p>
+                        <p className="text-xs text-gray-500">{top.count} criadores</p>
                       </>
                     );
                   })()}

@@ -78,14 +78,14 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
     return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   };
   return (
-    <header className="bg-card border-b border-border px-4 py-3 sticky top-0 z-20 table-header-shadow">
+    <header className="bg-white border-b border-gray-200 px-4 py-3 sticky top-0 z-20 shadow-sm">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <h1 className="text-xl font-bold text-foreground">{title}</h1>
+          <h1 className="text-xl font-bold text-gray-900">{title}</h1>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <HelpCircle className="w-4 h-4 text-muted-foreground" />
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-gray-700">
+                <HelpCircle className="w-4 h-4" />
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom" className="max-w-sm">
