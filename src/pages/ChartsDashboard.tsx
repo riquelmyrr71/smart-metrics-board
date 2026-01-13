@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Plus, Trash2, Diamond, Users, TrendingUp, Save, Loader2, FileText, Calendar, Target, Settings, ArrowUpRight, ArrowDownRight, Minus, RotateCcw, Check, ChevronRight, Award } from 'lucide-react';
+import { Plus, Trash2, Diamond, Users, TrendingUp, Save, Loader2, FileText, Calendar, Target, Settings, ArrowUpRight, ArrowDownRight, Minus, RotateCcw, Check, ChevronRight, Award, BarChart3 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, BarChart, Bar, ComposedChart, PieChart, Pie, Cell } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -16,6 +15,7 @@ import { CreatorsConversionMetrics } from '@/components/CreatorsConversionMetric
 import { BrandLogo } from '@/components/BrandLogo';
 import { branding, getReportFooter } from '@/config/branding';
 import { MonthSelector } from '@/components/Charts/MonthSelector';
+import { StandardPageHeader } from '@/components/StandardPageHeader';
 
 interface DailyEntry {
   id: string;
@@ -561,49 +561,36 @@ const ChartsDashboard: React.FC = () => {
       </div>;
   }
   return <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-lg border-b border-border px-4 py-3">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-4">
-            <Link to="/">
-              <Button variant="ghost" size="sm" className="gap-2 hover:bg-destructive/10 hover:text-destructive">
-                <ArrowLeft className="w-4 h-4" />
-                Voltar
-              </Button>
-            </Link>
-            <div className="flex items-center gap-3">
-              <BrandLogo size="md" />
-              <h1 className="text-xl font-bold text-foreground">
-                {branding.titles.charts}
-              </h1>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
+      <StandardPageHeader 
+        title={branding.titles.charts}
+        icon={<BarChart3 className="h-6 w-6" />}
+        actions={
+          <div className="flex items-center gap-2 flex-wrap">
             <div className="flex items-center gap-2">
-              <Input type="date" value={dailyReportDate} onChange={e => setDailyReportDate(e.target.value)} className="w-[140px] h-9 bg-background border-border focus:border-destructive text-sm" />
-              <Button variant="outline" size="sm" onClick={handleExportDailyPDF} disabled={isExportingDaily || !reportDateEntry} className="gap-2 border-border hover:bg-muted/50">
+              <Input type="date" value={dailyReportDate} onChange={e => setDailyReportDate(e.target.value)} className="w-[140px] h-9 bg-background border-border focus:border-primary text-sm" />
+              <Button variant="outline" size="sm" onClick={handleExportDailyPDF} disabled={isExportingDaily || !reportDateEntry} className="gap-2">
                 {isExportingDaily ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
                 Relatório Diário
               </Button>
             </div>
             <div className="flex items-center gap-2 border-l border-border pl-2">
-              <Input type="date" value={resetDate} onChange={e => setResetDate(e.target.value)} className="w-[140px] h-9 bg-background border-border focus:border-destructive text-sm" />
+              <Input type="date" value={resetDate} onChange={e => setResetDate(e.target.value)} className="w-[140px] h-9 bg-background border-border text-sm" />
               <Button variant="outline" size="sm" onClick={handleResetDayMetrics} className="gap-2 border-destructive/50 hover:bg-destructive/10 hover:text-destructive text-destructive">
                 <RotateCcw className="w-4 h-4" />
                 Zerar Dia
               </Button>
             </div>
-            <Button variant="outline" size="sm" onClick={handleExportPDF} disabled={isExporting || entries.length === 0} className="gap-2 border-destructive/30 hover:bg-destructive/10 hover:text-destructive">
+            <Button variant="outline" size="sm" onClick={handleExportPDF} disabled={isExporting || entries.length === 0} className="gap-2">
               {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
               Exportar PDF
             </Button>
-            <Button onClick={saveData} disabled={isSaving} size="sm" className="gap-2 bg-destructive hover:bg-destructive/90 text-destructive-foreground">
+            <Button onClick={saveData} disabled={isSaving} size="sm" className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground">
               {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               Salvar
             </Button>
           </div>
-        </div>
-      </header>
+        }
+      />
 
       <main className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
         {/* Month Selector */}
