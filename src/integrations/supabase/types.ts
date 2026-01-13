@@ -14,29 +14,71 @@ export type Database = {
   }
   public: {
     Tables: {
+      agencies: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          logo_url: string | null
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          logo_url?: string | null
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          logo_url?: string | null
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       dashboard_data: {
         Row: {
+          agency_id: string | null
           created_at: string
           data: Json
           id: string
           updated_at: string
         }
         Insert: {
+          agency_id?: string | null
           created_at?: string
           data: Json
           id?: string
           updated_at?: string
         }
         Update: {
+          agency_id?: string | null
           created_at?: string
           data?: Json
           id?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "dashboard_data_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       live_schedules: {
         Row: {
+          agency_id: string | null
           created_at: string
           executive_name: string
           id: string
@@ -46,6 +88,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          agency_id?: string | null
           created_at?: string
           executive_name: string
           id?: string
@@ -55,6 +98,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          agency_id?: string | null
           created_at?: string
           executive_name?: string
           id?: string
@@ -63,10 +107,19 @@ export type Database = {
           schedule_date?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "live_schedules_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       monthly_projections: {
         Row: {
+          agency_id: string | null
           created_at: string
           creators_actual: number
           creators_projection: number
@@ -80,6 +133,7 @@ export type Database = {
           year: number
         }
         Insert: {
+          agency_id?: string | null
           created_at?: string
           creators_actual?: number
           creators_projection?: number
@@ -93,6 +147,7 @@ export type Database = {
           year: number
         }
         Update: {
+          agency_id?: string | null
           created_at?: string
           creators_actual?: number
           creators_projection?: number
@@ -105,10 +160,19 @@ export type Database = {
           updated_at?: string
           year?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "monthly_projections_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notes: {
         Row: {
+          agency_id: string | null
           content: string | null
           created_at: string
           id: string
@@ -118,6 +182,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          agency_id?: string | null
           content?: string | null
           created_at?: string
           id?: string
@@ -127,6 +192,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          agency_id?: string | null
           content?: string | null
           created_at?: string
           id?: string
@@ -135,11 +201,64 @@ export type Database = {
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "notes_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          agency_id: string | null
+          avatar_url: string | null
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          is_super_admin: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agency_id?: string | null
+          avatar_url?: string | null
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id?: string
+          is_super_admin?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agency_id?: string | null
+          avatar_url?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          is_super_admin?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       scheduling_goals: {
         Row: {
           active_creators: number | null
+          agency_id: string | null
           created_at: string
           days_goal: number
           id: string
@@ -149,6 +268,7 @@ export type Database = {
         }
         Insert: {
           active_creators?: number | null
+          agency_id?: string | null
           created_at?: string
           days_goal?: number
           id?: string
@@ -158,6 +278,7 @@ export type Database = {
         }
         Update: {
           active_creators?: number | null
+          agency_id?: string | null
           created_at?: string
           days_goal?: number
           id?: string
@@ -165,17 +286,66 @@ export type Database = {
           updated_at?: string
           year?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "scheduling_goals_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          agency_id: string
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_agency_id: { Args: { _user_id: string }; Returns: string }
+      has_agency_role: {
+        Args: {
+          _agency_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_super_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "super_admin" | "admin" | "manager" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -302,6 +472,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["super_admin", "admin", "manager", "user"],
+    },
   },
 } as const
