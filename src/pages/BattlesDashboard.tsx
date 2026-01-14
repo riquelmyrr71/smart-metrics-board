@@ -894,6 +894,16 @@ const BattlesDashboard = () => {
               {showMetricsReport ? 'Ocultar Métricas' : 'Ver Métricas'}
             </Button>
 
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={openCalendarExportDialog}
+              className="gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Exportar Calendário
+            </Button>
+
             <Button onClick={handleSave} disabled={isSaving} size="sm" className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground">
               {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
               Salvar
@@ -1014,6 +1024,66 @@ const BattlesDashboard = () => {
               />
               <DialogFooter>
                 <Button onClick={handleAddAssociate}>Adicionar</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Calendar Export Dialog */}
+          <Dialog open={showCalendarExportDialog} onOpenChange={setShowCalendarExportDialog}>
+            <DialogContent className="bg-card">
+              <DialogHeader>
+                <DialogTitle>Exportar Calendário de Batalhas</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-sm font-medium mb-2 block">Data Inicial</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-full justify-start text-left font-normal">
+                        <CalendarDays className="mr-2 h-4 w-4" />
+                        {exportStartDate ? format(exportStartDate, 'dd/MM/yyyy', { locale: ptBR }) : 'Selecione a data inicial'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 z-50" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={exportStartDate}
+                        onSelect={setExportStartDate}
+                        locale={ptBR}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium mb-2 block">Data Final</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-full justify-start text-left font-normal">
+                        <CalendarDays className="mr-2 h-4 w-4" />
+                        {exportEndDate ? format(exportEndDate, 'dd/MM/yyyy', { locale: ptBR }) : 'Selecione a data final'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 z-50" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={exportEndDate}
+                        onSelect={setExportEndDate}
+                        locale={ptBR}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </div>
+              <DialogFooter className="gap-2">
+                <Button variant="outline" onClick={() => setShowCalendarExportDialog(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={handleExportCalendarPDF} disabled={isExportingPDF || !exportStartDate || !exportEndDate}>
+                  {isExportingPDF ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Download className="h-4 w-4 mr-2" />}
+                  Exportar PDF
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
