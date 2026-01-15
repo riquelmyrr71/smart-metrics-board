@@ -44,6 +44,44 @@ export type Database = {
         }
         Relationships: []
       }
+      agency_login_codes: {
+        Row: {
+          agency_id: string | null
+          code: string
+          created_at: string
+          email: string
+          id: string
+          is_active: boolean
+          updated_at: string
+        }
+        Insert: {
+          agency_id?: string | null
+          code: string
+          created_at?: string
+          email: string
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Update: {
+          agency_id?: string | null
+          code?: string
+          created_at?: string
+          email?: string
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_login_codes_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agency_settings: {
         Row: {
           agency_id: string

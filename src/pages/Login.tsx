@@ -25,36 +25,39 @@ const Login = () => {
     });
   }, [navigate]);
 
-  const handleSendCode = async (e: React.FormEvent) => {
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          shouldCreateUser: false,
-        },
-      });
+      // Check if email exists in agency_login_codes
+      const { data: codeData, error } = await supabase
+        .from("agency_login_codes")
+        .select("id, email")
+        .eq("email", email.toLowerCase().trim())
+        .eq("is_active", true)
+        .single();
 
-      if (error) {
+      if (error || !codeData) {
         toast({
-          title: "Erro ao enviar código",
-          description: error.message,
+          title: "Email não encontrado",
+          description: "Este email não está cadastrado como agência parceira.",
           variant: "destructive",
         });
+        setIsLoading(false);
         return;
       }
 
-      toast({
-        title: "Código enviado!",
-        description: "Verifique seu email para obter o código de acesso.",
-      });
+      // Email exists, proceed to code step
       setStep("code");
+      toast({
+        title: "Email verificado",
+        description: "Digite o código de acesso da sua agência.",
+      });
     } catch (error) {
       toast({
         title: "Erro inesperado",
-        description: "Ocorreu um erro ao tentar enviar o código.",
+        description: "Ocorreu um erro ao verificar o email.",
         variant: "destructive",
       });
     } finally {
@@ -67,28 +70,51 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.verifyOtp({
-        email,
-        token: code,
-        type: "email",
-      });
+      // Verify the code matches for this email
+      const { data: codeData, error } = await supabase
+        .from("agency_login_codes")
+        .select("id, email, code, agency_id")
+        .eq("email", email.toLowerCase().trim())
+        .eq("code", code.trim())
+        .eq("is_active", true)
+        .single();
 
-      if (error) {
+      if (error || !codeData) {
         toast({
           title: "Código inválido",
-          description: error.message,
+          description: "O código informado está incorreto.",
           variant: "destructive",
         });
+        setIsLoading(false);
         return;
       }
 
-      if (data.user) {
+      // Code is correct, sign in with OTP (passwordless)
+      const { error: signInError } = await supabase.auth.signInWithOtp({
+        email: email.toLowerCase().trim(),
+        options: {
+          shouldCreateUser: true,
+          data: {
+            agency_id: codeData.agency_id,
+          }
+        },
+      });
+
+      if (signInError) {
         toast({
-          title: "Login realizado com sucesso!",
-          description: "Bem-vindo ao painel.",
+          title: "Erro ao fazer login",
+          description: signInError.message,
+          variant: "destructive",
         });
-        navigate("/");
+        setIsLoading(false);
+        return;
       }
+
+      toast({
+        title: "Código verificado!",
+        description: "Verifique seu email para confirmar o acesso.",
+      });
+      
     } catch (error) {
       toast({
         title: "Erro inesperado",
@@ -234,13 +260,15 @@ const Login = () => {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
             >
-              Acesse sua conta usando apenas seu email
+              {step === "email" 
+                ? "Acesse sua conta usando seu email e código da agência" 
+                : "Digite o código de 6 dígitos da sua agência"}
             </motion.p>
           </div>
 
           {step === "email" ? (
             /* Email Step */
-            <form onSubmit={handleSendCode} className="space-y-6">
+            <form onSubmit={handleEmailSubmit} className="space-y-6">
               <motion.div 
                 className="space-y-2"
                 initial={{ opacity: 0, x: -10 }}
@@ -252,12 +280,12 @@ const Login = () => {
                   className="text-neutral-600 text-sm font-medium flex items-center gap-2"
                 >
                   <Mail size={14} className="text-neutral-400" />
-                  Seu Email
+                  Email da Agência
                 </Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="seu@email.com"
+                  placeholder="agencia@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -279,11 +307,11 @@ const Login = () => {
                   {isLoading ? (
                     <span className="flex items-center gap-2">
                       <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Enviando...
+                      Verificando...
                     </span>
                   ) : (
                     <span className="flex items-center gap-2">
-                      Entrar com Email
+                      Continuar
                       <ArrowRight size={16} />
                     </span>
                   )}
@@ -301,7 +329,7 @@ const Login = () => {
                   className="text-sm text-neutral-500 hover:text-neutral-700 font-medium transition-colors flex items-center gap-2"
                 >
                   <KeyRound size={14} />
-                  Esqueci minha senha
+                  Esqueci meu código
                 </button>
               </motion.div>
             </form>
@@ -314,7 +342,7 @@ const Login = () => {
                 className="bg-neutral-100/50 rounded-xl p-4 mb-4 text-center"
               >
                 <p className="text-sm text-neutral-600">
-                  Enviamos um código para <span className="font-semibold text-neutral-900">{email}</span>
+                  Acessando: <span className="font-semibold text-neutral-900">{email}</span>
                 </p>
               </motion.div>
 
@@ -329,17 +357,25 @@ const Login = () => {
                   className="text-neutral-600 text-sm font-medium flex items-center gap-2"
                 >
                   <KeyRound size={14} className="text-neutral-400" />
-                  Código de Verificação
+                  Código da Agência
                 </Label>
                 <Input
                   id="code"
                   type="text"
-                  placeholder="Digite o código"
+                  placeholder="000000"
                   value={code}
-                  onChange={(e) => setCode(e.target.value)}
+                  onChange={(e) => {
+                    // Only allow numbers and max 6 digits
+                    const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                    setCode(value);
+                  }}
                   required
-                  className="h-12 bg-neutral-50/50 border-neutral-200 text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-400 focus:ring-neutral-200 rounded-xl transition-all text-base text-center tracking-widest font-mono"
+                  maxLength={6}
+                  className="h-14 bg-neutral-50/50 border-neutral-200 text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-400 focus:ring-neutral-200 rounded-xl transition-all text-2xl text-center tracking-[0.5em] font-mono"
                 />
+                <p className="text-xs text-neutral-400 text-center mt-2">
+                  O código de 6 dígitos foi fornecido pela administração
+                </p>
               </motion.div>
 
               <motion.div
@@ -351,24 +387,27 @@ const Login = () => {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setStep("email")}
+                  onClick={() => {
+                    setStep("email");
+                    setCode("");
+                  }}
                   className="flex-1 h-12 border-neutral-200 text-neutral-600 hover:bg-neutral-50 rounded-xl text-sm"
                 >
                   Voltar
                 </Button>
                 <Button
                   type="submit"
-                  disabled={isLoading}
-                  className="flex-1 h-12 bg-neutral-900 hover:bg-neutral-800 text-white font-medium rounded-xl shadow-lg shadow-neutral-900/10 transition-all text-sm"
+                  disabled={isLoading || code.length !== 6}
+                  className="flex-1 h-12 bg-neutral-900 hover:bg-neutral-800 text-white font-medium rounded-xl shadow-lg shadow-neutral-900/10 transition-all text-sm disabled:opacity-50"
                 >
                   {isLoading ? (
                     <span className="flex items-center gap-2">
                       <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Verificando...
+                      Entrando...
                     </span>
                   ) : (
                     <span className="flex items-center gap-2">
-                      Verificar
+                      Entrar
                       <ArrowRight size={16} />
                     </span>
                   )}
@@ -383,10 +422,9 @@ const Login = () => {
               >
                 <button
                   type="button"
-                  onClick={handleSendCode}
                   className="text-sm text-neutral-500 hover:text-neutral-700 font-medium transition-colors"
                 >
-                  Não recebeu? Reenviar código
+                  Esqueceu o código? Contate a administração
                 </button>
               </motion.div>
             </form>
