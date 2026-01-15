@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, ArrowRight, KeyRound } from "lucide-react";
 import { branding } from "@/config/branding";
+import teamPhoto from "@/assets/team-photo.png";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -161,32 +162,49 @@ const Login = () => {
 
       {/* Main Content */}
       <div className="flex-1 flex relative">
-        {/* Rotating red organic element in background */}
-        <motion.div
-          className="absolute left-1/4 top-1/2 -translate-y-1/2 pointer-events-none"
-          style={{
-            width: '800px',
-            height: '800px',
-            background: 'linear-gradient(135deg, #8B0000 0%, #B22222 50%, #8B0000 100%)',
-            borderRadius: '60% 40% 55% 45% / 50% 60% 40% 50%',
-            opacity: 0.08,
-          }}
-          animate={{ rotate: 360 }}
-          transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
-        />
-        
-        <motion.div
-          className="absolute left-1/3 top-1/2 -translate-y-1/2 pointer-events-none"
-          style={{
-            width: '600px',
-            height: '600px',
-            background: 'linear-gradient(225deg, #8B0000 0%, #DC143C 50%, #8B0000 100%)',
-            borderRadius: '45% 55% 40% 60% / 55% 45% 60% 40%',
-            opacity: 0.05,
-          }}
-          animate={{ rotate: -360 }}
-          transition={{ duration: 80, repeat: Infinity, ease: "linear" }}
-        />
+        {/* Left side - Image with rotating background */}
+        <div className="hidden lg:flex flex-1 items-start justify-start pl-8 pt-4 relative">
+          {/* Rotating red organic element as background */}
+          <motion.div
+            className="absolute left-4 top-0 pointer-events-none"
+            style={{
+              width: '420px',
+              height: '420px',
+              background: 'linear-gradient(135deg, #8B0000 0%, #B22222 50%, #8B0000 100%)',
+              borderRadius: '60% 40% 55% 45% / 50% 60% 40% 50%',
+              opacity: 0.9,
+            }}
+            animate={{ rotate: 360 }}
+            transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
+          />
+          
+          <motion.div
+            className="absolute left-12 top-8 pointer-events-none"
+            style={{
+              width: '350px',
+              height: '350px',
+              background: 'linear-gradient(225deg, #8B0000 0%, #DC143C 50%, #8B0000 100%)',
+              borderRadius: '45% 55% 40% 60% / 55% 45% 60% 40%',
+              opacity: 0.6,
+            }}
+            animate={{ rotate: -360 }}
+            transition={{ duration: 80, repeat: Infinity, ease: "linear" }}
+          />
+
+          {/* Photo overlapping the rotating elements */}
+          <motion.div
+            className="relative z-10 mt-8 ml-6"
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.3 }}
+          >
+            <img 
+              src={teamPhoto} 
+              alt="Equipe trabalhando" 
+              className="w-72 h-72 object-cover rounded-3xl shadow-2xl shadow-black/30 border-4 border-white"
+            />
+          </motion.div>
+        </div>
 
         {/* Right side - Card positioned below logo */}
         <div className="flex-1 flex justify-end items-start pt-8 pr-12 relative z-10">
