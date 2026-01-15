@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -13,15 +13,17 @@ import {
   X,
   TrendingUp,
   Bell,
-  Palette
+  User,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAgency } from '@/contexts/AgencyContext';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
 import { branding } from '@/config/branding';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAgencySettings, applyBrandingToDocument } from '@/hooks/useAgencySettings';
+import logoF from '@/assets/logo-f.png';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -42,6 +44,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const { branding: agencyBranding } = useAgencySettings();
   const location = useLocation();
   const navigate = useNavigate();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Apply agency branding when it changes
@@ -57,160 +60,236 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Top Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-card border-b border-border shadow-sm">
-        <div className="flex items-center justify-between px-4 h-16">
-          {/* Logo & Agency Name */}
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
-            
-            <Link to="/" className="flex items-center gap-3 group">
-              {agency?.logo_url || agencyBranding?.logoUrl ? (
-                <img 
-                  src={agency?.logo_url || agencyBranding?.logoUrl || ''} 
-                  alt={agency?.name || 'Logo'} 
-                  className="h-9 w-auto object-contain"
-                />
-              ) : (
-                <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/25">
-                  <span className="text-primary-foreground font-bold text-lg">
-                    {agency?.name?.charAt(0) || branding.companyShortName}
-                  </span>
-                </div>
-              )}
-              <div className="hidden sm:block">
-                <h1 className="text-foreground font-bold text-lg leading-tight group-hover:text-primary transition-colors">
-                  {agencyBranding?.companyName || agency?.name || branding.companyName}
-                </h1>
-                <p className="text-muted-foreground text-xs">
-                  {agencyBranding?.companyTagline || branding.companyTagline}
-                </p>
+    <div className="min-h-screen bg-background flex">
+      {/* Sidebar - Desktop */}
+      <aside 
+        className={cn(
+          "hidden lg:flex flex-col fixed left-0 top-0 h-full bg-card border-r border-border z-40 transition-all duration-300",
+          sidebarCollapsed ? "w-16" : "w-60"
+        )}
+      >
+        {/* Logo Section */}
+        <div className="h-16 flex items-center justify-between px-4 border-b border-border">
+          {!sidebarCollapsed && (
+            <Link to="/" className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-xl bg-primary flex items-center justify-center">
+                <img src={logoF} alt="Logo" className="h-6 w-6 object-contain" />
+              </div>
+              <span className="font-semibold text-foreground">
+                {agencyBranding?.companyName || agency?.name || 'LiveMetrics'}
+              </span>
+            </Link>
+          )}
+          {sidebarCollapsed && (
+            <Link to="/" className="mx-auto">
+              <div className="h-9 w-9 rounded-xl bg-primary flex items-center justify-center">
+                <img src={logoF} alt="Logo" className="h-6 w-6 object-contain" />
               </div>
             </Link>
+          )}
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
+          {navigation.map((item) => {
+            const isActive = location.pathname === item.href;
+            return (
+              <Link
+                key={item.name}
+                to={item.href}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group",
+                  isActive 
+                    ? "bg-primary text-primary-foreground shadow-sm" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                )}
+                title={sidebarCollapsed ? item.name : undefined}
+              >
+                <item.icon className={cn(
+                  "h-5 w-5 flex-shrink-0",
+                  isActive && "text-primary-foreground"
+                )} />
+                {!sidebarCollapsed && <span>{item.name}</span>}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Bottom Section */}
+        <div className="p-2 border-t border-border space-y-1">
+          <Link
+            to="/configuracoes"
+            className={cn(
+              "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-muted-foreground hover:text-foreground hover:bg-muted",
+              location.pathname === '/configuracoes' && "bg-muted text-foreground"
+            )}
+            title={sidebarCollapsed ? "Configurações" : undefined}
+          >
+            <Settings className="h-5 w-5" />
+            {!sidebarCollapsed && <span>Configurações</span>}
+          </Link>
+
+          {isSuperAdmin && (
+            <Link
+              to="/admin"
+              className={cn(
+                "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-muted-foreground hover:text-foreground hover:bg-muted",
+                location.pathname === '/admin' && "bg-muted text-foreground"
+              )}
+              title={sidebarCollapsed ? "Admin" : undefined}
+            >
+              <Users className="h-5 w-5" />
+              {!sidebarCollapsed && <span>Admin</span>}
+            </Link>
+          )}
+
+          {/* Collapse Toggle */}
+          <button
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-muted-foreground hover:text-foreground hover:bg-muted w-full"
+          >
+            {sidebarCollapsed ? (
+              <ChevronRight className="h-5 w-5" />
+            ) : (
+              <>
+                <ChevronLeft className="h-5 w-5" />
+                <span>Recolher</span>
+              </>
+            )}
+          </button>
+        </div>
+      </aside>
+
+      {/* Mobile Menu Button */}
+      <button
+        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-xl bg-card border border-border shadow-sm"
+      >
+        {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+      </button>
+
+      {/* Mobile Sidebar Overlay */}
+      {mobileMenuOpen && (
+        <div 
+          className="lg:hidden fixed inset-0 bg-black/50 z-40"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Mobile Sidebar */}
+      <aside 
+        className={cn(
+          "lg:hidden fixed left-0 top-0 h-full w-64 bg-card border-r border-border z-50 transform transition-transform duration-300",
+          mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
+        <div className="h-16 flex items-center px-4 border-b border-border">
+          <Link to="/" className="flex items-center gap-3" onClick={() => setMobileMenuOpen(false)}>
+            <div className="h-9 w-9 rounded-xl bg-primary flex items-center justify-center">
+              <img src={logoF} alt="Logo" className="h-6 w-6 object-contain" />
+            </div>
+            <span className="font-semibold text-foreground">
+              {agencyBranding?.companyName || agency?.name || 'LiveMetrics'}
+            </span>
+          </Link>
+        </div>
+
+        <nav className="py-4 px-2 space-y-1">
+          {navigation.map((item) => {
+            const isActive = location.pathname === item.href;
+            return (
+              <Link
+                key={item.name}
+                to={item.href}
+                onClick={() => setMobileMenuOpen(false)}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
+                  isActive 
+                    ? "bg-primary text-primary-foreground" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                )}
+              >
+                <item.icon className="h-5 w-5" />
+                <span>{item.name}</span>
+              </Link>
+            );
+          })}
+
+          <div className="h-px bg-border my-2" />
+
+          <Link
+            to="/configuracoes"
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted"
+          >
+            <Settings className="h-5 w-5" />
+            <span>Configurações</span>
+          </Link>
+
+          {isSuperAdmin && (
+            <Link
+              to="/admin"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted"
+            >
+              <Users className="h-5 w-5" />
+              <span>Admin</span>
+            </Link>
+          )}
+        </nav>
+      </aside>
+
+      {/* Main Content */}
+      <div className={cn(
+        "flex-1 flex flex-col min-h-screen transition-all duration-300",
+        sidebarCollapsed ? "lg:ml-16" : "lg:ml-60"
+      )}>
+        {/* Top Header */}
+        <header className="h-16 bg-card border-b border-border flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30">
+          <div className="lg:hidden w-10" /> {/* Spacer for mobile menu button */}
+          
+          <div className="hidden lg:block">
+            <p className="text-sm text-muted-foreground">
+              {agencyBranding?.companyTagline || branding.companyTagline}
+            </p>
           </div>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-1">
-            {navigation.map((item) => {
-              const isActive = location.pathname === item.href;
-              return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={cn(
-                    "px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200",
-                    isActive 
-                      ? "bg-primary text-primary-foreground shadow-md" 
-                      : "text-muted-foreground hover:text-foreground hover:bg-accent"
-                  )}
-                >
-                  <item.icon className="inline-block h-4 w-4 mr-1.5" />
-                  {item.name}
-                </Link>
-              );
-            })}
-          </nav>
-
-          {/* User Menu */}
+          {/* Right Side Actions */}
           <div className="flex items-center gap-2">
-            {/* Theme Toggle */}
             <ThemeToggle />
 
-            {/* Notifications Bell */}
             <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-foreground">
               <Bell className="h-5 w-5" />
-              <span className="absolute top-1 right-1 h-2 w-2 bg-primary rounded-full animate-pulse" />
+              <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-tiktok rounded-full" />
             </Button>
 
-            {/* Settings */}
-            <Link to="/configuracoes">
-              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
-                <Palette className="h-5 w-5" />
+            <Link to="/perfil">
+              <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground">
+                <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center">
+                  <User className="h-4 w-4" />
+                </div>
+                <span className="hidden sm:inline text-sm max-w-[120px] truncate">
+                  {profile?.full_name || profile?.email?.split('@')[0] || 'Usuário'}
+                </span>
               </Button>
             </Link>
-
-            {isSuperAdmin && (
-              <Link to="/admin">
-                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-                  <Settings className="h-4 w-4 mr-1" />
-                  <span className="hidden sm:inline">Admin</span>
-                </Button>
-              </Link>
-            )}
-            
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted">
-              <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-medium shadow-sm">
-                {profile?.email?.charAt(0).toUpperCase() || 'U'}
-              </div>
-              <span className="text-foreground text-sm max-w-32 truncate">{profile?.email}</span>
-            </div>
             
             <Button 
               variant="ghost" 
-              size="sm" 
+              size="icon"
               onClick={handleSignOut}
               className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
             >
-              <LogOut className="h-4 w-4" />
-              <span className="hidden sm:inline ml-1">Sair</span>
+              <LogOut className="h-5 w-5" />
             </Button>
           </div>
-        </div>
+        </header>
 
-        {/* Mobile Navigation */}
-        {mobileMenuOpen && (
-          <nav className="lg:hidden border-t border-border bg-card py-2">
-            {navigation.map((item) => {
-              const isActive = location.pathname === item.href;
-              return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors",
-                    isActive 
-                      ? "bg-accent text-primary border-l-2 border-primary" 
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  )}
-                >
-                  <item.icon className="h-5 w-5" />
-                  {item.name}
-                </Link>
-              );
-            })}
-            <Link
-              to="/configuracoes"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted border-t border-border mt-2"
-            >
-              <Palette className="h-5 w-5" />
-              Configurações
-            </Link>
-            {isSuperAdmin && (
-              <Link
-                to="/admin"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted"
-              >
-                <Settings className="h-5 w-5" />
-                Administração
-              </Link>
-            )}
-          </nav>
-        )}
-      </header>
-
-      {/* Main Content */}
-      <main className="pt-16 min-h-screen">
-        {children}
-      </main>
+        {/* Page Content */}
+        <main className="flex-1 p-4 lg:p-6">
+          {children}
+        </main>
+      </div>
     </div>
   );
 };

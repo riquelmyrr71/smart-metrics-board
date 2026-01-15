@@ -13,6 +13,7 @@ import CreatorsAnalysisDashboard from "./pages/CreatorsAnalysisDashboard";
 import OverviewDashboard from "./pages/OverviewDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import AgencySettings from "./pages/AgencySettings";
+import ProfilePage from "./pages/ProfilePage";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import AboutPage from "./pages/AboutPage";
@@ -45,6 +46,7 @@ const App = () => (
             <Route path="/criadores-analise" element={<ProtectedRoute><CreatorsAnalysisDashboard /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
             <Route path="/configuracoes" element={<ProtectedRoute><AgencySettings /></ProtectedRoute>} />
+            <Route path="/perfil" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
