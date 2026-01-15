@@ -6,14 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, ArrowRight } from "lucide-react";
+import { Mail, ArrowRight, KeyRound } from "lucide-react";
 import { branding } from "@/config/branding";
 
 const Login = () => {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [step, setStep] = useState<"email" | "code">("email");
+  const [code, setCode] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -25,19 +25,57 @@ const Login = () => {
     });
   }, [navigate]);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSendCode = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithOtp({
         email,
-        password,
+        options: {
+          shouldCreateUser: false,
+        },
       });
 
       if (error) {
         toast({
-          title: "Erro ao fazer login",
+          title: "Erro ao enviar código",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Código enviado!",
+        description: "Verifique seu email para obter o código de acesso.",
+      });
+      setStep("code");
+    } catch (error) {
+      toast({
+        title: "Erro inesperado",
+        description: "Ocorreu um erro ao tentar enviar o código.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        email,
+        token: code,
+        type: "email",
+      });
+
+      if (error) {
+        toast({
+          title: "Código inválido",
           description: error.message,
           variant: "destructive",
         });
@@ -54,7 +92,7 @@ const Login = () => {
     } catch (error) {
       toast({
         title: "Erro inesperado",
-        description: "Ocorreu um erro ao tentar fazer login.",
+        description: "Ocorreu um erro ao verificar o código.",
         variant: "destructive",
       });
     } finally {
@@ -122,10 +160,10 @@ const Login = () => {
       </motion.header>
 
       {/* Main Content */}
-      <div className="flex-1 flex items-center justify-center relative">
+      <div className="flex-1 flex relative">
         {/* Rotating red organic element in background */}
         <motion.div
-          className="absolute pointer-events-none"
+          className="absolute left-1/4 top-1/2 -translate-y-1/2 pointer-events-none"
           style={{
             width: '800px',
             height: '800px',
@@ -138,7 +176,7 @@ const Login = () => {
         />
         
         <motion.div
-          className="absolute pointer-events-none"
+          className="absolute left-1/3 top-1/2 -translate-y-1/2 pointer-events-none"
           style={{
             width: '600px',
             height: '600px',
@@ -150,19 +188,19 @@ const Login = () => {
           transition={{ duration: 80, repeat: Infinity, ease: "linear" }}
         />
 
-        <div className="relative z-10 w-full max-w-sm px-6">
-          {/* Login Card */}
+        {/* Right side - Card positioned below logo */}
+        <div className="flex-1 flex justify-end items-start pt-8 pr-12 relative z-10">
           <motion.div 
-            className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl shadow-black/5 border border-gray-100 p-8"
-            initial={{ opacity: 0, y: 30, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
+            className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl shadow-black/10 border border-gray-100 p-10 w-full max-w-md"
+            initial={{ opacity: 0, x: 30, scale: 0.95 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
           >
-            {/* Header */}
-            <div className="text-center mb-8">
+            {/* Header Text */}
+            <div className="mb-8">
               <motion.h1 
-                className="text-2xl font-semibold text-gray-900 mb-2"
-                style={{ fontFamily: "'Inter', sans-serif", letterSpacing: '-0.02em' }}
+                className="text-3xl font-bold text-gray-900 mb-3"
+                style={{ fontFamily: "'Inter', sans-serif", letterSpacing: '-0.03em' }}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.2 }}
@@ -170,127 +208,192 @@ const Login = () => {
                 Já sou uma Agência Parceira
               </motion.h1>
               <motion.p 
-                className="text-sm text-gray-500 leading-relaxed"
+                className="text-base text-gray-500 leading-relaxed"
                 style={{ fontFamily: "'Inter', sans-serif" }}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3 }}
               >
-                Plataforma de gerenciamento para agências de live do TikTok
+                Plataforma de gerenciamento para agências de live do TikTok. Acesse sua conta usando apenas seu email.
               </motion.p>
             </div>
 
-            {/* Form */}
-            <form onSubmit={handleLogin} className="space-y-5">
-              <motion.div 
-                className="space-y-2"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4 }}
-              >
-                <Label 
-                  htmlFor="email" 
-                  className="text-gray-700 text-sm font-medium"
-                  style={{ fontFamily: "'Inter', sans-serif" }}
+            {step === "email" ? (
+              /* Email Step */
+              <form onSubmit={handleSendCode} className="space-y-6">
+                <motion.div 
+                  className="space-y-2"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.4 }}
                 >
-                  Email
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="seu@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="h-11 bg-gray-50/50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-[#8B0000] focus:ring-[#8B0000]/20 rounded-xl transition-all"
-                  style={{ fontFamily: "'Inter', sans-serif" }}
-                />
-              </motion.div>
-
-              <motion.div 
-                className="space-y-2"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.5 }}
-              >
-                <Label 
-                  htmlFor="password" 
-                  className="text-gray-700 text-sm font-medium"
-                  style={{ fontFamily: "'Inter', sans-serif" }}
-                >
-                  Senha
-                </Label>
-                <div className="relative">
+                  <Label 
+                    htmlFor="email" 
+                    className="text-gray-700 text-sm font-medium flex items-center gap-2"
+                    style={{ fontFamily: "'Inter', sans-serif" }}
+                  >
+                    <Mail size={16} className="text-[#8B0000]" />
+                    Seu Email
+                  </Label>
                   <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    id="email"
+                    type="email"
+                    placeholder="seu@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="h-11 bg-gray-50/50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-[#8B0000] focus:ring-[#8B0000]/20 pr-11 rounded-xl transition-all"
+                    className="h-12 bg-gray-50/50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-[#8B0000] focus:ring-[#8B0000]/20 rounded-xl transition-all text-base"
                     style={{ fontFamily: "'Inter', sans-serif" }}
                   />
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="pt-2"
+                >
+                  <Button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-48 h-11 bg-[#8B0000] hover:bg-[#6B0000] text-white font-medium rounded-xl shadow-lg shadow-[#8B0000]/20 hover:shadow-[#8B0000]/30 transition-all text-sm"
+                    style={{ fontFamily: "'Inter', sans-serif" }}
+                  >
+                    {isLoading ? (
+                      <span className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Enviando...
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-2">
+                        Entrar com Email
+                        <ArrowRight size={16} />
+                      </span>
+                    )}
+                  </Button>
+                </motion.div>
+
+                <motion.div
+                  className="pt-4 border-t border-gray-100"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.6 }}
+                >
                   <button
                     type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    className="text-sm text-[#8B0000] hover:text-[#6B0000] font-medium transition-colors flex items-center gap-2"
+                    style={{ fontFamily: "'Inter', sans-serif" }}
                   >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    <KeyRound size={14} />
+                    Esqueci minha senha
                   </button>
-                </div>
-              </motion.div>
-
-              <motion.button
-                type="button"
-                className="text-xs text-[#8B0000] hover:text-[#6B0000] font-medium transition-colors"
-                style={{ fontFamily: "'Inter', sans-serif" }}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.55 }}
-              >
-                Esqueci minha senha
-              </motion.button>
-
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
-              >
-                <Button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full h-10 bg-[#8B0000] hover:bg-[#6B0000] text-white font-medium rounded-xl shadow-lg shadow-[#8B0000]/20 hover:shadow-[#8B0000]/30 transition-all text-sm"
-                  style={{ fontFamily: "'Inter', sans-serif" }}
+                </motion.div>
+              </form>
+            ) : (
+              /* Code Verification Step */
+              <form onSubmit={handleVerifyCode} className="space-y-6">
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="bg-[#8B0000]/5 rounded-xl p-4 mb-4"
                 >
-                  {isLoading ? (
-                    <span className="flex items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Entrando...
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-2">
-                      Entrar
-                      <ArrowRight size={16} />
-                    </span>
-                  )}
-                </Button>
-              </motion.div>
-            </form>
-          </motion.div>
+                  <p className="text-sm text-gray-600" style={{ fontFamily: "'Inter', sans-serif" }}>
+                    Enviamos um código para <span className="font-semibold text-[#8B0000]">{email}</span>
+                  </p>
+                </motion.div>
 
-          {/* Footer */}
-          <motion.p 
-            className="text-center text-xs text-gray-400 mt-6"
-            style={{ fontFamily: "'Inter', sans-serif" }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.7 }}
-          >
-            © {new Date().getFullYear()} {branding.companyName}
-          </motion.p>
+                <motion.div 
+                  className="space-y-2"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <Label 
+                    htmlFor="code" 
+                    className="text-gray-700 text-sm font-medium flex items-center gap-2"
+                    style={{ fontFamily: "'Inter', sans-serif" }}
+                  >
+                    <KeyRound size={16} className="text-[#8B0000]" />
+                    Código de Verificação
+                  </Label>
+                  <Input
+                    id="code"
+                    type="text"
+                    placeholder="Digite o código"
+                    value={code}
+                    onChange={(e) => setCode(e.target.value)}
+                    required
+                    className="h-12 bg-gray-50/50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-[#8B0000] focus:ring-[#8B0000]/20 rounded-xl transition-all text-base text-center tracking-widest font-mono"
+                    style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                  />
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="flex gap-3 pt-2"
+                >
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setStep("email")}
+                    className="h-11 px-6 border-gray-200 text-gray-600 hover:bg-gray-50 rounded-xl text-sm"
+                    style={{ fontFamily: "'Inter', sans-serif" }}
+                  >
+                    Voltar
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-40 h-11 bg-[#8B0000] hover:bg-[#6B0000] text-white font-medium rounded-xl shadow-lg shadow-[#8B0000]/20 hover:shadow-[#8B0000]/30 transition-all text-sm"
+                    style={{ fontFamily: "'Inter', sans-serif" }}
+                  >
+                    {isLoading ? (
+                      <span className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Verificando...
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-2">
+                        Verificar
+                        <ArrowRight size={16} />
+                      </span>
+                    )}
+                  </Button>
+                </motion.div>
+
+                <motion.button
+                  type="button"
+                  onClick={handleSendCode}
+                  className="text-sm text-gray-500 hover:text-[#8B0000] font-medium transition-colors"
+                  style={{ fontFamily: "'Inter', sans-serif" }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  Não recebeu? Reenviar código
+                </motion.button>
+              </form>
+            )}
+          </motion.div>
         </div>
       </div>
+
+      {/* Footer */}
+      <motion.footer 
+        className="py-4 text-center relative z-10"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.7 }}
+      >
+        <p 
+          className="text-xs text-gray-400"
+          style={{ fontFamily: "'Inter', sans-serif" }}
+        >
+          © {new Date().getFullYear()} {branding.companyName}. Todos os direitos reservados.
+        </p>
+      </motion.footer>
     </div>
   );
 };
