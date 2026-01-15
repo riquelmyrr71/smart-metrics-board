@@ -7,8 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, ArrowRight, KeyRound } from "lucide-react";
-import { branding } from "@/config/branding";
-import teamPhoto from "@/assets/team-photo.png";
+import logoImage from "@/assets/logo-curli.png";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -102,300 +101,300 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col relative overflow-hidden">
-      {/* Stylish Header */}
+    <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-neutral-100 flex flex-col relative overflow-hidden">
+      {/* Subtle organic background shapes */}
+      <div 
+        className="absolute top-0 right-0 w-[60%] h-full pointer-events-none"
+        style={{
+          background: 'radial-gradient(ellipse at 100% 0%, rgba(30, 30, 30, 0.03) 0%, transparent 60%)',
+        }}
+      />
+      
+      {/* Header with dark curved section */}
       <motion.header 
-        className="w-full px-8 py-4 flex items-center justify-between relative z-20"
+        className="w-full relative z-20"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <div className="flex items-center gap-3">
+        {/* Dark curved header background */}
+        <div 
+          className="absolute top-0 left-0 w-full h-24"
+          style={{
+            background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%)',
+            borderRadius: '0 0 40% 60% / 0 0 100% 100%',
+          }}
+        />
+        
+        <div className="relative px-8 py-5 flex items-center justify-between">
+          {/* Logo */}
           <motion.div 
-            className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#8B0000] to-[#B22222] flex items-center justify-center shadow-lg shadow-[#8B0000]/20"
-            whileHover={{ scale: 1.05, rotate: 5 }}
+            className="flex items-center gap-3"
+            whileHover={{ scale: 1.02 }}
             transition={{ type: "spring", stiffness: 400 }}
           >
-            <span className="text-white font-bold text-lg" style={{ fontFamily: "'Inter', sans-serif" }}>C</span>
-          </motion.div>
-          <span 
-            className="text-xl font-semibold text-gray-900"
-            style={{ fontFamily: "'Inter', sans-serif", letterSpacing: '-0.02em' }}
-          >
-            {branding.companyName}
-          </span>
-        </div>
-        
-        <nav className="hidden md:flex items-center gap-6">
-          <a 
-            href="#" 
-            className="text-sm text-gray-500 hover:text-gray-900 transition-colors font-medium"
-            style={{ fontFamily: "'Inter', sans-serif" }}
-          >
-            Sobre
-          </a>
-          <a 
-            href="#" 
-            className="text-sm text-gray-500 hover:text-gray-900 transition-colors font-medium"
-            style={{ fontFamily: "'Inter', sans-serif" }}
-          >
-            Recursos
-          </a>
-          <a 
-            href="#" 
-            className="text-sm text-gray-500 hover:text-gray-900 transition-colors font-medium"
-            style={{ fontFamily: "'Inter', sans-serif" }}
-          >
-            Contato
-          </a>
-        </nav>
-
-        <Button 
-          variant="outline"
-          className="px-6 py-2 border-[#8B0000]/30 text-[#8B0000] hover:bg-[#8B0000] hover:text-white transition-all duration-300 font-medium rounded-full text-sm"
-          style={{ fontFamily: "'Inter', sans-serif" }}
-          onClick={() => navigate("/register")}
-        >
-          Cadastrar-se
-        </Button>
-      </motion.header>
-
-      {/* Main Content */}
-      <div className="flex-1 flex relative">
-        {/* Left side - Image with rotating background */}
-        <div className="hidden lg:flex flex-1 items-start justify-start pl-8 pt-4 relative">
-          {/* Rotating red organic element as background */}
-          <motion.div
-            className="absolute left-4 top-0 pointer-events-none"
-            style={{
-              width: '420px',
-              height: '420px',
-              background: 'linear-gradient(135deg, #8B0000 0%, #B22222 50%, #8B0000 100%)',
-              borderRadius: '60% 40% 55% 45% / 50% 60% 40% 50%',
-              opacity: 0.9,
-            }}
-            animate={{ rotate: 360 }}
-            transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
-          />
-          
-          <motion.div
-            className="absolute left-12 top-8 pointer-events-none"
-            style={{
-              width: '350px',
-              height: '350px',
-              background: 'linear-gradient(225deg, #8B0000 0%, #DC143C 50%, #8B0000 100%)',
-              borderRadius: '45% 55% 40% 60% / 55% 45% 60% 40%',
-              opacity: 0.6,
-            }}
-            animate={{ rotate: -360 }}
-            transition={{ duration: 80, repeat: Infinity, ease: "linear" }}
-          />
-
-          {/* Photo overlapping the rotating elements */}
-          <motion.div
-            className="relative z-10 mt-8 ml-6"
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.3 }}
-          >
             <img 
-              src={teamPhoto} 
-              alt="Equipe trabalhando" 
-              className="w-72 h-72 object-cover rounded-3xl shadow-2xl shadow-black/30 border-4 border-white"
+              src={logoImage} 
+              alt="Logo" 
+              className="h-10 w-auto object-contain"
             />
           </motion.div>
-        </div>
+          
+          {/* Navigation */}
+          <nav className="hidden md:flex items-center gap-8">
+            <a 
+              href="#" 
+              className="text-sm text-white/70 hover:text-white transition-colors font-medium tracking-wide"
+            >
+              Sobre
+            </a>
+            <a 
+              href="#" 
+              className="text-sm text-white/70 hover:text-white transition-colors font-medium tracking-wide"
+            >
+              Recursos
+            </a>
+            <a 
+              href="#" 
+              className="text-sm text-white/70 hover:text-white transition-colors font-medium tracking-wide"
+            >
+              Contato
+            </a>
+          </nav>
 
-        {/* Right side - Card positioned below logo */}
-        <div className="flex-1 flex justify-end items-start pt-8 pr-12 relative z-10">
-          <motion.div 
-            className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl shadow-black/10 border border-gray-100 p-10 w-full max-w-md"
-            initial={{ opacity: 0, x: 30, scale: 0.95 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
+          {/* CTA Button */}
+          <Button 
+            variant="outline"
+            className="px-6 py-2 bg-transparent border border-white/20 text-white hover:bg-white hover:text-neutral-900 transition-all duration-300 font-medium rounded-full text-sm backdrop-blur-sm"
+            onClick={() => navigate("/register")}
           >
-            {/* Header Text */}
-            <div className="mb-8">
-              <motion.h1 
-                className="text-3xl font-bold text-gray-900 mb-3"
-                style={{ fontFamily: "'Inter', sans-serif", letterSpacing: '-0.03em' }}
+            Cadastrar-se
+          </Button>
+        </div>
+      </motion.header>
+
+      {/* Main Content - Centered */}
+      <div className="flex-1 flex items-center justify-center relative px-6">
+        {/* Rotating soft red organic elements around the card */}
+        <motion.div
+          className="absolute pointer-events-none"
+          style={{
+            width: '550px',
+            height: '550px',
+            background: 'linear-gradient(135deg, rgba(139, 0, 0, 0.08) 0%, rgba(178, 34, 34, 0.12) 50%, rgba(139, 0, 0, 0.06) 100%)',
+            borderRadius: '60% 40% 55% 45% / 50% 60% 40% 50%',
+            filter: 'blur(2px)',
+          }}
+          animate={{ rotate: 360 }}
+          transition={{ duration: 80, repeat: Infinity, ease: "linear" }}
+        />
+        
+        <motion.div
+          className="absolute pointer-events-none"
+          style={{
+            width: '480px',
+            height: '480px',
+            background: 'linear-gradient(225deg, rgba(139, 0, 0, 0.05) 0%, rgba(220, 20, 60, 0.08) 50%, rgba(139, 0, 0, 0.04) 100%)',
+            borderRadius: '45% 55% 40% 60% / 55% 45% 60% 40%',
+            filter: 'blur(1px)',
+          }}
+          animate={{ rotate: -360 }}
+          transition={{ duration: 100, repeat: Infinity, ease: "linear" }}
+        />
+
+        <motion.div
+          className="absolute pointer-events-none"
+          style={{
+            width: '620px',
+            height: '620px',
+            background: 'linear-gradient(45deg, rgba(30, 30, 30, 0.02) 0%, rgba(60, 60, 60, 0.04) 50%, rgba(30, 30, 30, 0.02) 100%)',
+            borderRadius: '50% 50% 45% 55% / 45% 55% 50% 50%',
+          }}
+          animate={{ rotate: 180 }}
+          transition={{ duration: 120, repeat: Infinity, ease: "linear" }}
+        />
+
+        {/* Login Card */}
+        <motion.div 
+          className="relative z-10 bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl shadow-black/5 border border-neutral-200/50 p-10 w-full max-w-md"
+          initial={{ opacity: 0, y: 20, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+        >
+          {/* Header Text */}
+          <div className="mb-8 text-center">
+            <motion.h1 
+              className="text-2xl font-semibold text-neutral-900 mb-3 tracking-tight"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+            >
+              Já sou uma Agência Parceira
+            </motion.h1>
+            <motion.p 
+              className="text-sm text-neutral-500 leading-relaxed"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              Acesse sua conta usando apenas seu email
+            </motion.p>
+          </div>
+
+          {step === "email" ? (
+            /* Email Step */
+            <form onSubmit={handleSendCode} className="space-y-6">
+              <motion.div 
+                className="space-y-2"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                <Label 
+                  htmlFor="email" 
+                  className="text-neutral-600 text-sm font-medium flex items-center gap-2"
+                >
+                  <Mail size={14} className="text-neutral-400" />
+                  Seu Email
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="h-12 bg-neutral-50/50 border-neutral-200 text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-400 focus:ring-neutral-200 rounded-xl transition-all text-base"
+                />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                className="pt-2 flex justify-center"
+              >
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full h-12 bg-neutral-900 hover:bg-neutral-800 text-white font-medium rounded-xl shadow-lg shadow-neutral-900/10 hover:shadow-neutral-900/20 transition-all text-sm"
+                >
+                  {isLoading ? (
+                    <span className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Enviando...
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      Entrar com Email
+                      <ArrowRight size={16} />
+                    </span>
+                  )}
+                </Button>
+              </motion.div>
+
+              <motion.div
+                className="pt-4 flex justify-center"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
+                transition={{ delay: 0.6 }}
+              >
+                <button
+                  type="button"
+                  className="text-sm text-neutral-500 hover:text-neutral-700 font-medium transition-colors flex items-center gap-2"
+                >
+                  <KeyRound size={14} />
+                  Esqueci minha senha
+                </button>
+              </motion.div>
+            </form>
+          ) : (
+            /* Code Verification Step */
+            <form onSubmit={handleVerifyCode} className="space-y-6">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="bg-neutral-100/50 rounded-xl p-4 mb-4 text-center"
+              >
+                <p className="text-sm text-neutral-600">
+                  Enviamos um código para <span className="font-semibold text-neutral-900">{email}</span>
+                </p>
+              </motion.div>
+
+              <motion.div 
+                className="space-y-2"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
               >
-                Já sou uma Agência Parceira
-              </motion.h1>
-              <motion.p 
-                className="text-base text-gray-500 leading-relaxed"
-                style={{ fontFamily: "'Inter', sans-serif" }}
+                <Label 
+                  htmlFor="code" 
+                  className="text-neutral-600 text-sm font-medium flex items-center gap-2"
+                >
+                  <KeyRound size={14} className="text-neutral-400" />
+                  Código de Verificação
+                </Label>
+                <Input
+                  id="code"
+                  type="text"
+                  placeholder="Digite o código"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  required
+                  className="h-12 bg-neutral-50/50 border-neutral-200 text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-400 focus:ring-neutral-200 rounded-xl transition-all text-base text-center tracking-widest font-mono"
+                />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="flex gap-3 pt-2"
+              >
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setStep("email")}
+                  className="flex-1 h-12 border-neutral-200 text-neutral-600 hover:bg-neutral-50 rounded-xl text-sm"
+                >
+                  Voltar
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                  className="flex-1 h-12 bg-neutral-900 hover:bg-neutral-800 text-white font-medium rounded-xl shadow-lg shadow-neutral-900/10 transition-all text-sm"
+                >
+                  {isLoading ? (
+                    <span className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Verificando...
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      Verificar
+                      <ArrowRight size={16} />
+                    </span>
+                  )}
+                </Button>
+              </motion.div>
+
+              <motion.div
+                className="flex justify-center"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 0.3 }}
+                transition={{ delay: 0.4 }}
               >
-                Plataforma de gerenciamento para agências de live do TikTok. Acesse sua conta usando apenas seu email.
-              </motion.p>
-            </div>
-
-            {step === "email" ? (
-              /* Email Step */
-              <form onSubmit={handleSendCode} className="space-y-6">
-                <motion.div 
-                  className="space-y-2"
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.4 }}
-                >
-                  <Label 
-                    htmlFor="email" 
-                    className="text-gray-700 text-sm font-medium flex items-center gap-2"
-                    style={{ fontFamily: "'Inter', sans-serif" }}
-                  >
-                    <Mail size={16} className="text-[#8B0000]" />
-                    Seu Email
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="seu@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="h-12 bg-gray-50/50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-[#8B0000] focus:ring-[#8B0000]/20 rounded-xl transition-all text-base"
-                    style={{ fontFamily: "'Inter', sans-serif" }}
-                  />
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 }}
-                  className="pt-2"
-                >
-                  <Button
-                    type="submit"
-                    disabled={isLoading}
-                    className="w-48 h-11 bg-[#8B0000] hover:bg-[#6B0000] text-white font-medium rounded-xl shadow-lg shadow-[#8B0000]/20 hover:shadow-[#8B0000]/30 transition-all text-sm"
-                    style={{ fontFamily: "'Inter', sans-serif" }}
-                  >
-                    {isLoading ? (
-                      <span className="flex items-center gap-2">
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        Enviando...
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-2">
-                        Entrar com Email
-                        <ArrowRight size={16} />
-                      </span>
-                    )}
-                  </Button>
-                </motion.div>
-
-                <motion.div
-                  className="pt-4 border-t border-gray-100"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.6 }}
-                >
-                  <button
-                    type="button"
-                    className="text-sm text-[#8B0000] hover:text-[#6B0000] font-medium transition-colors flex items-center gap-2"
-                    style={{ fontFamily: "'Inter', sans-serif" }}
-                  >
-                    <KeyRound size={14} />
-                    Esqueci minha senha
-                  </button>
-                </motion.div>
-              </form>
-            ) : (
-              /* Code Verification Step */
-              <form onSubmit={handleVerifyCode} className="space-y-6">
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="bg-[#8B0000]/5 rounded-xl p-4 mb-4"
-                >
-                  <p className="text-sm text-gray-600" style={{ fontFamily: "'Inter', sans-serif" }}>
-                    Enviamos um código para <span className="font-semibold text-[#8B0000]">{email}</span>
-                  </p>
-                </motion.div>
-
-                <motion.div 
-                  className="space-y-2"
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.2 }}
-                >
-                  <Label 
-                    htmlFor="code" 
-                    className="text-gray-700 text-sm font-medium flex items-center gap-2"
-                    style={{ fontFamily: "'Inter', sans-serif" }}
-                  >
-                    <KeyRound size={16} className="text-[#8B0000]" />
-                    Código de Verificação
-                  </Label>
-                  <Input
-                    id="code"
-                    type="text"
-                    placeholder="Digite o código"
-                    value={code}
-                    onChange={(e) => setCode(e.target.value)}
-                    required
-                    className="h-12 bg-gray-50/50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-[#8B0000] focus:ring-[#8B0000]/20 rounded-xl transition-all text-base text-center tracking-widest font-mono"
-                    style={{ fontFamily: "'JetBrains Mono', monospace" }}
-                  />
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                  className="flex gap-3 pt-2"
-                >
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setStep("email")}
-                    className="h-11 px-6 border-gray-200 text-gray-600 hover:bg-gray-50 rounded-xl text-sm"
-                    style={{ fontFamily: "'Inter', sans-serif" }}
-                  >
-                    Voltar
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={isLoading}
-                    className="w-40 h-11 bg-[#8B0000] hover:bg-[#6B0000] text-white font-medium rounded-xl shadow-lg shadow-[#8B0000]/20 hover:shadow-[#8B0000]/30 transition-all text-sm"
-                    style={{ fontFamily: "'Inter', sans-serif" }}
-                  >
-                    {isLoading ? (
-                      <span className="flex items-center gap-2">
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        Verificando...
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-2">
-                        Verificar
-                        <ArrowRight size={16} />
-                      </span>
-                    )}
-                  </Button>
-                </motion.div>
-
-                <motion.button
+                <button
                   type="button"
                   onClick={handleSendCode}
-                  className="text-sm text-gray-500 hover:text-[#8B0000] font-medium transition-colors"
-                  style={{ fontFamily: "'Inter', sans-serif" }}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.4 }}
+                  className="text-sm text-neutral-500 hover:text-neutral-700 font-medium transition-colors"
                 >
                   Não recebeu? Reenviar código
-                </motion.button>
-              </form>
-            )}
-          </motion.div>
-        </div>
+                </button>
+              </motion.div>
+            </form>
+          )}
+        </motion.div>
       </div>
 
       {/* Footer */}
@@ -405,11 +404,8 @@ const Login = () => {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.7 }}
       >
-        <p 
-          className="text-xs text-gray-400"
-          style={{ fontFamily: "'Inter', sans-serif" }}
-        >
-          © {new Date().getFullYear()} {branding.companyName}. Todos os direitos reservados.
+        <p className="text-xs text-neutral-400">
+          © {new Date().getFullYear()} Curli Agency. Todos os direitos reservados.
         </p>
       </motion.footer>
     </div>
