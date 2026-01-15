@@ -7,7 +7,36 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, ArrowRight, KeyRound } from "lucide-react";
-import logoImage from "@/assets/logo-curli.png";
+
+// Geometric F Logo Component
+const GeometricLogo = () => (
+  <div className="flex flex-col gap-0.5" style={{ width: '32px', height: '32px' }}>
+    {/* Top row - full width */}
+    <div className="flex gap-0.5">
+      <div className="w-2.5 h-2.5 bg-[#FF4D6A]" />
+      <div className="w-2.5 h-2.5 bg-[#FF4D6A]" />
+      <div className="w-2.5 h-2.5 bg-[#FF4D6A]" />
+    </div>
+    {/* Second row - left block */}
+    <div className="flex gap-0.5">
+      <div className="w-2.5 h-2.5 bg-[#FF4D6A]" />
+      <div className="w-2.5 h-2.5 bg-transparent" />
+      <div className="w-2.5 h-2.5 bg-transparent" />
+    </div>
+    {/* Third row - two blocks */}
+    <div className="flex gap-0.5">
+      <div className="w-2.5 h-2.5 bg-[#E8445A]" />
+      <div className="w-2.5 h-2.5 bg-[#E8445A]" />
+      <div className="w-2.5 h-2.5 bg-transparent" />
+    </div>
+    {/* Fourth row - left block */}
+    <div className="flex gap-0.5">
+      <div className="w-2.5 h-2.5 bg-[#E8445A]" />
+      <div className="w-2.5 h-2.5 bg-transparent" />
+      <div className="w-2.5 h-2.5 bg-transparent" />
+    </div>
+  </div>
+);
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -110,19 +139,20 @@ const Login = () => {
         }}
       />
       
-      {/* Header with dark curved section */}
+      {/* Header with dark curved section on the left */}
       <motion.header 
         className="w-full relative z-20"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        {/* Dark curved header background */}
+        {/* Dark curved header background - positioned more to the left */}
         <div 
-          className="absolute top-0 left-0 w-full h-24"
+          className="absolute top-0 left-0 h-20"
           style={{
-            background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%)',
-            borderRadius: '0 0 40% 60% / 0 0 100% 100%',
+            width: '280px',
+            background: 'linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%)',
+            borderRadius: '0 0 50% 0',
           }}
         />
         
@@ -133,30 +163,28 @@ const Login = () => {
             whileHover={{ scale: 1.02 }}
             transition={{ type: "spring", stiffness: 400 }}
           >
-            <img 
-              src={logoImage} 
-              alt="Logo" 
-              className="h-10 w-auto object-contain"
-            />
+            <div className="bg-[#0f0f0f] p-1.5 rounded-lg">
+              <GeometricLogo />
+            </div>
           </motion.div>
           
           {/* Navigation */}
           <nav className="hidden md:flex items-center gap-8">
             <a 
-              href="#" 
-              className="text-sm text-white/70 hover:text-white transition-colors font-medium tracking-wide"
+              href="#"
+              className="text-sm text-neutral-600 hover:text-neutral-900 transition-colors font-medium tracking-wide"
             >
               Sobre
             </a>
             <a 
               href="#" 
-              className="text-sm text-white/70 hover:text-white transition-colors font-medium tracking-wide"
+              className="text-sm text-neutral-600 hover:text-neutral-900 transition-colors font-medium tracking-wide"
             >
               Recursos
             </a>
             <a 
               href="#" 
-              className="text-sm text-white/70 hover:text-white transition-colors font-medium tracking-wide"
+              className="text-sm text-neutral-600 hover:text-neutral-900 transition-colors font-medium tracking-wide"
             >
               Contato
             </a>
@@ -165,7 +193,7 @@ const Login = () => {
           {/* CTA Button */}
           <Button 
             variant="outline"
-            className="px-6 py-2 bg-transparent border border-white/20 text-white hover:bg-white hover:text-neutral-900 transition-all duration-300 font-medium rounded-full text-sm backdrop-blur-sm"
+            className="px-6 py-2 bg-transparent border border-neutral-300 text-neutral-700 hover:bg-neutral-900 hover:text-white hover:border-neutral-900 transition-all duration-300 font-medium rounded-full text-sm"
             onClick={() => navigate("/register")}
           >
             Cadastrar-se
