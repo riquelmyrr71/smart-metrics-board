@@ -104,11 +104,22 @@ const Register = () => {
             .eq("id", codeData.id);
         }
 
+        // Update profile with initial data
+        await supabase
+          .from("profiles")
+          .update({
+            full_name: formData.fullName,
+            phone: formData.phone,
+            company_name: formData.companyName,
+            agency_id: codeData.agency_id,
+          })
+          .eq("user_id", signUpData.user.id);
+
         toast({
           title: "Conta criada com sucesso!",
-          description: "Você já pode fazer login.",
+          description: "Complete seu perfil para continuar.",
         });
-        navigate("/login");
+        navigate("/completar-perfil");
       }
     } catch (error) {
       toast({

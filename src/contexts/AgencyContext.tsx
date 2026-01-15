@@ -20,6 +20,12 @@ interface UserProfile {
   is_super_admin: boolean;
   created_at: string;
   updated_at: string;
+  phone: string | null;
+  company_name: string | null;
+  job_title: string | null;
+  bio: string | null;
+  tiktok_username: string | null;
+  profile_completed: boolean;
 }
 
 interface AgencyContextType {

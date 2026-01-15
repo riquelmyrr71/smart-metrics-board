@@ -353,33 +353,51 @@ export type Database = {
         Row: {
           agency_id: string | null
           avatar_url: string | null
+          bio: string | null
+          company_name: string | null
           created_at: string
           email: string
           full_name: string | null
           id: string
           is_super_admin: boolean
+          job_title: string | null
+          phone: string | null
+          profile_completed: boolean | null
+          tiktok_username: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           agency_id?: string | null
           avatar_url?: string | null
+          bio?: string | null
+          company_name?: string | null
           created_at?: string
           email: string
           full_name?: string | null
           id?: string
           is_super_admin?: boolean
+          job_title?: string | null
+          phone?: string | null
+          profile_completed?: boolean | null
+          tiktok_username?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           agency_id?: string | null
           avatar_url?: string | null
+          bio?: string | null
+          company_name?: string | null
           created_at?: string
           email?: string
           full_name?: string | null
           id?: string
           is_super_admin?: boolean
+          job_title?: string | null
+          phone?: string | null
+          profile_completed?: boolean | null
+          tiktok_username?: string | null
           updated_at?: string
           user_id?: string
         }

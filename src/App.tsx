@@ -14,6 +14,7 @@ import OverviewDashboard from "./pages/OverviewDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import AgencySettings from "./pages/AgencySettings";
 import ProfilePage from "./pages/ProfilePage";
+import CompleteProfile from "./pages/CompleteProfile";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import AboutPage from "./pages/AboutPage";
@@ -37,6 +38,7 @@ const App = () => (
             <Route path="/sobre" element={<AboutPage />} />
             <Route path="/recursos" element={<ResourcesPage />} />
             <Route path="/contato" element={<ContactPage />} />
+            <Route path="/completar-perfil" element={<ProtectedRoute><CompleteProfile /></ProtectedRoute>} />
             <Route path="/" element={<ProtectedRoute><OverviewDashboard /></ProtectedRoute>} />
             <Route path="/painel" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/graficos" element={<ProtectedRoute><ChartsDashboard /></ProtectedRoute>} />
