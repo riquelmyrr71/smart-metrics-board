@@ -14,6 +14,7 @@ import OverviewDashboard from "./pages/OverviewDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import AgencySettings from "./pages/AgencySettings";
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 import AboutPage from "./pages/AboutPage";
 import ResourcesPage from "./pages/ResourcesPage";
 import ContactPage from "./pages/ContactPage";
@@ -31,6 +32,7 @@ const App = () => (
         <AgencyProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
             <Route path="/sobre" element={<AboutPage />} />
             <Route path="/recursos" element={<ResourcesPage />} />
             <Route path="/contato" element={<ContactPage />} />
