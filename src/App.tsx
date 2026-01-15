@@ -12,6 +12,7 @@ import BattlesDashboard from "./pages/BattlesDashboard";
 import CreatorsAnalysisDashboard from "./pages/CreatorsAnalysisDashboard";
 import OverviewDashboard from "./pages/OverviewDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
+import AgencySettings from "./pages/AgencySettings";
 import Login from "./pages/Login";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AgencyProvider } from "./contexts/AgencyContext";
@@ -35,6 +36,7 @@ const App = () => (
             <Route path="/batalhas" element={<ProtectedRoute><BattlesDashboard /></ProtectedRoute>} />
             <Route path="/criadores-analise" element={<ProtectedRoute><CreatorsAnalysisDashboard /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/configuracoes" element={<ProtectedRoute><AgencySettings /></ProtectedRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
