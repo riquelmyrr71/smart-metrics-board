@@ -99,82 +99,84 @@
   }
 
   .dark {
-    --background: 0 0% 96%;
-    --foreground: 0 0% 15%;
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 15%;
+    --card: 222 47% 14%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 15%;
+    --popover: 222 47% 14%;
+    --popover-foreground: 210 40% 98%;
 
-    /* Primary: Red */
-    --primary: 0 72% 51%;
+    /* Primary: Red - slightly lighter for dark mode */
+    --primary: 0 72% 55%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 96%;
-    --secondary-foreground: 0 0% 15%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 0 0% 94%;
-    --muted-foreground: 0 0% 40%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
 
-    --accent: 0 85% 97%;
-    --accent-foreground: 0 72% 45%;
+    --accent: 0 60% 20%;
+    --accent-foreground: 0 72% 70%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 0 63% 45%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 142 70% 45%;
+    --success: 142 60% 45%;
     --success-foreground: 0 0% 100%;
 
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 10%;
 
-    --border: 0 0% 88%;
-    --input: 0 0% 88%;
-    --ring: 0 72% 51%;
+    --border: 217 33% 20%;
+    --input: 217 33% 20%;
+    --ring: 0 72% 55%;
 
-    --header-bg: 0 72% 51%;
+    /* Dashboard specific - Dark theme */
+    --header-bg: 0 65% 40%;
     --header-text: 0 0% 100%;
-    --subheader-bg: 0 65% 45%;
-    --row-even: 0 0% 100%;
-    --row-odd: 0 0% 98%;
-    --row-total: 0 72% 51%;
-    --row-subtotal: 0 55% 55%;
-    --cell-border: 0 0% 88%;
-    --cell-positive: 142 70% 35%;
-    --cell-negative: 0 65% 50%;
-    --cell-warning: 38 92% 50%;
-    --cell-over100: 0 75% 45%;
+    --subheader-bg: 0 55% 35%;
+    --row-even: 222 47% 14%;
+    --row-odd: 222 47% 16%;
+    --row-total: 0 65% 40%;
+    --row-subtotal: 0 50% 35%;
+    --cell-border: 217 33% 20%;
+    --cell-positive: 142 60% 50%;
+    --cell-negative: 0 65% 55%;
+    --cell-warning: 38 92% 55%;
+    --cell-over100: 0 70% 55%;
 
-    /* Column group colors */
-    --col-recruitment: 0 20% 97%;
-    --col-recruitment-header: 0 40% 85%;
-    --col-diamonds: 220 10% 97%;
-    --col-diamonds-header: 220 8% 80%;
+    /* Column group colors - darker for dark mode */
+    --col-recruitment: 0 20% 15%;
+    --col-recruitment-header: 0 30% 25%;
+    --col-diamonds: 220 10% 15%;
+    --col-diamonds-header: 220 8% 25%;
 
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 0 0% 15%;
-    --sidebar-primary: 0 72% 51%;
+    --sidebar-background: 222 47% 11%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 0 72% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 96%;
-    --sidebar-accent-foreground: 0 72% 45%;
-    --sidebar-border: 0 0% 88%;
-    --sidebar-ring: 0 72% 51%;
-    --chart-1: 0 72% 51%;
-    --chart-2: 0 65% 45%;
-    --chart-3: 0 55% 60%;
-    --chart-4: 0 45% 70%;
-    --chart-5: 0 0% 45%;
-    --sidebar: 0 0% 100%;
-    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
-    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
-    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
-    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+    --sidebar-accent: 217 33% 17%;
+    --sidebar-accent-foreground: 0 72% 70%;
+    --sidebar-border: 217 33% 20%;
+    --sidebar-ring: 0 72% 55%;
+    --chart-1: 0 72% 55%;
+    --chart-2: 0 60% 50%;
+    --chart-3: 0 50% 60%;
+    --chart-4: 0 40% 65%;
+    --chart-5: 220 10% 50%;
+    --sidebar: 222 47% 11%;
+    
+    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.2);
+    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.2);
+    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.3), 0 1px 2px -1px hsl(0 0% 0% / 0.3);
+    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.3), 0 1px 2px -1px hsl(0 0% 0% / 0.3);
+    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.3), 0 2px 4px -1px hsl(0 0% 0% / 0.3);
+    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.3), 0 4px 6px -1px hsl(0 0% 0% / 0.3);
+    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.3), 0 8px 10px -1px hsl(0 0% 0% / 0.3);
+    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.5);
   }
 }
 
