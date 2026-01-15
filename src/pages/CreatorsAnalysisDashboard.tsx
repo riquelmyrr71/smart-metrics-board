@@ -29,7 +29,7 @@ import { useNavigate } from 'react-router-dom';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import curliLogo from '@/assets/logo-curli.png';
-import { StandardPageHeader } from '@/components/StandardPageHeader';
+import DashboardLayout from '@/components/DashboardLayout';
 
 interface CreatorsData {
   [memberName: string]: number;
@@ -276,14 +276,18 @@ const CreatorsAnalysisDashboard = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <StandardPageHeader 
-        title="Criadores em Análise" 
-        icon={<UserSearch className="h-6 w-6" />}
-        actions={headerActions}
-      />
-
-      <main className="p-4 max-w-4xl mx-auto">
+    <DashboardLayout>
+      <div className="space-y-4 max-w-4xl mx-auto">
+        {/* Page Header with Actions */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <UserSearch className="h-6 w-6 text-primary" />
+            <h1 className="text-2xl font-bold text-foreground">Criadores em Análise</h1>
+          </div>
+          <div className="flex items-center gap-2">
+            {headerActions}
+          </div>
+        </div>
         {/* Last Updated Banner */}
         <Card className="mb-4 bg-amber-50 border-amber-200">
           <CardContent className="p-3">
@@ -753,8 +757,8 @@ const CreatorsAnalysisDashboard = () => {
             </div>
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 };
 

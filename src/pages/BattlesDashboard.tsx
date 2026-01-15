@@ -22,7 +22,7 @@ import {
   CalendarDays,
   Download
 } from 'lucide-react';
-import { StandardPageHeader } from '@/components/StandardPageHeader';
+import DashboardLayout from '@/components/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -793,11 +793,14 @@ const BattlesDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <StandardPageHeader 
-        title="Painel de Batalhas"
-        icon={<Swords className="h-6 w-6" />}
-        actions={
+    <DashboardLayout>
+      <div className="space-y-6">
+        {/* Page Header with Actions */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Swords className="h-6 w-6 text-primary" />
+            <h1 className="text-2xl font-bold text-foreground">Painel de Batalhas</h1>
+          </div>
           <div className="flex items-center gap-2 flex-wrap">
             {/* Month Navigation */}
             <div className="flex items-center gap-2 border rounded-lg px-2 py-1 bg-background">
@@ -909,10 +912,8 @@ const BattlesDashboard = () => {
               Salvar
             </Button>
           </div>
-        }
-      />
-      
-      <main className="p-4">
+        </div>
+
         {/* Metrics Report */}
         {showMetricsReport && (
           <div className="mb-6">
@@ -1457,7 +1458,7 @@ const BattlesDashboard = () => {
             </CardContent>
           </Card>
         )}
-      </main>
+      </div>
 
       {/* Hidden Custom Report for PDF Export */}
       <div className="fixed left-[-9999px] top-0">
@@ -2006,7 +2007,7 @@ const BattlesDashboard = () => {
           </div>
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 };
 
