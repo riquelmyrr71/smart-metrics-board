@@ -15,6 +15,7 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<"login" | "register">("login");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -114,153 +115,212 @@ const Login = () => {
   return (
     <div className="min-h-screen flex relative overflow-hidden">
       {/* Left side - Form */}
-      <div className="w-full lg:w-[55%] flex items-center justify-center p-8 bg-background relative z-20">
-        {/* Organic curved shape overlay */}
-        <motion.div 
-          className="absolute top-0 right-0 w-[120px] h-full hidden lg:block"
-          initial={{ x: 50, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.5 }}
-          style={{
-            background: 'hsl(var(--background))',
-            clipPath: 'ellipse(100% 80% at 0% 50%)',
-            zIndex: 30,
-            marginRight: '-60px',
-          }}
-        />
-        
-        <motion.div 
-          className="w-full max-w-md space-y-8"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
+      <div className="w-full lg:w-[60%] flex flex-col bg-background relative z-20">
+        {/* Header Navigation - ClickUp style */}
+        <motion.header 
+          className="w-full px-8 py-4 flex items-center justify-between border-b border-border/50"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
         >
-          {/* Logo and Header */}
-          <motion.div className="text-center space-y-4" variants={itemVariants}>
-            <motion.div className="flex justify-center" variants={logoVariants}>
-              <motion.div 
-                className="h-16 w-16 rounded-2xl bg-[#8B0000] flex items-center justify-center shadow-lg shadow-[#8B0000]/30"
-                whileHover={{ scale: 1.05, rotate: 5 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <TrendingUp className="h-8 w-8 text-white" />
-              </motion.div>
+          <div className="flex items-center gap-3">
+            <motion.div 
+              className="h-10 w-10 rounded-xl bg-[#8B0000] flex items-center justify-center"
+              whileHover={{ scale: 1.05 }}
+            >
+              <TrendingUp className="h-5 w-5 text-white" />
             </motion.div>
-            <motion.div variants={itemVariants}>
-              <h1 className="text-3xl font-bold text-foreground">
-                {branding.companyName}
-              </h1>
-              <p className="text-muted-foreground mt-2">
-                {branding.companyTagline}
+            <span className="text-lg font-bold text-foreground">{branding.companyName}</span>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Button 
+              variant={activeTab === "login" ? "outline" : "ghost"}
+              className={`px-6 ${activeTab === "login" ? "border-[#8B0000] text-[#8B0000]" : "text-muted-foreground"}`}
+              onClick={() => setActiveTab("login")}
+            >
+              Login
+            </Button>
+            <Button 
+              variant={activeTab === "register" ? "default" : "ghost"}
+              className={`px-6 ${activeTab === "register" ? "bg-[#8B0000] hover:bg-[#6B0000] text-white" : "text-muted-foreground"}`}
+              onClick={() => setActiveTab("register")}
+            >
+              Cadastrar
+            </Button>
+          </div>
+        </motion.header>
+
+        {/* Form Content */}
+        <div className="flex-1 flex items-center justify-center p-8 relative">
+          {/* Rotating white circle around card */}
+          <motion.div
+            className="absolute w-[480px] h-[480px] rounded-full border-2 border-dashed border-muted-foreground/20"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+          />
+          <motion.div
+            className="absolute w-[520px] h-[520px] rounded-full border border-muted-foreground/10"
+            animate={{ rotate: -360 }}
+            transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+          />
+          
+          <motion.div 
+            className="w-full max-w-md space-y-6 relative z-10"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            {/* Platform Description */}
+            <motion.div className="text-center space-y-2" variants={itemVariants}>
+              <motion.div variants={logoVariants}>
+                <h1 className="text-2xl font-bold text-foreground">
+                  {activeTab === "login" ? "Já sou uma Agência Parceira" : "Criar Nova Conta"}
+                </h1>
+              </motion.div>
+              <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                Plataforma profissional de gerenciamento para agências de live do TikTok. 
+                Centralize métricas, relatórios e análises do seu time.
               </p>
             </motion.div>
-          </motion.div>
 
-          {/* Login Form */}
-          <motion.form 
-            onSubmit={handleLogin} 
-            className="space-y-6 bg-card/80 backdrop-blur-sm p-8 rounded-2xl border border-border shadow-xl"
-            variants={itemVariants}
-          >
-            <motion.div 
-              className="space-y-2"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4, duration: 0.4 }}
+            {/* Login Form */}
+            <motion.form 
+              onSubmit={handleLogin} 
+              className="space-y-5 bg-card p-8 rounded-2xl border border-border shadow-xl backdrop-blur-sm"
+              variants={itemVariants}
             >
-              <Label htmlFor="email" className="text-foreground font-medium">
-                Email
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="seu@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="h-12 bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-[#8B0000] focus:ring-[#8B0000]/20 transition-all duration-200"
-              />
-            </motion.div>
-            <motion.div 
-              className="space-y-2"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.5, duration: 0.4 }}
-            >
-              <Label htmlFor="password" className="text-foreground font-medium">
-                Senha
-              </Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="h-12 bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-[#8B0000] focus:ring-[#8B0000]/20 pr-12 transition-all duration-200"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
-              </div>
-            </motion.div>
-            
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6, duration: 0.4 }}
-            >
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className="w-full h-12 bg-[#8B0000] hover:bg-[#6B0000] text-white font-semibold shadow-lg shadow-[#8B0000]/25 hover:shadow-[#8B0000]/40 transition-all text-base"
+              <motion.div 
+                className="space-y-2"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4, duration: 0.4 }}
               >
-                {isLoading ? (
-                  <span className="flex items-center gap-2">
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Entrando...
-                  </span>
-                ) : (
-                  <>
-                    <LogIn className="mr-2 h-5 w-5" />
-                    Entrar
-                  </>
-                )}
-              </Button>
-            </motion.div>
-          </motion.form>
+                <Label htmlFor="email" className="text-foreground font-medium">
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="h-12 bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-[#8B0000] focus:ring-[#8B0000]/20 transition-all duration-200"
+                />
+              </motion.div>
+              <motion.div 
+                className="space-y-2"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.5, duration: 0.4 }}
+              >
+                <Label htmlFor="password" className="text-foreground font-medium">
+                  Senha
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="h-12 bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-[#8B0000] focus:ring-[#8B0000]/20 pr-12 transition-all duration-200"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
+              </motion.div>
+              
+              {activeTab === "login" && (
+                <motion.button
+                  type="button"
+                  className="text-sm text-[#8B0000] hover:text-[#6B0000] font-medium transition-colors"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.55 }}
+                >
+                  Esqueci minha senha
+                </motion.button>
+              )}
+              
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6, duration: 0.4 }}
+              >
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full h-12 bg-[#8B0000] hover:bg-[#6B0000] text-white font-semibold shadow-lg shadow-[#8B0000]/25 hover:shadow-[#8B0000]/40 transition-all text-base"
+                >
+                  {isLoading ? (
+                    <span className="flex items-center gap-2">
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      {activeTab === "login" ? "Entrando..." : "Cadastrando..."}
+                    </span>
+                  ) : (
+                    <>
+                      <LogIn className="mr-2 h-5 w-5" />
+                      {activeTab === "login" ? "Entrar" : "Criar Conta"}
+                    </>
+                  )}
+                </Button>
+              </motion.div>
+            </motion.form>
 
-          {/* Footer */}
-          <motion.p 
-            className="text-center text-sm text-muted-foreground"
-            variants={itemVariants}
-          >
-            © {new Date().getFullYear()} {branding.companyName}. Todos os direitos reservados.
-          </motion.p>
-        </motion.div>
+            {/* Footer */}
+            <motion.p 
+              className="text-center text-xs text-muted-foreground"
+              variants={itemVariants}
+            >
+              © {new Date().getFullYear()} {branding.companyName}. Todos os direitos reservados.
+            </motion.p>
+          </motion.div>
+        </div>
       </div>
 
-      {/* Right side - Image with organic shape overlay */}
+      {/* Right side - Image with rotating organic shape */}
       <motion.div 
-        className="hidden lg:block lg:w-[45%] relative"
+        className="hidden lg:block lg:w-[40%] relative"
         variants={imageSlideVariants}
         initial="hidden"
         animate="visible"
       >
-        {/* Dark red organic shape */}
+        {/* Rotating dark red organic circle - More separated and rounded */}
         <motion.div 
-          className="absolute inset-0 z-10"
-          initial={{ clipPath: 'ellipse(0% 100% at 100% 50%)' }}
-          animate={{ clipPath: 'ellipse(70% 100% at 100% 50%)' }}
-          transition={{ duration: 1, delay: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+          className="absolute z-10"
           style={{
+            width: '140%',
+            height: '140%',
+            top: '-20%',
+            left: '-40%',
             background: '#8B0000',
+            borderRadius: '50%',
           }}
+          animate={{ rotate: 360 }}
+          transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
+        />
+        
+        {/* Second rotating layer */}
+        <motion.div 
+          className="absolute z-10"
+          style={{
+            width: '130%',
+            height: '130%',
+            top: '-15%',
+            left: '-35%',
+            background: 'rgba(139, 0, 0, 0.6)',
+            borderRadius: '50%',
+          }}
+          animate={{ rotate: -360 }}
+          transition={{ duration: 80, repeat: Infinity, ease: "linear" }}
         />
         
         {/* Background image */}
@@ -272,7 +332,7 @@ const Login = () => {
           style={{
             backgroundImage: `url(${loginBg})`,
             backgroundSize: 'cover',
-            backgroundPosition: 'center',
+            backgroundPosition: 'center right',
           }}
         />
         
@@ -280,7 +340,7 @@ const Login = () => {
         <div 
           className="absolute inset-0 z-5"
           style={{
-            background: 'linear-gradient(135deg, rgba(139,0,0,0.3) 0%, transparent 50%)',
+            background: 'linear-gradient(135deg, rgba(139,0,0,0.4) 0%, transparent 60%)',
           }}
         />
       </motion.div>
