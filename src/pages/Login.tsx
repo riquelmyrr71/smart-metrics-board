@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,13 +63,64 @@ const Login = () => {
     }
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.15,
+        delayChildren: 0.2,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.5,
+        ease: "easeOut" as const,
+      },
+    },
+  };
+
+  const logoVariants = {
+    hidden: { opacity: 0, scale: 0.8, rotate: -10 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      rotate: 0,
+      transition: {
+        duration: 0.6,
+        ease: "easeOut" as const,
+      },
+    },
+  };
+
+  const imageSlideVariants = {
+    hidden: { x: 100, opacity: 0 },
+    visible: {
+      x: 0,
+      opacity: 1,
+      transition: {
+        duration: 0.8,
+        ease: "easeOut" as const,
+      },
+    },
+  };
+
   return (
     <div className="min-h-screen flex relative overflow-hidden">
       {/* Left side - Form */}
       <div className="w-full lg:w-[55%] flex items-center justify-center p-8 bg-background relative z-20">
         {/* Organic curved shape overlay */}
-        <div 
+        <motion.div 
           className="absolute top-0 right-0 w-[120px] h-full hidden lg:block"
+          initial={{ x: 50, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.5 }}
           style={{
             background: 'hsl(var(--background))',
             clipPath: 'ellipse(100% 80% at 0% 50%)',
@@ -77,27 +129,45 @@ const Login = () => {
           }}
         />
         
-        <div className="w-full max-w-md space-y-8">
+        <motion.div 
+          className="w-full max-w-md space-y-8"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
           {/* Logo and Header */}
-          <div className="text-center space-y-4">
-            <div className="flex justify-center">
-              <div className="h-16 w-16 rounded-2xl bg-[#8B0000] flex items-center justify-center shadow-lg shadow-[#8B0000]/30">
+          <motion.div className="text-center space-y-4" variants={itemVariants}>
+            <motion.div className="flex justify-center" variants={logoVariants}>
+              <motion.div 
+                className="h-16 w-16 rounded-2xl bg-[#8B0000] flex items-center justify-center shadow-lg shadow-[#8B0000]/30"
+                whileHover={{ scale: 1.05, rotate: 5 }}
+                whileTap={{ scale: 0.95 }}
+              >
                 <TrendingUp className="h-8 w-8 text-white" />
-              </div>
-            </div>
-            <div>
+              </motion.div>
+            </motion.div>
+            <motion.div variants={itemVariants}>
               <h1 className="text-3xl font-bold text-foreground">
                 {branding.companyName}
               </h1>
               <p className="text-muted-foreground mt-2">
                 {branding.companyTagline}
               </p>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
           {/* Login Form */}
-          <form onSubmit={handleLogin} className="space-y-6 bg-card/80 backdrop-blur-sm p-8 rounded-2xl border border-border shadow-xl">
-            <div className="space-y-2">
+          <motion.form 
+            onSubmit={handleLogin} 
+            className="space-y-6 bg-card/80 backdrop-blur-sm p-8 rounded-2xl border border-border shadow-xl"
+            variants={itemVariants}
+          >
+            <motion.div 
+              className="space-y-2"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.4, duration: 0.4 }}
+            >
               <Label htmlFor="email" className="text-foreground font-medium">
                 Email
               </Label>
@@ -108,10 +178,15 @@ const Login = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="h-12 bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-[#8B0000] focus:ring-[#8B0000]/20"
+                className="h-12 bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-[#8B0000] focus:ring-[#8B0000]/20 transition-all duration-200"
               />
-            </div>
-            <div className="space-y-2">
+            </motion.div>
+            <motion.div 
+              className="space-y-2"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.5, duration: 0.4 }}
+            >
               <Label htmlFor="password" className="text-foreground font-medium">
                 Senha
               </Label>
@@ -123,7 +198,7 @@ const Login = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="h-12 bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-[#8B0000] focus:ring-[#8B0000]/20 pr-12"
+                  className="h-12 bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-[#8B0000] focus:ring-[#8B0000]/20 pr-12 transition-all duration-200"
                 />
                 <button
                   type="button"
@@ -133,48 +208,67 @@ const Login = () => {
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
-            </div>
+            </motion.div>
             
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="w-full h-12 bg-[#8B0000] hover:bg-[#6B0000] text-white font-semibold shadow-lg shadow-[#8B0000]/25 hover:shadow-[#8B0000]/40 transition-all text-base"
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6, duration: 0.4 }}
             >
-              {isLoading ? (
-                <span className="flex items-center gap-2">
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Entrando...
-                </span>
-              ) : (
-                <>
-                  <LogIn className="mr-2 h-5 w-5" />
-                  Entrar
-                </>
-              )}
-            </Button>
-          </form>
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="w-full h-12 bg-[#8B0000] hover:bg-[#6B0000] text-white font-semibold shadow-lg shadow-[#8B0000]/25 hover:shadow-[#8B0000]/40 transition-all text-base"
+              >
+                {isLoading ? (
+                  <span className="flex items-center gap-2">
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Entrando...
+                  </span>
+                ) : (
+                  <>
+                    <LogIn className="mr-2 h-5 w-5" />
+                    Entrar
+                  </>
+                )}
+              </Button>
+            </motion.div>
+          </motion.form>
 
           {/* Footer */}
-          <p className="text-center text-sm text-muted-foreground">
+          <motion.p 
+            className="text-center text-sm text-muted-foreground"
+            variants={itemVariants}
+          >
             © {new Date().getFullYear()} {branding.companyName}. Todos os direitos reservados.
-          </p>
-        </div>
+          </motion.p>
+        </motion.div>
       </div>
 
       {/* Right side - Image with organic shape overlay */}
-      <div className="hidden lg:block lg:w-[45%] relative">
+      <motion.div 
+        className="hidden lg:block lg:w-[45%] relative"
+        variants={imageSlideVariants}
+        initial="hidden"
+        animate="visible"
+      >
         {/* Dark red organic shape */}
-        <div 
+        <motion.div 
           className="absolute inset-0 z-10"
+          initial={{ clipPath: 'ellipse(0% 100% at 100% 50%)' }}
+          animate={{ clipPath: 'ellipse(70% 100% at 100% 50%)' }}
+          transition={{ duration: 1, delay: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
           style={{
             background: '#8B0000',
-            clipPath: 'ellipse(70% 100% at 100% 50%)',
           }}
         />
         
         {/* Background image */}
-        <div 
+        <motion.div 
           className="absolute inset-0 z-0"
+          initial={{ scale: 1.1, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 1.2, ease: "easeOut" }}
           style={{
             backgroundImage: `url(${loginBg})`,
             backgroundSize: 'cover',
@@ -189,7 +283,7 @@ const Login = () => {
             background: 'linear-gradient(135deg, rgba(139,0,0,0.3) 0%, transparent 50%)',
           }}
         />
-      </div>
+      </motion.div>
     </div>
   );
 };
