@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, Trash2, Upload, Calendar, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { StandardPageHeader } from "@/components/StandardPageHeader";
+import DashboardLayout from "@/components/DashboardLayout";
 
 interface Note {
   id: string;
@@ -170,16 +170,15 @@ const NotesPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <StandardPageHeader 
-        title="Anotações"
-        icon={<FileText className="h-6 w-6" />}
-      />
-      
-      <div className="p-4 md:p-8">
-        <div className="max-w-6xl mx-auto">
+    <DashboardLayout>
+      <div className="max-w-6xl mx-auto space-y-6">
+        {/* Page Header */}
+        <div className="flex items-center gap-3">
+          <FileText className="h-6 w-6 text-primary" />
+          <h1 className="text-2xl font-bold text-foreground">Anotações</h1>
+        </div>
 
-          <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid md:grid-cols-2 gap-8">
             {/* Form */}
             <Card className="bg-card border-border">
               <CardHeader>
@@ -348,8 +347,7 @@ const NotesPage = () => {
             </div>
           </div>
         </div>
-      </div>
-    </div>
+    </DashboardLayout>
   );
 };
 

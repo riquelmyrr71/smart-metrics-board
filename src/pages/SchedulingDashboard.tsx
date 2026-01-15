@@ -16,7 +16,7 @@ import jsPDF from 'jspdf';
 import { BrandLogo } from '@/components/BrandLogo';
 import { branding, getReportFooter } from '@/config/branding';
 import curliLogo from '@/assets/logo-curli.png';
-import { StandardPageHeader } from '@/components/StandardPageHeader';
+import DashboardLayout from '@/components/DashboardLayout';
 import {
   LineChart,
   Line,
@@ -889,11 +889,14 @@ const SchedulingDashboard = () => {
   }, [reportRangeData]);
 
   return (
-    <div className="min-h-screen bg-background">
-      <StandardPageHeader 
-        title="Agendamento de Lives"
-        icon={<CalendarIcon className="h-6 w-6" />}
-        actions={
+    <DashboardLayout>
+      <div className="space-y-6">
+        {/* Page Header with Actions */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <CalendarIcon className="h-6 w-6 text-primary" />
+            <h1 className="text-2xl font-bold text-foreground">Agendamento de Lives</h1>
+          </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <Button variant="outline" size="icon" onClick={prevMonth}>
@@ -911,10 +914,7 @@ const SchedulingDashboard = () => {
               {isSaving ? 'Salvando...' : 'Salvar'}
             </Button>
           </div>
-        }
-      />
-      
-      <div className="p-4">
+        </div>
 
       {/* Management Buttons */}
       <div className="flex items-center gap-3 mb-6">
@@ -2027,7 +2027,7 @@ const SchedulingDashboard = () => {
         </div>
       </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 };
 

@@ -15,7 +15,7 @@ import { CreatorsConversionMetrics } from '@/components/CreatorsConversionMetric
 import { BrandLogo } from '@/components/BrandLogo';
 import { branding, getReportFooter } from '@/config/branding';
 import { MonthSelector } from '@/components/Charts/MonthSelector';
-import { StandardPageHeader } from '@/components/StandardPageHeader';
+import DashboardLayout from '@/components/DashboardLayout';
 
 interface DailyEntry {
   id: string;
@@ -559,12 +559,16 @@ const ChartsDashboard: React.FC = () => {
           <p className="text-muted-foreground">Carregando dados...</p>
         </div>
       </div>;
-  }
-  return <div className="min-h-screen bg-background">
-      <StandardPageHeader 
-        title={branding.titles.charts}
-        icon={<BarChart3 className="h-6 w-6" />}
-        actions={
+   }
+   return (
+    <DashboardLayout>
+      <div className="space-y-6">
+        {/* Page Header with Actions */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <BarChart3 className="h-6 w-6 text-primary" />
+            <h1 className="text-2xl font-bold text-foreground">{branding.titles.charts}</h1>
+          </div>
           <div className="flex items-center gap-2 flex-wrap">
             <div className="flex items-center gap-2">
               <Input type="date" value={dailyReportDate} onChange={e => setDailyReportDate(e.target.value)} className="w-[140px] h-9 bg-background border-border focus:border-primary text-sm" />
@@ -589,10 +593,8 @@ const ChartsDashboard: React.FC = () => {
               Salvar
             </Button>
           </div>
-        }
-      />
+        </div>
 
-      <main className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
         {/* Month Selector */}
         <div className="flex items-center justify-between flex-wrap gap-4">
           <MonthSelector
@@ -1407,7 +1409,7 @@ const ChartsDashboard: React.FC = () => {
               </div>}
           </CardContent>
         </Card>
-      </main>
+      </div>
 
       {/* Hidden Daily Report for PDF Export */}
       <div className="fixed left-[-9999px] top-0">
@@ -2221,6 +2223,7 @@ const ChartsDashboard: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>;
+    </DashboardLayout>
+  );
 };
 export default ChartsDashboard;
