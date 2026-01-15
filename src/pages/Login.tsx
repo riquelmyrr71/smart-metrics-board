@@ -153,14 +153,16 @@ const Login = () => {
 
         {/* Form Content */}
         <div className="flex-1 flex items-center justify-center p-8 relative">
-          {/* Rotating white circle around card */}
+          {/* Rotating organic shapes around card */}
           <motion.div
-            className="absolute w-[480px] h-[480px] rounded-full border-2 border-dashed border-muted-foreground/20"
+            className="absolute w-[480px] h-[440px] border-2 border-dashed border-muted-foreground/20"
+            style={{ borderRadius: '60% 40% 55% 45% / 50% 60% 40% 50%' }}
             animate={{ rotate: 360 }}
             transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
           />
           <motion.div
-            className="absolute w-[520px] h-[520px] rounded-full border border-muted-foreground/10"
+            className="absolute w-[520px] h-[480px] border border-muted-foreground/10"
+            style={{ borderRadius: '45% 55% 40% 60% / 55% 45% 60% 40%' }}
             animate={{ rotate: -360 }}
             transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
           />
@@ -293,36 +295,6 @@ const Login = () => {
         initial="hidden"
         animate="visible"
       >
-        {/* Rotating dark red organic circle - More separated and rounded */}
-        <motion.div 
-          className="absolute z-10"
-          style={{
-            width: '140%',
-            height: '140%',
-            top: '-20%',
-            left: '-40%',
-            background: '#8B0000',
-            borderRadius: '50%',
-          }}
-          animate={{ rotate: 360 }}
-          transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
-        />
-        
-        {/* Second rotating layer */}
-        <motion.div 
-          className="absolute z-10"
-          style={{
-            width: '130%',
-            height: '130%',
-            top: '-15%',
-            left: '-35%',
-            background: 'rgba(139, 0, 0, 0.6)',
-            borderRadius: '50%',
-          }}
-          animate={{ rotate: -360 }}
-          transition={{ duration: 80, repeat: Infinity, ease: "linear" }}
-        />
-        
         {/* Background image */}
         <motion.div 
           className="absolute inset-0 z-0"
@@ -336,11 +308,11 @@ const Login = () => {
           }}
         />
         
-        {/* Gradient overlay on image */}
+        {/* Subtle gradient overlay */}
         <div 
           className="absolute inset-0 z-5"
           style={{
-            background: 'linear-gradient(135deg, rgba(139,0,0,0.4) 0%, transparent 60%)',
+            background: 'linear-gradient(135deg, rgba(0,0,0,0.2) 0%, transparent 60%)',
           }}
         />
       </motion.div>
