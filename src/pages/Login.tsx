@@ -7,36 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, ArrowRight, KeyRound } from "lucide-react";
-
-// Geometric F Logo Component
-const GeometricLogo = () => (
-  <div className="flex flex-col gap-0.5" style={{ width: '32px', height: '32px' }}>
-    {/* Top row - full width */}
-    <div className="flex gap-0.5">
-      <div className="w-2.5 h-2.5 bg-[#FF4D6A]" />
-      <div className="w-2.5 h-2.5 bg-[#FF4D6A]" />
-      <div className="w-2.5 h-2.5 bg-[#FF4D6A]" />
-    </div>
-    {/* Second row - left block */}
-    <div className="flex gap-0.5">
-      <div className="w-2.5 h-2.5 bg-[#FF4D6A]" />
-      <div className="w-2.5 h-2.5 bg-transparent" />
-      <div className="w-2.5 h-2.5 bg-transparent" />
-    </div>
-    {/* Third row - two blocks */}
-    <div className="flex gap-0.5">
-      <div className="w-2.5 h-2.5 bg-[#E8445A]" />
-      <div className="w-2.5 h-2.5 bg-[#E8445A]" />
-      <div className="w-2.5 h-2.5 bg-transparent" />
-    </div>
-    {/* Fourth row - left block */}
-    <div className="flex gap-0.5">
-      <div className="w-2.5 h-2.5 bg-[#E8445A]" />
-      <div className="w-2.5 h-2.5 bg-transparent" />
-      <div className="w-2.5 h-2.5 bg-transparent" />
-    </div>
-  </div>
-);
+import logoF from "@/assets/logo-f.png";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -163,9 +134,7 @@ const Login = () => {
             whileHover={{ scale: 1.02 }}
             transition={{ type: "spring", stiffness: 400 }}
           >
-            <div className="bg-[#0f0f0f] p-1.5 rounded-lg">
-              <GeometricLogo />
-            </div>
+            <img src={logoF} alt="Logo" className="h-10 w-auto object-contain" />
           </motion.div>
           
           {/* Navigation */}
