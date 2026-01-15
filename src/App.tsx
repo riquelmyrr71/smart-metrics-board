@@ -14,6 +14,9 @@ import OverviewDashboard from "./pages/OverviewDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import AgencySettings from "./pages/AgencySettings";
 import Login from "./pages/Login";
+import AboutPage from "./pages/AboutPage";
+import ResourcesPage from "./pages/ResourcesPage";
+import ContactPage from "./pages/ContactPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AgencyProvider } from "./contexts/AgencyContext";
 
@@ -28,6 +31,9 @@ const App = () => (
         <AgencyProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/sobre" element={<AboutPage />} />
+            <Route path="/recursos" element={<ResourcesPage />} />
+            <Route path="/contato" element={<ContactPage />} />
             <Route path="/" element={<ProtectedRoute><OverviewDashboard /></ProtectedRoute>} />
             <Route path="/painel" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/graficos" element={<ProtectedRoute><ChartsDashboard /></ProtectedRoute>} />

@@ -140,19 +140,19 @@ const Login = () => {
           {/* Navigation */}
           <nav className="hidden md:flex items-center gap-8">
             <a 
-              href="#"
+              href="/sobre" 
               className="text-sm text-neutral-600 hover:text-neutral-900 transition-colors font-medium tracking-wide"
             >
               Sobre
             </a>
             <a 
-              href="#" 
+              href="/recursos" 
               className="text-sm text-neutral-600 hover:text-neutral-900 transition-colors font-medium tracking-wide"
             >
               Recursos
             </a>
             <a 
-              href="#" 
+              href="/contato" 
               className="text-sm text-neutral-600 hover:text-neutral-900 transition-colors font-medium tracking-wide"
             >
               Contato
