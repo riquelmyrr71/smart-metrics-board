@@ -44,6 +44,100 @@ export type Database = {
         }
         Relationships: []
       }
+      agency_settings: {
+        Row: {
+          agency_id: string
+          branding: Json | null
+          created_at: string | null
+          custom_domain: string | null
+          features: Json | null
+          id: string
+          limits: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          agency_id: string
+          branding?: Json | null
+          created_at?: string | null
+          custom_domain?: string | null
+          features?: Json | null
+          id?: string
+          limits?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          agency_id?: string
+          branding?: Json | null
+          created_at?: string | null
+          custom_domain?: string | null
+          features?: Json | null
+          id?: string
+          limits?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_settings_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: true
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audit_logs: {
+        Row: {
+          action: string
+          agency_id: string | null
+          created_at: string | null
+          id: string
+          ip_address: string | null
+          new_data: Json | null
+          old_data: Json | null
+          record_id: string | null
+          table_name: string
+          user_agent: string | null
+          user_email: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          agency_id?: string | null
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id?: string | null
+          table_name: string
+          user_agent?: string | null
+          user_email?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          agency_id?: string | null
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id?: string | null
+          table_name?: string
+          user_agent?: string | null
+          user_email?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dashboard_data: {
         Row: {
           agency_id: string | null
@@ -80,6 +174,7 @@ export type Database = {
         Row: {
           agency_id: string | null
           created_at: string
+          created_by: string | null
           executive_name: string
           id: string
           is_scheduled: boolean
@@ -90,6 +185,7 @@ export type Database = {
         Insert: {
           agency_id?: string | null
           created_at?: string
+          created_by?: string | null
           executive_name: string
           id?: string
           is_scheduled?: boolean
@@ -100,6 +196,7 @@ export type Database = {
         Update: {
           agency_id?: string | null
           created_at?: string
+          created_by?: string | null
           executive_name?: string
           id?: string
           is_scheduled?: boolean
@@ -175,6 +272,7 @@ export type Database = {
           agency_id: string | null
           content: string | null
           created_at: string
+          created_by: string | null
           id: string
           image_url: string | null
           note_date: string
@@ -185,6 +283,7 @@ export type Database = {
           agency_id?: string | null
           content?: string | null
           created_at?: string
+          created_by?: string | null
           id?: string
           image_url?: string | null
           note_date?: string
@@ -195,6 +294,7 @@ export type Database = {
           agency_id?: string | null
           content?: string | null
           created_at?: string
+          created_by?: string | null
           id?: string
           image_url?: string | null
           note_date?: string
@@ -343,6 +443,16 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      log_audit_event: {
+        Args: {
+          p_action: string
+          p_new_data?: Json
+          p_old_data?: Json
+          p_record_id: string
+          p_table_name: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "super_admin" | "admin" | "manager" | "user"
