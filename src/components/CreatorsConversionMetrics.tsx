@@ -182,22 +182,22 @@ export const CreatorsConversionMetrics: React.FC = () => {
 
   if (isLoading) {
     return (
-      <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-background">
+      <Card className="border-border bg-card">
         <CardContent className="p-6 flex items-center justify-center">
-          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="border-primary/30 bg-gradient-to-br from-primary/5 via-background to-primary/10 shadow-lg overflow-hidden">
-      <CardHeader className="pb-4 bg-gradient-to-r from-primary/10 to-transparent border-b border-primary/20">
+    <Card className="border-border bg-card shadow-sm overflow-hidden">
+      <CardHeader className="pb-4 border-b border-border">
         <CardTitle className="flex items-center gap-3 text-xl">
-          <div className="p-2.5 rounded-xl bg-primary/20 shadow-inner">
-            <Zap className="w-6 h-6 text-primary" />
+          <div className="p-2.5 rounded-xl bg-muted">
+            <Zap className="w-6 h-6 text-foreground" />
           </div>
-          <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent font-bold">
+          <span className="font-bold text-foreground">
             Relatório de Conversão de Criadores
           </span>
         </CardTitle>
@@ -207,57 +207,48 @@ export const CreatorsConversionMetrics: React.FC = () => {
         {/* Main Stats Row */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Em Análise Card */}
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 p-4 border border-primary/30 shadow-md">
-            <div className="absolute top-0 right-0 w-20 h-20 bg-primary/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-            <div className="relative">
-              <div className="flex items-center gap-2 mb-2">
-                <Users className="w-4 h-4 text-primary" />
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Em Análise</span>
-              </div>
-              <p className="text-3xl font-bold text-primary">{creatorsInAnalysis}</p>
-              {analysisLastUpdated && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  {format(new Date(analysisLastUpdated), 'dd/MM HH:mm', { locale: ptBR })}
-                </p>
-              )}
+          <div className="rounded-xl bg-card p-4 border border-border">
+            <div className="flex items-center gap-2 mb-2">
+              <Users className="w-4 h-4 text-muted-foreground" />
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Em Análise</span>
             </div>
+            <p className="text-3xl font-bold text-foreground">{creatorsInAnalysis}</p>
+            {analysisLastUpdated && (
+              <p className="text-xs text-muted-foreground mt-1">
+                {format(new Date(analysisLastUpdated), 'dd/MM HH:mm', { locale: ptBR })}
+              </p>
+            )}
           </div>
 
           {/* Entradas do Mês Card */}
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-success/20 to-success/5 p-4 border border-success/30 shadow-md">
-            <div className="absolute top-0 right-0 w-20 h-20 bg-success/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-            <div className="relative">
-              <div className="flex items-center gap-2 mb-2">
-                <UserCheck className="w-4 h-4 text-success" />
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Entradas Mês</span>
-              </div>
-              <p className="text-3xl font-bold text-success">{monthlyEntryTotal}</p>
-              <p className="text-xs text-muted-foreground mt-1">{daysWithData} dias</p>
+          <div className="rounded-xl bg-card p-4 border border-border">
+            <div className="flex items-center gap-2 mb-2">
+              <UserCheck className="w-4 h-4 text-success" />
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Entradas Mês</span>
             </div>
+            <p className="text-3xl font-bold text-success">{monthlyEntryTotal}</p>
+            <p className="text-xs text-muted-foreground mt-1">{daysWithData} dias</p>
           </div>
 
           {/* Melhor Membro Card */}
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-warning/20 to-warning/5 p-4 border border-warning/30 shadow-md cursor-help">
-                <div className="absolute top-0 right-0 w-20 h-20 bg-warning/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-                <div className="relative">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Trophy className="w-4 h-4 text-warning" />
-                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Melhor Membro</span>
-                  </div>
-                  {bestMember ? (
-                    <>
-                      <p className="text-lg font-bold text-foreground truncate">{bestMember.name}</p>
-                      <div className="flex items-center gap-1 mt-1">
-                        <Star className="w-3 h-3 text-warning fill-warning" />
-                        <span className="text-sm font-semibold text-warning">{bestMember.count} criadores</span>
-                      </div>
-                    </>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">Sem dados</p>
-                  )}
+              <div className="rounded-xl bg-card p-4 border border-border cursor-help">
+                <div className="flex items-center gap-2 mb-2">
+                  <Trophy className="w-4 h-4 text-warning" />
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Melhor Membro</span>
                 </div>
+                {bestMember ? (
+                  <>
+                    <p className="text-lg font-bold text-foreground truncate">{bestMember.name}</p>
+                    <div className="flex items-center gap-1 mt-1">
+                      <Star className="w-3 h-3 text-warning fill-warning" />
+                      <span className="text-sm font-semibold text-warning">{bestMember.count} criadores</span>
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Sem dados</p>
+                )}
               </div>
             </TooltipTrigger>
             <TooltipContent>
@@ -268,17 +259,14 @@ export const CreatorsConversionMetrics: React.FC = () => {
           {/* Impacto da Taxa Card */}
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/30 to-primary/10 p-4 border border-primary/40 shadow-md cursor-help">
-                <div className="absolute top-0 right-0 w-20 h-20 bg-primary/15 rounded-full -translate-y-1/2 translate-x-1/2" />
-                <div className="relative">
-                  <div className="flex items-center gap-2 mb-2">
-                    <ArrowUpRight className="w-4 h-4 text-primary" />
-                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Impacto Taxa</span>
-                  </div>
-                  <p className="text-3xl font-bold text-primary">{conversionRate}%</p>
-                  <div className="flex items-center gap-1 mt-1">
-                    <span className="text-xs text-muted-foreground">{impactRate.toFixed(2)} entrada/análise</span>
-                  </div>
+              <div className="rounded-xl bg-card p-4 border border-border cursor-help">
+                <div className="flex items-center gap-2 mb-2">
+                  <ArrowUpRight className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Impacto Taxa</span>
+                </div>
+                <p className="text-3xl font-bold text-foreground">{conversionRate}%</p>
+                <div className="flex items-center gap-1 mt-1">
+                  <span className="text-xs text-muted-foreground">{impactRate.toFixed(2)} entrada/análise</span>
                 </div>
               </div>
             </TooltipTrigger>
@@ -290,11 +278,11 @@ export const CreatorsConversionMetrics: React.FC = () => {
 
         {/* Goal Section */}
         {creatorsGoal > 0 && (
-          <div className="rounded-2xl bg-gradient-to-r from-primary/15 via-primary/10 to-primary/5 p-5 border border-primary/30 shadow-inner">
+          <div className="rounded-xl bg-card p-5 border border-border">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-primary/20">
-                  <Target className="w-5 h-5 text-primary" />
+                <div className="p-2 rounded-xl bg-muted">
+                  <Target className="w-5 h-5 text-foreground" />
                 </div>
                 <div>
                   <span className="font-bold text-foreground">Meta de Criadores</span>
@@ -317,11 +305,11 @@ export const CreatorsConversionMetrics: React.FC = () => {
             <div className="space-y-2 mb-5">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Progresso</span>
-                <span className="font-bold text-foreground">{monthlyEntryTotal} / {creatorsGoal} <span className="text-primary">({goalPercentage}%)</span></span>
+                <span className="font-bold text-foreground">{monthlyEntryTotal} / {creatorsGoal} ({goalPercentage}%)</span>
               </div>
-              <div className="relative h-4 rounded-full bg-muted/50 overflow-hidden">
+              <div className="relative h-3 rounded-full bg-muted overflow-hidden">
                 <div 
-                  className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary to-primary/70 rounded-full transition-all duration-500 shadow-lg"
+                  className="absolute inset-y-0 left-0 bg-foreground rounded-full transition-all duration-500"
                   style={{ width: `${Math.min(100, goalPercentage)}%` }}
                 />
               </div>
@@ -329,14 +317,14 @@ export const CreatorsConversionMetrics: React.FC = () => {
 
             {/* Goal metrics grid */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-              <div className="p-3 rounded-xl bg-card/80 border border-border/50 backdrop-blur-sm">
+              <div className="p-3 rounded-xl bg-muted border border-border">
                 <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wide">Faltam</p>
-                <p className={`text-2xl font-bold ${creatorsRemaining > 0 ? 'text-primary' : 'text-success'}`}>
+                <p className={`text-2xl font-bold ${creatorsRemaining > 0 ? 'text-foreground' : 'text-success'}`}>
                   {creatorsRemaining}
                 </p>
               </div>
 
-              <div className="p-3 rounded-xl bg-card/80 border border-border/50 backdrop-blur-sm">
+              <div className="p-3 rounded-xl bg-muted border border-border">
                 <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wide">Projeção</p>
                 <p className={`text-2xl font-bold ${projection >= creatorsGoal ? 'text-success' : 'text-warning'}`}>
                   {projection}
@@ -344,7 +332,7 @@ export const CreatorsConversionMetrics: React.FC = () => {
                 <p className="text-xs text-muted-foreground">{projectedGoalPercentage}% da meta</p>
               </div>
 
-              <div className="p-3 rounded-xl bg-card/80 border border-border/50 backdrop-blur-sm">
+              <div className="p-3 rounded-xl bg-muted border border-border">
                 <div className="flex items-center gap-1 mb-1">
                   <Calendar className="w-3 h-3 text-muted-foreground" />
                   <p className="text-xs text-muted-foreground uppercase tracking-wide">Dias Restantes</p>
@@ -352,7 +340,7 @@ export const CreatorsConversionMetrics: React.FC = () => {
                 <p className="text-2xl font-bold text-foreground">{remainingDays}</p>
               </div>
 
-              <div className={`p-3 rounded-xl border backdrop-blur-sm ${
+              <div className={`p-3 rounded-xl border ${
                 creatorsNeededPerDay > avgDailyEntry 
                   ? 'bg-destructive/10 border-destructive/30' 
                   : 'bg-success/10 border-success/30'
@@ -370,8 +358,8 @@ export const CreatorsConversionMetrics: React.FC = () => {
         )}
 
         {creatorsGoal === 0 && (
-          <div className="p-5 rounded-2xl bg-warning/10 border border-warning/30 text-center">
-            <Target className="w-6 h-6 text-warning mx-auto mb-2" />
+          <div className="p-5 rounded-xl bg-muted border border-border text-center">
+            <Target className="w-6 h-6 text-muted-foreground mx-auto mb-2" />
             <p className="text-sm font-medium text-foreground">Meta de criadores não definida</p>
             <p className="text-xs text-muted-foreground">Configure a meta no painel de Gráficos</p>
           </div>
@@ -379,7 +367,7 @@ export const CreatorsConversionMetrics: React.FC = () => {
 
         {/* Bottom metrics */}
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-          <div className="p-4 rounded-xl bg-card border border-border/50 shadow-sm">
+          <div className="p-4 rounded-xl bg-card border border-border">
             <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wide">Média Diária</p>
             <div className="flex items-baseline gap-2">
               <p className="text-2xl font-bold text-foreground">{avgDailyEntry}</p>
@@ -387,7 +375,7 @@ export const CreatorsConversionMetrics: React.FC = () => {
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-card border border-border/50 shadow-sm">
+          <div className="p-4 rounded-xl bg-card border border-border">
             <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wide">Entrada Hoje</p>
             <div className="flex items-center gap-2">
               <p className="text-2xl font-bold text-foreground">{dailyEntryTotal}</p>
@@ -401,14 +389,14 @@ export const CreatorsConversionMetrics: React.FC = () => {
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-card border border-border/50 shadow-sm col-span-2 lg:col-span-1">
+          <div className="p-4 rounded-xl bg-card border border-border col-span-2 lg:col-span-1">
             <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wide">Conversão Média Diária</p>
-            <p className="text-2xl font-bold text-primary">{analysisToEntryRatio}%</p>
+            <p className="text-2xl font-bold text-foreground">{analysisToEntryRatio}%</p>
           </div>
         </div>
 
         {/* Footer */}
-        <p className="text-xs text-muted-foreground text-center pt-3 border-t border-border/50">
+        <p className="text-xs text-muted-foreground text-center pt-3 border-t border-border">
           A taxa mostra quantos criadores em análise efetivamente entram na agência
         </p>
       </CardContent>

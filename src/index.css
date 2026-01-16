@@ -35,17 +35,11 @@
     --accent: 0 0% 96%;
     --accent-foreground: 0 0% 5%;
 
-    /* TikTok Brand Colors - ONLY for buttons */
+    /* TikTok Brand Colors */
     --tiktok: 177 50% 62%;
     --tiktok-foreground: 0 0% 0%;
     --tiktok-pink: 348 86% 53%;
     --tiktok-pink-foreground: 0 0% 100%;
-
-    /* Brand button variants */
-    --brand-primary: 177 50% 62%;
-    --brand-primary-foreground: 0 0% 0%;
-    --brand-secondary: 348 86% 53%;
-    --brand-secondary-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
@@ -135,17 +129,11 @@
     --accent: 0 0% 15%;
     --accent-foreground: 0 0% 95%;
 
-    /* TikTok Brand Colors - ONLY for buttons */
+    /* TikTok Brand Colors */
     --tiktok: 177 50% 62%;
     --tiktok-foreground: 0 0% 0%;
     --tiktok-pink: 348 86% 53%;
     --tiktok-pink-foreground: 0 0% 100%;
-
-    /* Brand button variants */
-    --brand-primary: 177 50% 62%;
-    --brand-primary-foreground: 0 0% 0%;
-    --brand-secondary: 348 86% 53%;
-    --brand-secondary-foreground: 0 0% 100%;
 
     --destructive: 348 86% 53%;
     --destructive-foreground: 0 0% 100%;
