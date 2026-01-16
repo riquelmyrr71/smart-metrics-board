@@ -163,28 +163,20 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-neutral-100 flex flex-col relative overflow-hidden">
-      {/* Subtle organic background shapes */}
-      <div 
-        className="absolute top-0 right-0 w-[60%] h-full pointer-events-none"
-        style={{
-          background: 'radial-gradient(ellipse at 100% 0%, rgba(30, 30, 30, 0.03) 0%, transparent 60%)',
-        }}
-      />
-      
-      {/* Header with dark curved section on the left */}
+    <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
+      {/* Header */}
       <motion.header 
         className="w-full relative z-20"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        {/* Dark curved header background - positioned more to the left */}
+        {/* Dark curved header background */}
         <div 
           className="absolute top-0 left-0 h-20"
           style={{
             width: '280px',
-            background: 'linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%)',
+            background: 'hsl(var(--card))',
             borderRadius: '0 0 50% 0',
           }}
         />
@@ -203,19 +195,19 @@ const Login = () => {
           <nav className="hidden md:flex items-center gap-8">
             <a 
               href="/sobre" 
-              className="text-sm text-neutral-600 hover:text-neutral-900 transition-colors font-medium tracking-wide"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors font-medium tracking-wide"
             >
               Sobre
             </a>
             <a 
               href="/recursos" 
-              className="text-sm text-neutral-600 hover:text-neutral-900 transition-colors font-medium tracking-wide"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors font-medium tracking-wide"
             >
               Recursos
             </a>
             <a 
               href="/contato" 
-              className="text-sm text-neutral-600 hover:text-neutral-900 transition-colors font-medium tracking-wide"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors font-medium tracking-wide"
             >
               Contato
             </a>
@@ -224,7 +216,7 @@ const Login = () => {
           {/* CTA Button */}
           <Button 
             variant="outline"
-            className="px-6 py-2 bg-transparent border border-neutral-300 text-neutral-700 hover:bg-neutral-900 hover:text-white hover:border-neutral-900 transition-all duration-300 font-medium rounded-full text-sm"
+            className="px-6 py-2 rounded-full text-sm"
             onClick={() => navigate("/register")}
           >
             Cadastrar-se
@@ -234,48 +226,19 @@ const Login = () => {
 
       {/* Main Content - Centered */}
       <div className="flex-1 flex items-center justify-center relative px-6">
-        {/* Rotating soft red organic elements around the card */}
-        <motion.div
-          className="absolute pointer-events-none"
-          style={{
-            width: '550px',
-            height: '550px',
-            background: 'linear-gradient(135deg, rgba(139, 0, 0, 0.08) 0%, rgba(178, 34, 34, 0.12) 50%, rgba(139, 0, 0, 0.06) 100%)',
-            borderRadius: '60% 40% 55% 45% / 50% 60% 40% 50%',
-            filter: 'blur(2px)',
-          }}
-          animate={{ rotate: 360 }}
-          transition={{ duration: 80, repeat: Infinity, ease: "linear" }}
-        />
-        
-        <motion.div
-          className="absolute pointer-events-none"
-          style={{
-            width: '480px',
-            height: '480px',
-            background: 'linear-gradient(225deg, rgba(139, 0, 0, 0.05) 0%, rgba(220, 20, 60, 0.08) 50%, rgba(139, 0, 0, 0.04) 100%)',
-            borderRadius: '45% 55% 40% 60% / 55% 45% 60% 40%',
-            filter: 'blur(1px)',
-          }}
-          animate={{ rotate: -360 }}
-          transition={{ duration: 100, repeat: Infinity, ease: "linear" }}
-        />
-
-        <motion.div
-          className="absolute pointer-events-none"
-          style={{
-            width: '620px',
-            height: '620px',
-            background: 'linear-gradient(45deg, rgba(30, 30, 30, 0.02) 0%, rgba(60, 60, 60, 0.04) 50%, rgba(30, 30, 30, 0.02) 100%)',
-            borderRadius: '50% 50% 45% 55% / 45% 55% 50% 50%',
-          }}
-          animate={{ rotate: 180 }}
-          transition={{ duration: 120, repeat: Infinity, ease: "linear" }}
-        />
+        {/* Subtle background elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div 
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-10"
+            style={{
+              background: 'radial-gradient(circle, hsl(var(--tiktok)) 0%, transparent 70%)',
+            }}
+          />
+        </div>
 
         {/* Login Card */}
         <motion.div 
-          className="relative z-10 bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl shadow-black/5 border border-neutral-200/50 p-10 w-full max-w-md"
+          className="relative z-10 bg-card backdrop-blur-xl rounded-2xl shadow-2xl border border-border p-10 w-full max-w-md"
           initial={{ opacity: 0, y: 20, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
@@ -287,10 +250,10 @@ const Login = () => {
                 key={s}
                 className={`h-1.5 rounded-full transition-all duration-300 ${
                   step === s 
-                    ? "w-8 bg-neutral-900" 
+                    ? "w-8 bg-foreground" 
                     : i < ["email", "code", "password"].indexOf(step)
-                      ? "w-4 bg-neutral-400"
-                      : "w-4 bg-neutral-200"
+                      ? "w-4 bg-muted-foreground"
+                      : "w-4 bg-muted"
                 }`}
               />
             ))}
@@ -300,7 +263,7 @@ const Login = () => {
           <div className="mb-8 text-center">
             <motion.h1 
               key={step}
-              className="text-2xl font-semibold text-neutral-900 mb-3 tracking-tight"
+              className="text-2xl font-semibold text-foreground mb-3 tracking-tight"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
@@ -309,7 +272,7 @@ const Login = () => {
             </motion.h1>
             <motion.p 
               key={`desc-${step}`}
-              className="text-sm text-neutral-500 leading-relaxed"
+              className="text-sm text-muted-foreground leading-relaxed"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.1 }}
@@ -329,9 +292,9 @@ const Login = () => {
               <div className="space-y-2">
                 <Label 
                   htmlFor="email" 
-                  className="text-neutral-600 text-sm font-medium flex items-center gap-2"
+                  className="text-muted-foreground text-sm font-medium flex items-center gap-2"
                 >
-                  <Mail size={14} className="text-neutral-400" />
+                  <Mail size={14} className="text-muted-foreground" />
                   Email da Agência
                 </Label>
                 <Input
@@ -342,18 +305,18 @@ const Login = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   autoFocus
-                  className="h-12 bg-neutral-50/50 border-neutral-200 text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-400 focus:ring-neutral-200 rounded-xl transition-all text-base"
+                  className="h-12 rounded-xl transition-all text-base"
                 />
               </div>
 
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full h-12 bg-neutral-900 hover:bg-neutral-800 text-white font-medium rounded-xl shadow-lg shadow-neutral-900/10 hover:shadow-neutral-900/20 transition-all text-sm"
+                className="w-full h-12 rounded-xl text-sm"
               >
                 {isLoading ? (
                   <span className="flex items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
                     Verificando...
                   </span>
                 ) : (
@@ -367,7 +330,7 @@ const Login = () => {
               <div className="pt-2 flex justify-center">
                 <button
                   type="button"
-                  className="text-sm text-neutral-500 hover:text-neutral-700 font-medium transition-colors flex items-center gap-2"
+                  className="text-sm text-muted-foreground hover:text-foreground font-medium transition-colors flex items-center gap-2"
                 >
                   <KeyRound size={14} />
                   Esqueci meus dados
@@ -384,18 +347,18 @@ const Login = () => {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
             >
-              <div className="bg-neutral-100/50 rounded-xl p-3 text-center">
-                <p className="text-sm text-neutral-600">
-                  <span className="font-medium text-neutral-900">{email}</span>
+              <div className="bg-muted rounded-xl p-3 text-center">
+                <p className="text-sm text-muted-foreground">
+                  <span className="font-medium text-foreground">{email}</span>
                 </p>
               </div>
 
               <div className="space-y-2">
                 <Label 
                   htmlFor="code" 
-                  className="text-neutral-600 text-sm font-medium flex items-center gap-2"
+                  className="text-muted-foreground text-sm font-medium flex items-center gap-2"
                 >
-                  <KeyRound size={14} className="text-neutral-400" />
+                  <KeyRound size={14} className="text-muted-foreground" />
                   Código da Agência
                 </Label>
                 <Input
@@ -410,9 +373,9 @@ const Login = () => {
                   required
                   autoFocus
                   maxLength={6}
-                  className="h-14 bg-neutral-50/50 border-neutral-200 text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-400 focus:ring-neutral-200 rounded-xl transition-all text-2xl text-center tracking-[0.5em] font-mono"
+                  className="h-14 rounded-xl transition-all text-2xl text-center tracking-[0.5em] font-mono"
                 />
-                <p className="text-xs text-neutral-400 text-center mt-2">
+                <p className="text-xs text-muted-foreground text-center mt-2">
                   O código foi fornecido pela administração
                 </p>
               </div>
@@ -425,18 +388,18 @@ const Login = () => {
                     setStep("email");
                     setCode("");
                   }}
-                  className="flex-1 h-12 border-neutral-200 text-neutral-600 hover:bg-neutral-50 rounded-xl text-sm"
+                  className="flex-1 h-12 rounded-xl text-sm"
                 >
                   Voltar
                 </Button>
                 <Button
                   type="submit"
                   disabled={isLoading || code.length !== 6}
-                  className="flex-1 h-12 bg-neutral-900 hover:bg-neutral-800 text-white font-medium rounded-xl shadow-lg shadow-neutral-900/10 transition-all text-sm disabled:opacity-50"
+                  className="flex-1 h-12 rounded-xl text-sm"
                 >
                   {isLoading ? (
                     <span className="flex items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
                       Verificando...
                     </span>
                   ) : (
@@ -458,18 +421,18 @@ const Login = () => {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
             >
-              <div className="bg-neutral-100/50 rounded-xl p-3 text-center">
-                <p className="text-sm text-neutral-600">
-                  <span className="font-medium text-neutral-900">{email}</span>
+              <div className="bg-muted rounded-xl p-3 text-center">
+                <p className="text-sm text-muted-foreground">
+                  <span className="font-medium text-foreground">{email}</span>
                 </p>
               </div>
 
               <div className="space-y-2">
                 <Label 
                   htmlFor="password" 
-                  className="text-neutral-600 text-sm font-medium flex items-center gap-2"
+                  className="text-muted-foreground text-sm font-medium flex items-center gap-2"
                 >
-                  <Lock size={14} className="text-neutral-400" />
+                  <Lock size={14} className="text-muted-foreground" />
                   Senha
                 </Label>
                 <Input
@@ -480,7 +443,7 @@ const Login = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   autoFocus
-                  className="h-12 bg-neutral-50/50 border-neutral-200 text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-400 focus:ring-neutral-200 rounded-xl transition-all text-base"
+                  className="h-12 rounded-xl transition-all text-base"
                 />
               </div>
 
@@ -492,18 +455,18 @@ const Login = () => {
                     setStep("code");
                     setPassword("");
                   }}
-                  className="flex-1 h-12 border-neutral-200 text-neutral-600 hover:bg-neutral-50 rounded-xl text-sm"
+                  className="flex-1 h-12 rounded-xl text-sm"
                 >
                   Voltar
                 </Button>
                 <Button
                   type="submit"
                   disabled={isLoading || password.length < 6}
-                  className="flex-1 h-12 bg-neutral-900 hover:bg-neutral-800 text-white font-medium rounded-xl shadow-lg shadow-neutral-900/10 transition-all text-sm disabled:opacity-50"
+                  className="flex-1 h-12 rounded-xl text-sm"
                 >
                   {isLoading ? (
                     <span className="flex items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
                       Entrando...
                     </span>
                   ) : (
@@ -518,7 +481,7 @@ const Login = () => {
               <div className="flex justify-center">
                 <button
                   type="button"
-                  className="text-sm text-neutral-500 hover:text-neutral-700 font-medium transition-colors"
+                  className="text-sm text-muted-foreground hover:text-foreground font-medium transition-colors"
                 >
                   Esqueci minha senha
                 </button>
@@ -535,7 +498,7 @@ const Login = () => {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.7 }}
       >
-        <p className="text-xs text-neutral-400">
+        <p className="text-xs text-muted-foreground">
           © {new Date().getFullYear()} Curli Agency. Todos os direitos reservados.
         </p>
       </motion.footer>
