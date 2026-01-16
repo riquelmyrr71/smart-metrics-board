@@ -13,180 +13,182 @@
 @layer base {
   :root {
     --background: 0 0% 98%;
-    --foreground: 0 0% 10%;
+    --foreground: 0 0% 5%;
 
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 10%;
+    --card-foreground: 0 0% 5%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 10%;
+    --popover-foreground: 0 0% 5%;
 
-    /* Primary: Neutral Black */
-    --primary: 0 0% 9%;
+    /* Primary: TikTok Black */
+    --primary: 0 0% 0%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 0 0% 96%;
-    --secondary-foreground: 0 0% 10%;
+    --secondary-foreground: 0 0% 5%;
 
     --muted: 0 0% 95%;
-    --muted-foreground: 0 0% 45%;
+    --muted-foreground: 0 0% 40%;
 
-    --accent: 0 0% 96%;
-    --accent-foreground: 0 0% 10%;
+    --accent: 174 100% 47%;
+    --accent-foreground: 0 0% 0%;
 
-    /* TikTok accent - Cyan/Turquoise */
-    --tiktok: 174 72% 56%;
-    --tiktok-foreground: 0 0% 100%;
-    --tiktok-pink: 340 82% 60%;
+    /* TikTok Brand Colors */
+    --tiktok: 174 100% 47%;
+    --tiktok-foreground: 0 0% 0%;
+    --tiktok-pink: 344 99% 57%;
+    --tiktok-pink-foreground: 0 0% 100%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 344 99% 57%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 142 70% 45%;
+    --success: 160 84% 39%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 10%;
+    --warning: 45 93% 47%;
+    --warning-foreground: 0 0% 5%;
 
-    --border: 0 0% 92%;
-    --input: 0 0% 92%;
-    --ring: 174 72% 56%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 174 100% 47%;
 
     --radius: 0.75rem;
 
-    /* Dashboard specific - Minimal theme */
-    --header-bg: 0 0% 9%;
+    /* Dashboard specific - TikTok theme */
+    --header-bg: 0 0% 0%;
     --header-text: 0 0% 100%;
-    --subheader-bg: 0 0% 15%;
+    --subheader-bg: 0 0% 8%;
     --row-even: 0 0% 100%;
-    --row-odd: 0 0% 99%;
-    --row-total: 0 0% 9%;
-    --row-subtotal: 0 0% 20%;
-    --cell-border: 0 0% 92%;
-    --cell-positive: 142 70% 35%;
-    --cell-negative: 0 65% 50%;
-    --cell-warning: 38 92% 50%;
-    --cell-over100: 174 72% 40%;
+    --row-odd: 0 0% 98%;
+    --row-total: 0 0% 0%;
+    --row-subtotal: 0 0% 12%;
+    --cell-border: 0 0% 90%;
+    --cell-positive: 160 84% 39%;
+    --cell-negative: 344 99% 57%;
+    --cell-warning: 45 93% 47%;
+    --cell-over100: 174 100% 40%;
 
-    /* Column group colors - subtle */
-    --col-recruitment: 0 0% 99%;
-    --col-recruitment-header: 0 0% 95%;
-    --col-diamonds: 174 20% 98%;
-    --col-diamonds-header: 174 15% 92%;
+    /* Column group colors */
+    --col-recruitment: 344 30% 98%;
+    --col-recruitment-header: 344 30% 94%;
+    --col-diamonds: 174 30% 97%;
+    --col-diamonds-header: 174 30% 92%;
 
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 0 0% 10%;
-    --sidebar-primary: 0 0% 9%;
+    --sidebar-foreground: 0 0% 5%;
+    --sidebar-primary: 0 0% 0%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 96%;
-    --sidebar-accent-foreground: 0 0% 10%;
-    --sidebar-border: 0 0% 92%;
-    --sidebar-ring: 174 72% 56%;
-    --chart-1: 174 72% 56%;
-    --chart-2: 340 82% 60%;
-    --chart-3: 0 0% 30%;
-    --chart-4: 0 0% 50%;
-    --chart-5: 0 0% 70%;
+    --sidebar-accent: 174 100% 95%;
+    --sidebar-accent-foreground: 0 0% 0%;
+    --sidebar-border: 0 0% 90%;
+    --sidebar-ring: 174 100% 47%;
+    --chart-1: 174 100% 47%;
+    --chart-2: 344 99% 57%;
+    --chart-3: 0 0% 0%;
+    --chart-4: 0 0% 30%;
+    --chart-5: 0 0% 60%;
     --sidebar: 0 0% 100%;
     --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
     --font-serif: 'Merriweather', ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
     --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-    --shadow-2xs: 0 1px 2px 0px hsl(0 0% 0% / 0.03);
-    --shadow-xs: 0 1px 2px 0px hsl(0 0% 0% / 0.04);
-    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.05), 0 1px 2px -1px hsl(0 0% 0% / 0.05);
-    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.06), 0 1px 2px -1px hsl(0 0% 0% / 0.06);
-    --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.05), 0 2px 4px -2px hsl(0 0% 0% / 0.05);
-    --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.05), 0 4px 6px -4px hsl(0 0% 0% / 0.05);
-    --shadow-xl: 0 20px 25px -5px hsl(0 0% 0% / 0.05), 0 8px 10px -6px hsl(0 0% 0% / 0.05);
-    --shadow-2xl: 0 25px 50px -12px hsl(0 0% 0% / 0.15);
+    --shadow-2xs: 0 1px 2px 0px hsl(0 0% 0% / 0.05);
+    --shadow-xs: 0 1px 2px 0px hsl(0 0% 0% / 0.06);
+    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.08), 0 1px 2px -1px hsl(0 0% 0% / 0.08);
+    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+    --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.08), 0 2px 4px -2px hsl(0 0% 0% / 0.08);
+    --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.08), 0 4px 6px -4px hsl(0 0% 0% / 0.08);
+    --shadow-xl: 0 20px 25px -5px hsl(0 0% 0% / 0.08), 0 8px 10px -6px hsl(0 0% 0% / 0.08);
+    --shadow-2xl: 0 25px 50px -12px hsl(0 0% 0% / 0.2);
     --tracking-normal: 0em;
     --spacing: 0.25rem;
   }
 
   .dark {
-    --background: 0 0% 7%;
+    --background: 0 0% 4%;
     --foreground: 0 0% 95%;
 
-    --card: 0 0% 10%;
+    --card: 0 0% 8%;
     --card-foreground: 0 0% 95%;
 
-    --popover: 0 0% 10%;
+    --popover: 0 0% 8%;
     --popover-foreground: 0 0% 95%;
 
-    /* Primary: White/Light for dark mode */
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
+    /* Primary: TikTok White for dark mode */
+    --primary: 0 0% 100%;
+    --primary-foreground: 0 0% 0%;
 
-    --secondary: 0 0% 15%;
+    --secondary: 0 0% 12%;
     --secondary-foreground: 0 0% 95%;
 
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 60%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 55%;
 
-    --accent: 0 0% 15%;
-    --accent-foreground: 0 0% 95%;
+    --accent: 174 100% 47%;
+    --accent-foreground: 0 0% 0%;
 
-    /* TikTok accent - Cyan/Turquoise */
-    --tiktok: 174 72% 56%;
-    --tiktok-foreground: 0 0% 100%;
-    --tiktok-pink: 340 82% 60%;
+    /* TikTok Brand Colors */
+    --tiktok: 174 100% 47%;
+    --tiktok-foreground: 0 0% 0%;
+    --tiktok-pink: 344 99% 57%;
+    --tiktok-pink-foreground: 0 0% 100%;
 
-    --destructive: 0 63% 45%;
+    --destructive: 344 99% 57%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 142 60% 50%;
+    --success: 160 84% 45%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 10%;
+    --warning: 45 93% 50%;
+    --warning-foreground: 0 0% 5%;
 
-    --border: 0 0% 18%;
-    --input: 0 0% 18%;
-    --ring: 174 72% 56%;
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 174 100% 47%;
 
-    /* Dashboard specific - Dark theme */
-    --header-bg: 0 0% 98%;
-    --header-text: 0 0% 9%;
-    --subheader-bg: 0 0% 20%;
-    --row-even: 0 0% 10%;
-    --row-odd: 0 0% 12%;
-    --row-total: 0 0% 98%;
-    --row-subtotal: 0 0% 25%;
-    --cell-border: 0 0% 18%;
-    --cell-positive: 142 60% 50%;
-    --cell-negative: 0 65% 55%;
-    --cell-warning: 38 92% 55%;
-    --cell-over100: 174 72% 50%;
+    /* Dashboard specific - Dark TikTok theme */
+    --header-bg: 0 0% 100%;
+    --header-text: 0 0% 0%;
+    --subheader-bg: 0 0% 15%;
+    --row-even: 0 0% 8%;
+    --row-odd: 0 0% 10%;
+    --row-total: 0 0% 100%;
+    --row-subtotal: 0 0% 18%;
+    --cell-border: 0 0% 15%;
+    --cell-positive: 160 84% 50%;
+    --cell-negative: 344 99% 60%;
+    --cell-warning: 45 93% 55%;
+    --cell-over100: 174 100% 50%;
 
-    /* Column group colors - darker for dark mode */
-    --col-recruitment: 0 0% 12%;
-    --col-recruitment-header: 0 0% 18%;
-    --col-diamonds: 174 10% 12%;
-    --col-diamonds-header: 174 10% 18%;
+    /* Column group colors - dark mode */
+    --col-recruitment: 344 20% 10%;
+    --col-recruitment-header: 344 20% 15%;
+    --col-diamonds: 174 20% 10%;
+    --col-diamonds-header: 174 20% 15%;
 
-    --sidebar-background: 0 0% 7%;
+    --sidebar-background: 0 0% 4%;
     --sidebar-foreground: 0 0% 95%;
-    --sidebar-primary: 0 0% 98%;
-    --sidebar-primary-foreground: 0 0% 9%;
-    --sidebar-accent: 0 0% 15%;
-    --sidebar-accent-foreground: 0 0% 95%;
-    --sidebar-border: 0 0% 18%;
-    --sidebar-ring: 174 72% 56%;
-    --chart-1: 174 72% 56%;
-    --chart-2: 340 82% 60%;
-    --chart-3: 0 0% 60%;
-    --chart-4: 0 0% 45%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 174 100% 15%;
+    --sidebar-accent-foreground: 174 100% 47%;
+    --sidebar-border: 0 0% 15%;
+    --sidebar-ring: 174 100% 47%;
+    --chart-1: 174 100% 47%;
+    --chart-2: 344 99% 57%;
+    --chart-3: 0 0% 80%;
+    --chart-4: 0 0% 50%;
     --chart-5: 0 0% 30%;
-    --sidebar: 0 0% 7%;
+    --sidebar: 0 0% 4%;
     
-    --shadow-2xs: 0 1px 2px 0px hsl(0 0% 0% / 0.3);
-    --shadow-xs: 0 1px 2px 0px hsl(0 0% 0% / 0.4);
-    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.4), 0 1px 2px -1px hsl(0 0% 0% / 0.4);
-    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.5), 0 1px 2px -1px hsl(0 0% 0% / 0.5);
-    --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.4), 0 2px 4px -2px hsl(0 0% 0% / 0.4);
-    --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.4), 0 4px 6px -4px hsl(0 0% 0% / 0.4);
-    --shadow-xl: 0 20px 25px -5px hsl(0 0% 0% / 0.4), 0 8px 10px -6px hsl(0 0% 0% / 0.4);
-    --shadow-2xl: 0 25px 50px -12px hsl(0 0% 0% / 0.6);
+    --shadow-2xs: 0 1px 2px 0px hsl(0 0% 0% / 0.4);
+    --shadow-xs: 0 1px 2px 0px hsl(0 0% 0% / 0.5);
+    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.5), 0 1px 2px -1px hsl(0 0% 0% / 0.5);
+    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.6), 0 1px 2px -1px hsl(0 0% 0% / 0.6);
+    --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.5), 0 2px 4px -2px hsl(0 0% 0% / 0.5);
+    --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.5), 0 4px 6px -4px hsl(0 0% 0% / 0.5);
+    --shadow-xl: 0 20px 25px -5px hsl(0 0% 0% / 0.5), 0 8px 10px -6px hsl(0 0% 0% / 0.5);
+    --shadow-2xl: 0 25px 50px -12px hsl(0 0% 0% / 0.7);
   }
 }
 
