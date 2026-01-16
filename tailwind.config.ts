@@ -96,12 +96,6 @@ export default {
 				pink: 'hsl(var(--tiktok-pink))',
 				'pink-foreground': 'hsl(var(--tiktok-pink-foreground))'
 			},
-			brand: {
-				primary: 'hsl(var(--brand-primary))',
-				'primary-foreground': 'hsl(var(--brand-primary-foreground))',
-				secondary: 'hsl(var(--brand-secondary))',
-				'secondary-foreground': 'hsl(var(--brand-secondary-foreground))'
-			},
 			dashboard: {
 				header: 'hsl(var(--header-bg))',
 				'header-text': 'hsl(var(--header-text))',

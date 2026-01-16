@@ -15,13 +15,6 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        // TikTok Brand buttons - cyan
-        brand: "bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary/90",
-        // TikTok Brand buttons - pink
-        "brand-pink": "bg-brand-secondary text-brand-secondary-foreground hover:bg-brand-secondary/90",
-        // Outline variants with brand colors
-        "brand-outline": "border-2 border-brand-primary text-brand-primary bg-transparent hover:bg-brand-primary hover:text-brand-primary-foreground",
-        "brand-pink-outline": "border-2 border-brand-secondary text-brand-secondary bg-transparent hover:bg-brand-secondary hover:text-brand-secondary-foreground",
       },
       size: {
         default: "h-10 px-4 py-2",
