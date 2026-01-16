@@ -16,31 +16,67 @@ export type Database = {
     Tables: {
       agencies: {
         Row: {
+          address: string | null
+          city: string | null
+          country: string | null
           created_at: string
+          description: string | null
+          email: string | null
+          founded_at: string | null
           id: string
           is_active: boolean
           logo_url: string | null
           name: string
+          phone: string | null
           slug: string
+          state: string | null
+          total_creators: number | null
+          total_diamonds: number | null
+          total_lives: number | null
           updated_at: string
+          website: string | null
         }
         Insert: {
+          address?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string
+          description?: string | null
+          email?: string | null
+          founded_at?: string | null
           id?: string
           is_active?: boolean
           logo_url?: string | null
           name: string
+          phone?: string | null
           slug: string
+          state?: string | null
+          total_creators?: number | null
+          total_diamonds?: number | null
+          total_lives?: number | null
           updated_at?: string
+          website?: string | null
         }
         Update: {
+          address?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string
+          description?: string | null
+          email?: string | null
+          founded_at?: string | null
           id?: string
           is_active?: boolean
           logo_url?: string | null
           name?: string
+          phone?: string | null
           slug?: string
+          state?: string | null
+          total_creators?: number | null
+          total_diamonds?: number | null
+          total_lives?: number | null
           updated_at?: string
+          website?: string | null
         }
         Relationships: []
       }
