@@ -16,7 +16,8 @@ import {
   User,
   ChevronLeft,
   ChevronRight,
-  HelpCircle
+  HelpCircle,
+  Building2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAgency } from '@/contexts/AgencyContext';
@@ -38,6 +39,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { AgencyInfoCard } from '@/components/AgencyInfoCard';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -63,6 +65,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const [notifications] = useState([
     { id: 1, title: 'Bem-vindo!', message: 'Sua plataforma está pronta para uso.' }
   ]);
+  const [agencyInfoOpen, setAgencyInfoOpen] = useState(false);
 
   // Apply agency branding when it changes
   useEffect(() => {
