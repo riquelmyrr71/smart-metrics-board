@@ -12,6 +12,7 @@
 
 @layer base {
   :root {
+    /* Light mode - Clean white theme */
     --background: 0 0% 98%;
     --foreground: 0 0% 5%;
 
@@ -21,8 +22,8 @@
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 5%;
 
-    /* Primary: TikTok Black */
-    --primary: 0 0% 0%;
+    /* Primary: Neutral for UI elements */
+    --primary: 0 0% 10%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 0 0% 96%;
@@ -31,16 +32,22 @@
     --muted: 0 0% 95%;
     --muted-foreground: 0 0% 40%;
 
-    --accent: 174 100% 47%;
-    --accent-foreground: 0 0% 0%;
+    --accent: 0 0% 96%;
+    --accent-foreground: 0 0% 5%;
 
-    /* TikTok Brand Colors */
-    --tiktok: 174 100% 47%;
+    /* TikTok Brand Colors - ONLY for buttons */
+    --tiktok: 177 50% 62%;
     --tiktok-foreground: 0 0% 0%;
-    --tiktok-pink: 344 99% 57%;
+    --tiktok-pink: 348 86% 53%;
     --tiktok-pink-foreground: 0 0% 100%;
 
-    --destructive: 344 99% 57%;
+    /* Brand button variants */
+    --brand-primary: 177 50% 62%;
+    --brand-primary-foreground: 0 0% 0%;
+    --brand-secondary: 348 86% 53%;
+    --brand-secondary-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
     --success: 160 84% 39%;
@@ -51,42 +58,42 @@
 
     --border: 0 0% 90%;
     --input: 0 0% 90%;
-    --ring: 174 100% 47%;
+    --ring: 177 50% 62%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
 
-    /* Dashboard specific - TikTok theme */
-    --header-bg: 0 0% 0%;
+    /* Dashboard specific */
+    --header-bg: 0 0% 5%;
     --header-text: 0 0% 100%;
-    --subheader-bg: 0 0% 8%;
+    --subheader-bg: 0 0% 10%;
     --row-even: 0 0% 100%;
     --row-odd: 0 0% 98%;
-    --row-total: 0 0% 0%;
-    --row-subtotal: 0 0% 12%;
+    --row-total: 0 0% 5%;
+    --row-subtotal: 0 0% 15%;
     --cell-border: 0 0% 90%;
     --cell-positive: 160 84% 39%;
-    --cell-negative: 344 99% 57%;
+    --cell-negative: 348 86% 53%;
     --cell-warning: 45 93% 47%;
-    --cell-over100: 174 100% 40%;
+    --cell-over100: 177 50% 50%;
 
     /* Column group colors */
-    --col-recruitment: 344 30% 98%;
-    --col-recruitment-header: 344 30% 94%;
-    --col-diamonds: 174 30% 97%;
-    --col-diamonds-header: 174 30% 92%;
+    --col-recruitment: 0 0% 99%;
+    --col-recruitment-header: 0 0% 95%;
+    --col-diamonds: 177 10% 98%;
+    --col-diamonds-header: 177 10% 94%;
 
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 0 0% 5%;
-    --sidebar-primary: 0 0% 0%;
+    --sidebar-primary: 0 0% 10%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 174 100% 95%;
-    --sidebar-accent-foreground: 0 0% 0%;
+    --sidebar-accent: 0 0% 96%;
+    --sidebar-accent-foreground: 0 0% 5%;
     --sidebar-border: 0 0% 90%;
-    --sidebar-ring: 174 100% 47%;
-    --chart-1: 174 100% 47%;
-    --chart-2: 344 99% 57%;
-    --chart-3: 0 0% 0%;
-    --chart-4: 0 0% 30%;
+    --sidebar-ring: 177 50% 62%;
+    --chart-1: 177 50% 62%;
+    --chart-2: 348 86% 53%;
+    --chart-3: 0 0% 20%;
+    --chart-4: 0 0% 40%;
     --chart-5: 0 0% 60%;
     --sidebar: 0 0% 100%;
     --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
@@ -105,90 +112,97 @@
   }
 
   .dark {
-    --background: 0 0% 4%;
+    /* Dark mode - Backstage style */
+    --background: 0 0% 0%;
     --foreground: 0 0% 95%;
 
-    --card: 0 0% 8%;
+    --card: 0 0% 7%;
     --card-foreground: 0 0% 95%;
 
-    --popover: 0 0% 8%;
+    --popover: 0 0% 10%;
     --popover-foreground: 0 0% 95%;
 
-    /* Primary: TikTok White for dark mode */
-    --primary: 0 0% 100%;
+    /* Primary: Neutral white for UI elements */
+    --primary: 0 0% 95%;
     --primary-foreground: 0 0% 0%;
 
     --secondary: 0 0% 12%;
     --secondary-foreground: 0 0% 95%;
 
-    --muted: 0 0% 12%;
+    --muted: 0 0% 15%;
     --muted-foreground: 0 0% 55%;
 
-    --accent: 174 100% 47%;
-    --accent-foreground: 0 0% 0%;
+    --accent: 0 0% 15%;
+    --accent-foreground: 0 0% 95%;
 
-    /* TikTok Brand Colors */
-    --tiktok: 174 100% 47%;
+    /* TikTok Brand Colors - ONLY for buttons */
+    --tiktok: 177 50% 62%;
     --tiktok-foreground: 0 0% 0%;
-    --tiktok-pink: 344 99% 57%;
+    --tiktok-pink: 348 86% 53%;
     --tiktok-pink-foreground: 0 0% 100%;
 
-    --destructive: 344 99% 57%;
+    /* Brand button variants */
+    --brand-primary: 177 50% 62%;
+    --brand-primary-foreground: 0 0% 0%;
+    --brand-secondary: 348 86% 53%;
+    --brand-secondary-foreground: 0 0% 100%;
+
+    --destructive: 348 86% 53%;
     --destructive-foreground: 0 0% 100%;
 
     --success: 160 84% 45%;
-    --success-foreground: 0 0% 100%;
+    --success-foreground: 0 0% 0%;
 
     --warning: 45 93% 50%;
-    --warning-foreground: 0 0% 5%;
+    --warning-foreground: 0 0% 0%;
 
-    --border: 0 0% 15%;
+    --border: 0 0% 18%;
     --input: 0 0% 15%;
-    --ring: 174 100% 47%;
+    --ring: 177 50% 62%;
 
-    /* Dashboard specific - Dark TikTok theme */
-    --header-bg: 0 0% 100%;
-    --header-text: 0 0% 0%;
-    --subheader-bg: 0 0% 15%;
-    --row-even: 0 0% 8%;
+    /* Dashboard specific - Backstage style */
+    --header-bg: 0 0% 0%;
+    --header-text: 0 0% 100%;
+    --subheader-bg: 0 0% 10%;
+    --row-even: 0 0% 7%;
     --row-odd: 0 0% 10%;
-    --row-total: 0 0% 100%;
+    --row-total: 0 0% 95%;
     --row-subtotal: 0 0% 18%;
-    --cell-border: 0 0% 15%;
+    --cell-border: 0 0% 18%;
     --cell-positive: 160 84% 50%;
-    --cell-negative: 344 99% 60%;
+    --cell-negative: 348 86% 55%;
     --cell-warning: 45 93% 55%;
-    --cell-over100: 174 100% 50%;
+    --cell-over100: 177 50% 55%;
 
-    /* Column group colors - dark mode */
-    --col-recruitment: 344 20% 10%;
-    --col-recruitment-header: 344 20% 15%;
-    --col-diamonds: 174 20% 10%;
-    --col-diamonds-header: 174 20% 15%;
+    /* Column group colors - subtle dark */
+    --col-recruitment: 0 0% 8%;
+    --col-recruitment-header: 0 0% 12%;
+    --col-diamonds: 177 5% 8%;
+    --col-diamonds-header: 177 5% 12%;
 
-    --sidebar-background: 0 0% 4%;
+    --sidebar-background: 0 0% 0%;
     --sidebar-foreground: 0 0% 95%;
-    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary: 177 50% 62%;
     --sidebar-primary-foreground: 0 0% 0%;
-    --sidebar-accent: 174 100% 15%;
-    --sidebar-accent-foreground: 174 100% 47%;
-    --sidebar-border: 0 0% 15%;
-    --sidebar-ring: 174 100% 47%;
-    --chart-1: 174 100% 47%;
-    --chart-2: 344 99% 57%;
+    --sidebar-accent: 0 0% 12%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 0 0% 18%;
+    --sidebar-ring: 177 50% 62%;
+    --chart-1: 177 50% 62%;
+    --chart-2: 348 86% 53%;
     --chart-3: 0 0% 80%;
     --chart-4: 0 0% 50%;
     --chart-5: 0 0% 30%;
-    --sidebar: 0 0% 4%;
+    --sidebar: 0 0% 0%;
     
-    --shadow-2xs: 0 1px 2px 0px hsl(0 0% 0% / 0.4);
-    --shadow-xs: 0 1px 2px 0px hsl(0 0% 0% / 0.5);
-    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.5), 0 1px 2px -1px hsl(0 0% 0% / 0.5);
-    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.6), 0 1px 2px -1px hsl(0 0% 0% / 0.6);
-    --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.5), 0 2px 4px -2px hsl(0 0% 0% / 0.5);
-    --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.5), 0 4px 6px -4px hsl(0 0% 0% / 0.5);
-    --shadow-xl: 0 20px 25px -5px hsl(0 0% 0% / 0.5), 0 8px 10px -6px hsl(0 0% 0% / 0.5);
-    --shadow-2xl: 0 25px 50px -12px hsl(0 0% 0% / 0.7);
+    --shadow-2xs: 0 1px 2px 0px hsl(0 0% 0% / 0.5);
+    --shadow-xs: 0 1px 2px 0px hsl(0 0% 0% / 0.6);
+    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.6), 0 1px 2px -1px hsl(0 0% 0% / 0.6);
+    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.7), 0 1px 2px -1px hsl(0 0% 0% / 0.7);
+    --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.6), 0 2px 4px -2px hsl(0 0% 0% / 0.6);
+    --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.6), 0 4px 6px -4px hsl(0 0% 0% / 0.6);
+    --shadow-xl: 0 20px 25px -5px hsl(0 0% 0% / 0.6), 0 8px 10px -6px hsl(0 0% 0% / 0.6);
+    --shadow-2xl: 0 25px 50px -12px hsl(0 0% 0% / 0.8);
   }
 }
 
