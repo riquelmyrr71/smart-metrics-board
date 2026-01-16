@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Building2, 
   Users, 
@@ -10,7 +10,7 @@ import {
   Calendar,
   TrendingUp,
   Diamond,
-  Video,
+  Swords,
   X,
   Loader2,
   Edit,
@@ -25,7 +25,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAgency } from '@/contexts/AgencyContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
-import { format } from 'date-fns';
+import { format, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 interface TeamMember {
@@ -60,6 +60,19 @@ interface AgencyDetails {
   created_at: string;
 }
 
+interface MonthlyProjection {
+  diamonds_actual: number;
+  creators_actual: number;
+  month: number;
+  year: number;
+}
+
+interface BattleData {
+  [memberName: string]: {
+    [date: string]: number;
+  };
+}
+
 interface AgencyInfoCardProps {
   isOpen: boolean;
   onClose: () => void;
@@ -69,6 +82,8 @@ export const AgencyInfoCard: React.FC<AgencyInfoCardProps> = ({ isOpen, onClose 
   const { agency } = useAgency();
   const [agencyDetails, setAgencyDetails] = useState<AgencyDetails | null>(null);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [monthlyProjection, setMonthlyProjection] = useState<MonthlyProjection | null>(null);
+  const [battleData, setBattleData] = useState<BattleData>({});
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -82,28 +97,54 @@ export const AgencyInfoCard: React.FC<AgencyInfoCardProps> = ({ isOpen, onClose 
     
     setIsLoading(true);
     try {
-      // Load agency details
-      const { data: agencyData, error: agencyError } = await supabase
-        .from('agencies')
-        .select('*')
-        .eq('id', agency.id)
-        .single();
+      // Load all data in parallel
+      const [agencyResult, membersResult, projectionsResult, battlesResult] = await Promise.all([
+        // Agency details
+        supabase
+          .from('agencies')
+          .select('*')
+          .eq('id', agency.id)
+          .single(),
+        // Team members
+        supabase
+          .from('agency_team_members')
+          .select('*')
+          .eq('agency_id', agency.id)
+          .eq('is_active', true)
+          .order('role', { ascending: false })
+          .order('name'),
+        // Current month projections
+        supabase
+          .from('monthly_projections')
+          .select('diamonds_actual, creators_actual, month, year')
+          .order('year', { ascending: false })
+          .order('month', { ascending: false })
+          .limit(1),
+        // Battles data
+        supabase
+          .from('dashboard_data')
+          .select('data')
+          .eq('id', '00000000-0000-0000-0000-000000000005')
+          .maybeSingle()
+      ]);
 
-      if (agencyError) throw agencyError;
-      // Cast to unknown first then to AgencyDetails since the types file may not be updated yet
-      setAgencyDetails(agencyData as unknown as AgencyDetails);
+      if (!agencyResult.error && agencyResult.data) {
+        setAgencyDetails(agencyResult.data as unknown as AgencyDetails);
+      }
 
-      // Load team members
-      const { data: membersData, error: membersError } = await supabase
-        .from('agency_team_members')
-        .select('*')
-        .eq('agency_id', agency.id)
-        .eq('is_active', true)
-        .order('role', { ascending: false })
-        .order('name');
+      if (!membersResult.error && membersResult.data) {
+        setTeamMembers(membersResult.data);
+      }
 
-      if (!membersError) {
-        setTeamMembers(membersData || []);
+      if (!projectionsResult.error && projectionsResult.data && projectionsResult.data.length > 0) {
+        setMonthlyProjection(projectionsResult.data[0]);
+      }
+
+      if (!battlesResult.error && battlesResult.data?.data) {
+        const parsed = battlesResult.data.data as { battleData?: BattleData };
+        if (parsed.battleData) {
+          setBattleData(parsed.battleData);
+        }
       }
     } catch (error) {
       console.error('Erro ao carregar dados da agência:', error);
@@ -111,6 +152,21 @@ export const AgencyInfoCard: React.FC<AgencyInfoCardProps> = ({ isOpen, onClose 
       setIsLoading(false);
     }
   };
+
+  // Calculate battles for next 7 days
+  const battlesNext7Days = useMemo(() => {
+    const today = new Date();
+    let total = 0;
+    
+    for (let i = 0; i < 7; i++) {
+      const dateStr = format(addDays(today, i), 'yyyy-MM-dd');
+      Object.values(battleData).forEach(memberBattles => {
+        total += memberBattles[dateStr] || 0;
+      });
+    }
+    
+    return total;
+  }, [battleData]);
 
   if (!isOpen) return null;
 
@@ -121,6 +177,26 @@ export const AgencyInfoCard: React.FC<AgencyInfoCardProps> = ({ isOpen, onClose 
     if (!executiveId) return null;
     const exec = executives.find(e => e.id === executiveId);
     return exec?.name || null;
+  };
+
+  // Get initials for avatar fallback
+  const getInitials = (name: string) => {
+    const parts = name.split(' ');
+    if (parts.length >= 2) {
+      return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
+
+  // Format large numbers
+  const formatNumber = (num: number) => {
+    if (num >= 1000000) {
+      return `${(num / 1000000).toFixed(1)}M`;
+    }
+    if (num >= 1000) {
+      return `${(num / 1000).toFixed(0)}K`;
+    }
+    return num.toLocaleString('pt-BR');
   };
 
   return (
@@ -173,26 +249,36 @@ export const AgencyInfoCard: React.FC<AgencyInfoCardProps> = ({ isOpen, onClose 
 
               <ScrollArea className="h-[400px]">
                 <TabsContent value="overview" className="p-4 space-y-4 mt-0">
-                  {/* Stats Grid */}
+                  {/* Stats Grid - Real Data */}
                   <div className="grid grid-cols-3 gap-3">
                     <div className="bg-muted/50 rounded-xl p-3 text-center">
                       <Users className="h-5 w-5 mx-auto text-primary mb-1" />
-                      <p className="text-lg font-bold">{agencyDetails?.total_creators || 0}</p>
-                      <p className="text-[10px] text-muted-foreground">Criadores</p>
+                      <p className="text-lg font-bold">{monthlyProjection?.creators_actual || 0}</p>
+                      <p className="text-[10px] text-muted-foreground">Criadores (mês)</p>
                     </div>
                     <div className="bg-muted/50 rounded-xl p-3 text-center">
-                      <Video className="h-5 w-5 mx-auto text-tiktok mb-1" />
-                      <p className="text-lg font-bold">{agencyDetails?.total_lives || 0}</p>
-                      <p className="text-[10px] text-muted-foreground">Lives</p>
+                      <Swords className="h-5 w-5 mx-auto text-red-500 mb-1" />
+                      <p className="text-lg font-bold">{battlesNext7Days}</p>
+                      <p className="text-[10px] text-muted-foreground">Batalhas (7 dias)</p>
                     </div>
                     <div className="bg-muted/50 rounded-xl p-3 text-center">
                       <Diamond className="h-5 w-5 mx-auto text-amber-500 mb-1" />
                       <p className="text-lg font-bold">
-                        {(agencyDetails?.total_diamonds || 0).toLocaleString('pt-BR')}
+                        {formatNumber(monthlyProjection?.diamonds_actual || 0)}
                       </p>
-                      <p className="text-[10px] text-muted-foreground">Diamantes</p>
+                      <p className="text-[10px] text-muted-foreground">Diamantes (mês)</p>
                     </div>
                   </div>
+
+                  {/* Month Reference */}
+                  {monthlyProjection && (
+                    <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground bg-muted/30 rounded-lg py-2">
+                      <Calendar className="h-3 w-3" />
+                      <span>
+                        Dados de {format(new Date(monthlyProjection.year, monthlyProjection.month - 1), "MMMM 'de' yyyy", { locale: ptBR })}
+                      </span>
+                    </div>
+                  )}
 
                   {/* Agency Info */}
                   <div className="space-y-3">
@@ -293,7 +379,7 @@ export const AgencyInfoCard: React.FC<AgencyInfoCardProps> = ({ isOpen, onClose 
                             <Avatar className="h-10 w-10">
                               <AvatarImage src={exec.avatar_url || undefined} />
                               <AvatarFallback className="bg-primary text-primary-foreground text-sm">
-                                {exec.name.charAt(0).toUpperCase()}
+                                {getInitials(exec.name)}
                               </AvatarFallback>
                             </Avatar>
                             <div className="flex-1">
@@ -330,7 +416,7 @@ export const AgencyInfoCard: React.FC<AgencyInfoCardProps> = ({ isOpen, onClose 
                         <Avatar className="h-8 w-8">
                           <AvatarImage src={assoc.avatar_url || undefined} />
                           <AvatarFallback className="bg-muted text-muted-foreground text-xs">
-                            {assoc.name.charAt(0).toUpperCase()}
+                            {getInitials(assoc.name)}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
