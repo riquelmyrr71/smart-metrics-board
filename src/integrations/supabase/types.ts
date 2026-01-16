@@ -123,6 +123,69 @@ export type Database = {
           },
         ]
       }
+      agency_team_members: {
+        Row: {
+          agency_id: string
+          avatar_url: string | null
+          created_at: string
+          email: string | null
+          executive_id: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          phone: string | null
+          role: string
+          sort_order: number | null
+          tiktok_username: string | null
+          updated_at: string
+        }
+        Insert: {
+          agency_id: string
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          executive_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          phone?: string | null
+          role?: string
+          sort_order?: number | null
+          tiktok_username?: string | null
+          updated_at?: string
+        }
+        Update: {
+          agency_id?: string
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          executive_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          phone?: string | null
+          role?: string
+          sort_order?: number | null
+          tiktok_username?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_team_members_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_team_members_executive_id_fkey"
+            columns: ["executive_id"]
+            isOneToOne: false
+            referencedRelation: "agency_team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
