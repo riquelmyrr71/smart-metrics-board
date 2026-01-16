@@ -345,17 +345,30 @@ export const AgencyInfoCard: React.FC<AgencyInfoCardProps> = ({ isOpen, onClose 
                     </div>
                   </div>
 
-                  {/* Ideas Section */}
+                  {/* Projections Section */}
                   <div className="space-y-2">
-                    <p className="text-xs font-medium text-muted-foreground">Ideias & Próximos Passos</p>
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                        <TrendingUp className="h-4 w-4 text-amber-500" />
-                        <span className="text-xs">Aumentar meta de criadores em 20%</span>
+                    <p className="text-xs font-medium text-muted-foreground">Projeções (Próximos 7 dias)</p>
+                    <div className="bg-gradient-to-br from-red-500/10 to-amber-500/10 rounded-xl p-4 border border-red-500/20">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="h-10 w-10 rounded-lg bg-red-500/20 flex items-center justify-center">
+                          <Swords className="h-5 w-5 text-red-500" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Batalhas Agendadas</p>
+                          <p className="text-2xl font-bold">{battlesNext7Days}</p>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 p-2 rounded-lg bg-primary/10 border border-primary/20">
-                        <Users className="h-4 w-4 text-primary" />
-                        <span className="text-xs">Treinar novos associados</span>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-background/50 rounded-lg p-2">
+                          <p className="text-[10px] text-muted-foreground">Expectativa de Ganhos</p>
+                          <p className="text-sm font-semibold text-amber-500">
+                            {formatNumber(battlesNext7Days * 15000)} 💎
+                          </p>
+                        </div>
+                        <div className="bg-background/50 rounded-lg p-2">
+                          <p className="text-[10px] text-muted-foreground">Média por Batalha</p>
+                          <p className="text-sm font-semibold">~15K 💎</p>
+                        </div>
                       </div>
                     </div>
                   </div>
