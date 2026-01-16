@@ -316,6 +316,23 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
               </DropdownMenuContent>
             </DropdownMenu>
 
+            {/* Agency Info */}
+            {agency && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="text-muted-foreground hover:text-foreground"
+                    onClick={() => setAgencyInfoOpen(!agencyInfoOpen)}
+                  >
+                    <Building2 className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Informações da Agência</TooltipContent>
+              </Tooltip>
+            )}
+
             {/* Settings */}
             <Tooltip>
               <TooltipTrigger asChild>
@@ -382,6 +399,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
           {children}
         </main>
       </div>
+
+      {/* Agency Info Card */}
+      <AgencyInfoCard isOpen={agencyInfoOpen} onClose={() => setAgencyInfoOpen(false)} />
     </div>
   );
 };

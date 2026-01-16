@@ -90,7 +90,8 @@ export const AgencyInfoCard: React.FC<AgencyInfoCardProps> = ({ isOpen, onClose 
         .single();
 
       if (agencyError) throw agencyError;
-      setAgencyDetails(agencyData as AgencyDetails);
+      // Cast to unknown first then to AgencyDetails since the types file may not be updated yet
+      setAgencyDetails(agencyData as unknown as AgencyDetails);
 
       // Load team members
       const { data: membersData, error: membersError } = await supabase

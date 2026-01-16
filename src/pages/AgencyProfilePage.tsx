@@ -114,20 +114,22 @@ const AgencyProfilePage = () => {
 
       if (agencyError) throw agencyError;
 
+      // Cast to any since types may not be updated yet
+      const data = agencyData as Record<string, unknown>;
       setFormData({
-        name: agencyData.name || '',
-        description: agencyData.description || '',
-        website: agencyData.website || '',
-        email: agencyData.email || '',
-        phone: agencyData.phone || '',
-        address: agencyData.address || '',
-        city: agencyData.city || '',
-        state: agencyData.state || '',
-        country: agencyData.country || 'Brasil',
-        founded_at: agencyData.founded_at || '',
-        total_creators: agencyData.total_creators || 0,
-        total_lives: agencyData.total_lives || 0,
-        total_diamonds: agencyData.total_diamonds || 0,
+        name: (data.name as string) || '',
+        description: (data.description as string) || '',
+        website: (data.website as string) || '',
+        email: (data.email as string) || '',
+        phone: (data.phone as string) || '',
+        address: (data.address as string) || '',
+        city: (data.city as string) || '',
+        state: (data.state as string) || '',
+        country: (data.country as string) || 'Brasil',
+        founded_at: (data.founded_at as string) || '',
+        total_creators: (data.total_creators as number) || 0,
+        total_lives: (data.total_lives as number) || 0,
+        total_diamonds: (data.total_diamonds as number) || 0,
       });
 
       // Load team members
