@@ -517,6 +517,26 @@ const ChartsDashboard: React.FC = () => {
   const reportDiamondsGoalPercent = monthlyGoals.diamondsGoal > 0 ? reportDiamonds / monthlyGoals.diamondsGoal * 100 : 0;
   const reportCreatorsGoalPercent = monthlyGoals.creatorsGoal > 0 ? reportCreators / monthlyGoals.creatorsGoal * 100 : 0;
 
+  // Report date marcos calculation - accumulated diamonds up to report date
+  const reportDateObj = new Date(dailyReportDate + 'T12:00:00');
+  const reportMonthStart = startOfMonth(reportDateObj);
+  const entriesUpToReportDate = entries.filter(e => {
+    const entryDate = new Date(e.date + 'T12:00:00');
+    return entryDate >= reportMonthStart && entryDate <= reportDateObj;
+  });
+  const accumulatedDiamondsUpToReportDate = entriesUpToReportDate.reduce((sum, e) => sum + e.diamonds, 0);
+  const daysWithDataUpToReportDate = entriesUpToReportDate.length;
+  const totalDaysInReportMonth = getDaysInMonth(reportDateObj);
+  
+  // Current marco level based on accumulated diamonds up to report date
+  const reportCurrentLevel = sortedTargets.filter(t => accumulatedDiamondsUpToReportDate >= t.diamondsValue).pop();
+  
+  // Projection for report date's month
+  const projectedDiamondsForReportMonth = daysWithDataUpToReportDate > 0 
+    ? (accumulatedDiamondsUpToReportDate / daysWithDataUpToReportDate) * totalDaysInReportMonth 
+    : 0;
+  const reportProjectedLevel = sortedTargets.filter(t => projectedDiamondsForReportMonth >= t.diamondsValue).pop();
+
   // Comparison calculations
   const diamondsDiff = todayDiamonds - yesterdayDiamonds;
   const creatorsDiff = todayCreators - yesterdayCreators;
@@ -1588,6 +1608,59 @@ const ChartsDashboard: React.FC = () => {
                   backgroundColor: '#1a1a1a'
                 }} />
                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Marcos (Percentage Levels) Section */}
+          <div className="rounded-xl p-6 mb-8" style={{
+          backgroundColor: '#ffffff',
+          border: '1px solid #d4d4d4'
+        }}>
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{
+            color: '#1a1a1a'
+          }}>
+              <Award className="w-5 h-5" style={{
+              color: '#b91c1c'
+            }} />
+              Marcos de Porcentagem
+            </h2>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center p-4 rounded-lg" style={{
+              backgroundColor: '#fecaca',
+              border: '2px solid #b91c1c'
+            }}>
+                <p className="text-sm mb-1" style={{
+                color: '#525252'
+              }}>Nível Atingido</p>
+                <p className="text-3xl font-bold" style={{
+                color: '#991b1b'
+              }}>
+                  {reportCurrentLevel ? `${reportCurrentLevel.percentage}%` : '0%'}
+                </p>
+                <p className="text-xs mt-1" style={{
+                color: '#737373'
+              }}>
+                  {accumulatedDiamondsUpToReportDate.toLocaleString('pt-BR')} diamantes
+                </p>
+              </div>
+              <div className="text-center p-4 rounded-lg" style={{
+              backgroundColor: '#fef3c7',
+              border: '2px solid #f59e0b'
+            }}>
+                <p className="text-sm mb-1" style={{
+                color: '#525252'
+              }}>Projeção Mês</p>
+                <p className="text-3xl font-bold" style={{
+                color: '#b45309'
+              }}>
+                  {reportProjectedLevel ? `${reportProjectedLevel.percentage}%` : reportCurrentLevel ? `${reportCurrentLevel.percentage}%` : '0%'}
+                </p>
+                <p className="text-xs mt-1" style={{
+                color: '#737373'
+              }}>
+                  {Math.round(projectedDiamondsForReportMonth).toLocaleString('pt-BR')} projetado
+                </p>
               </div>
             </div>
           </div>
