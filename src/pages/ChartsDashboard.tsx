@@ -1614,53 +1614,121 @@ const ChartsDashboard: React.FC = () => {
 
           {/* Marcos (Percentage Levels) Section */}
           <div className="rounded-xl p-6 mb-8" style={{
-          backgroundColor: '#ffffff',
-          border: '1px solid #d4d4d4'
-        }}>
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{
-            color: '#1a1a1a'
+            backgroundColor: '#ffffff',
+            border: '1px solid #d4d4d4'
           }}>
-              <Award className="w-5 h-5" style={{
-              color: '#b91c1c'
-            }} />
+            <h2 className="text-lg font-semibold mb-6 flex items-center justify-center gap-2" style={{
+              color: '#1a1a1a'
+            }}>
+              <Award className="w-5 h-5" style={{ color: '#b91c1c' }} />
               Marcos de Porcentagem
             </h2>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="text-center p-4 rounded-lg" style={{
-              backgroundColor: '#fecaca',
-              border: '2px solid #b91c1c'
-            }}>
-                <p className="text-sm mb-1" style={{
-                color: '#525252'
-              }}>Nível Atingido</p>
-                <p className="text-3xl font-bold" style={{
-                color: '#991b1b'
+            
+            {/* Summary Cards */}
+            <div className="grid grid-cols-2 gap-4 mb-8">
+              <div className="text-center p-5 rounded-xl" style={{
+                backgroundColor: '#dcfce7',
+                border: '2px solid #22c55e'
               }}>
+                <p className="text-xs font-medium uppercase tracking-wide mb-2" style={{ color: '#166534' }}>
+                  Nível Atual
+                </p>
+                <p className="text-4xl font-bold" style={{ color: '#15803d' }}>
                   {reportCurrentLevel ? `${reportCurrentLevel.percentage}%` : '0%'}
                 </p>
-                <p className="text-xs mt-1" style={{
-                color: '#737373'
-              }}>
-                  {accumulatedDiamondsUpToReportDate.toLocaleString('pt-BR')} diamantes
+                <p className="text-sm mt-2 font-medium" style={{ color: '#166534' }}>
+                  {accumulatedDiamondsUpToReportDate.toLocaleString('pt-BR')} 💎
                 </p>
               </div>
-              <div className="text-center p-4 rounded-lg" style={{
-              backgroundColor: '#fef3c7',
-              border: '2px solid #f59e0b'
-            }}>
-                <p className="text-sm mb-1" style={{
-                color: '#525252'
-              }}>Projeção Mês</p>
-                <p className="text-3xl font-bold" style={{
-                color: '#b45309'
+              <div className="text-center p-5 rounded-xl" style={{
+                backgroundColor: '#fef3c7',
+                border: '2px solid #f59e0b'
               }}>
+                <p className="text-xs font-medium uppercase tracking-wide mb-2" style={{ color: '#92400e' }}>
+                  Projeção Mês
+                </p>
+                <p className="text-4xl font-bold" style={{ color: '#b45309' }}>
                   {reportProjectedLevel ? `${reportProjectedLevel.percentage}%` : reportCurrentLevel ? `${reportCurrentLevel.percentage}%` : '0%'}
                 </p>
-                <p className="text-xs mt-1" style={{
-                color: '#737373'
-              }}>
-                  {Math.round(projectedDiamondsForReportMonth).toLocaleString('pt-BR')} projetado
+                <p className="text-sm mt-2 font-medium" style={{ color: '#92400e' }}>
+                  {Math.round(projectedDiamondsForReportMonth).toLocaleString('pt-BR')} 💎
                 </p>
+              </div>
+            </div>
+
+            {/* Visual Trail */}
+            <div className="relative px-4">
+              {/* Progress Line Background */}
+              <div className="absolute top-5 left-8 right-8 h-2 rounded-full" style={{ backgroundColor: '#e5e5e5' }} />
+              
+              {/* Progress Line Filled */}
+              <div 
+                className="absolute top-5 left-8 h-2 rounded-full" 
+                style={{ 
+                  backgroundColor: '#22c55e',
+                  width: `${Math.min(100, (sortedTargets.findIndex(t => t.percentage === (reportCurrentLevel?.percentage || 0)) + 1) / sortedTargets.length * 100)}%`,
+                  maxWidth: 'calc(100% - 4rem)'
+                }} 
+              />
+              
+              {/* Milestone Nodes */}
+              <div className="relative flex justify-between">
+                {sortedTargets.map((target, index) => {
+                  const isAchieved = accumulatedDiamondsUpToReportDate >= target.diamondsValue;
+                  const isCurrent = reportCurrentLevel?.percentage === target.percentage;
+                  const isProjected = reportProjectedLevel?.percentage === target.percentage && !isCurrent;
+                  
+                  return (
+                    <div key={target.percentage} className="flex flex-col items-center" style={{ width: '60px' }}>
+                      {/* Node Circle */}
+                      <div 
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold relative z-10"
+                        style={{
+                          backgroundColor: isAchieved ? '#22c55e' : isCurrent ? '#f59e0b' : '#e5e5e5',
+                          color: isAchieved || isCurrent ? '#ffffff' : '#737373',
+                          border: isProjected ? '3px solid #f59e0b' : 'none',
+                          boxShadow: isCurrent ? '0 0 0 4px rgba(245, 158, 11, 0.3)' : 'none'
+                        }}
+                      >
+                        {isAchieved ? (
+                          <Check className="w-5 h-5" />
+                        ) : (
+                          `${target.percentage}%`
+                        )}
+                      </div>
+                      
+                      {/* Percentage Label */}
+                      {isAchieved && (
+                        <p className="text-xs font-semibold mt-2" style={{ color: '#22c55e' }}>
+                          {target.percentage}%
+                        </p>
+                      )}
+                      
+                      {/* Diamond Value */}
+                      <p className="text-xs mt-1" style={{ color: '#737373' }}>
+                        {(target.diamondsValue / 1000000).toFixed(1)}M
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Legend */}
+            <div className="flex justify-center gap-6 mt-6 pt-4" style={{ borderTop: '1px solid #e5e5e5' }}>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 rounded-full flex items-center justify-center" style={{ backgroundColor: '#22c55e' }}>
+                  <Check className="w-3 h-3 text-white" />
+                </div>
+                <span className="text-xs" style={{ color: '#525252' }}>Atingido</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: '#f59e0b' }} />
+                <span className="text-xs" style={{ color: '#525252' }}>Atual</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: '#e5e5e5', border: '2px solid #f59e0b' }} />
+                <span className="text-xs" style={{ color: '#525252' }}>Projeção</span>
               </div>
             </div>
           </div>
