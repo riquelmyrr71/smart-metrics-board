@@ -2174,7 +2174,7 @@ const ChartsDashboard: React.FC = () => {
         }}>
           {/* Header */}
           <div className="text-center mb-6 pb-4" style={{
-            borderBottom: '2px solid #f59e0b'
+            borderBottom: '2px solid #1a1a1a'
           }}>
             <h1 className="text-xl font-bold mb-1" style={{ color: '#1a1a1a' }}>
               Relatório de Marcos
@@ -2184,91 +2184,177 @@ const ChartsDashboard: React.FC = () => {
             </p>
           </div>
 
-          {/* Status Cards - 3 columns */}
-          <div className="grid grid-cols-3 gap-3 mb-5">
+          {/* Status Cards - 2 columns centered */}
+          <div className="grid grid-cols-2 gap-4 mb-6 px-8">
             {/* Current Level */}
-            <div className="rounded-lg p-4 text-center" style={{
-              backgroundColor: '#f0fdf4',
-              border: '1px solid #86efac'
+            <div className="rounded-xl p-5 text-center" style={{
+              backgroundColor: '#dcfce7',
+              border: '2px solid #22c55e'
             }}>
-              <p className="text-[10px] uppercase tracking-wide mb-1" style={{ color: '#166534' }}>
+              <p className="text-[10px] uppercase tracking-wider font-semibold mb-2" style={{ color: '#166534' }}>
                 Nível Atual
               </p>
-              <p className="text-2xl font-bold" style={{ color: '#166534' }}>
+              <p className="text-4xl font-bold" style={{ color: '#15803d' }}>
                 {currentLevel ? `${currentLevel.percentage}%` : '0%'}
               </p>
-            </div>
-
-            {/* Current Diamonds */}
-            <div className="rounded-lg p-4 text-center" style={{
-              backgroundColor: '#fef2f2',
-              border: '1px solid #fecaca'
-            }}>
-              <p className="text-[10px] uppercase tracking-wide mb-1" style={{ color: '#991b1b' }}>
-                Diamantes
-              </p>
-              <p className="text-lg font-bold" style={{ color: '#991b1b' }}>
-                {(monthDiamonds / 1000000).toFixed(2)}M
+              <p className="text-sm font-medium mt-2" style={{ color: '#166534' }}>
+                {(monthDiamonds / 1000000).toFixed(2)}M 💎
               </p>
             </div>
 
             {/* Projection */}
-            <div className="rounded-lg p-4 text-center" style={{
-              backgroundColor: '#fffbeb',
-              border: '1px solid #fcd34d'
+            <div className="rounded-xl p-5 text-center" style={{
+              backgroundColor: '#fef3c7',
+              border: '2px solid #f59e0b'
             }}>
-              <p className="text-[10px] uppercase tracking-wide mb-1" style={{ color: '#b45309' }}>
-                Projeção
+              <p className="text-[10px] uppercase tracking-wider font-semibold mb-2" style={{ color: '#92400e' }}>
+                Projeção Mês
               </p>
-              <p className="text-2xl font-bold" style={{ color: '#b45309' }}>
+              <p className="text-4xl font-bold" style={{ color: '#b45309' }}>
                 {projectedLevel ? `${projectedLevel.percentage}%` : currentLevel ? `${currentLevel.percentage}%` : '0%'}
               </p>
+              <p className="text-sm font-medium mt-2" style={{ color: '#92400e' }}>
+                {(projectedMonthDiamonds / 1000000).toFixed(2)}M 💎
+              </p>
+            </div>
+          </div>
+
+          {/* Visual Trail */}
+          <div className="mb-6 px-4">
+            <div className="relative">
+              {/* Progress Line Background */}
+              <div className="absolute top-5 left-6 right-6 h-2 rounded-full" style={{ backgroundColor: '#e5e5e5' }} />
+              
+              {/* Progress Line Filled */}
+              <div 
+                className="absolute top-5 left-6 h-2 rounded-full" 
+                style={{ 
+                  backgroundColor: '#22c55e',
+                  width: `${Math.min(100, ((sortedTargets.findIndex(t => t.percentage === (currentLevel?.percentage || 0)) + 1) / sortedTargets.length * 100))}%`,
+                  maxWidth: 'calc(100% - 3rem)'
+                }} 
+              />
+              
+              {/* Milestone Nodes */}
+              <div className="relative flex justify-between">
+                {sortedTargets.map((target, index) => {
+                  const isAchieved = monthDiamonds >= target.diamondsValue;
+                  const isCurrent = currentLevel?.percentage === target.percentage && !isAchieved;
+                  const isProjected = projectedLevel?.percentage === target.percentage && !isAchieved && !isCurrent;
+                  
+                  return (
+                    <div key={target.percentage} className="flex flex-col items-center" style={{ width: '65px' }}>
+                      {/* Node Circle */}
+                      <div 
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold relative z-10"
+                        style={{
+                          backgroundColor: isAchieved ? '#22c55e' : isCurrent ? '#f59e0b' : '#e5e5e5',
+                          color: isAchieved || isCurrent ? '#ffffff' : '#737373',
+                          border: isProjected ? '3px dashed #f59e0b' : 'none',
+                          boxShadow: isCurrent ? '0 0 0 4px rgba(245, 158, 11, 0.3)' : 'none'
+                        }}
+                      >
+                        {isAchieved ? '✓' : `${target.percentage}%`}
+                      </div>
+                      
+                      {/* Diamond Value */}
+                      <p className="text-[10px] font-medium mt-1" style={{ color: isAchieved ? '#22c55e' : '#737373' }}>
+                        {(target.diamondsValue / 1000000).toFixed(1)}M
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            
+            {/* Trail Legend */}
+            <div className="flex justify-center gap-6 mt-4">
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#22c55e' }} />
+                <span className="text-[9px]" style={{ color: '#525252' }}>Atingido</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#f59e0b' }} />
+                <span className="text-[9px]" style={{ color: '#525252' }}>Em Progresso</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#e5e5e5', border: '1px dashed #f59e0b' }} />
+                <span className="text-[9px]" style={{ color: '#525252' }}>Projeção</span>
+              </div>
             </div>
           </div>
 
           {/* Progress to Next Level */}
           {nextLevel && (
-            <div className="rounded-lg p-4 mb-5" style={{
-              backgroundColor: '#f9fafb',
-              border: '1px solid #e5e7eb'
+            <div className="rounded-xl p-4 mb-5 mx-4" style={{
+              backgroundColor: '#fafafa',
+              border: '1px solid #e5e5e5'
             }}>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-xs font-medium" style={{ color: '#374151' }}>
-                  Próximo: {nextLevel.percentage}%
+                <span className="text-xs font-semibold" style={{ color: '#374151' }}>
+                  Próximo Marco: {nextLevel.percentage}%
                 </span>
-                <span className="text-xs" style={{ color: '#6b7280' }}>
+                <span className="text-xs font-medium" style={{ color: '#f59e0b' }}>
                   Faltam {((nextLevel.diamondsValue - monthDiamonds) / 1000000).toFixed(2)}M
                 </span>
               </div>
-              <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: '#e5e7eb' }}>
+              <div className="h-3 rounded-full overflow-hidden" style={{ backgroundColor: '#e5e7eb' }}>
                 <div className="h-full rounded-full" style={{
                   width: `${Math.min(100, Math.max(0, progressToNextLevel))}%`,
-                  backgroundColor: '#f59e0b'
+                  backgroundColor: '#22c55e'
                 }} />
               </div>
-              <p className="text-[10px] mt-1 text-center" style={{ color: '#9ca3af' }}>
-                {progressToNextLevel.toFixed(0)}% concluído
+              <p className="text-[10px] mt-2 text-center font-medium" style={{ color: '#6b7280' }}>
+                {progressToNextLevel.toFixed(0)}% concluído para {nextLevel.percentage}%
               </p>
             </div>
           )}
 
+          {/* Summary Stats */}
+          <div className="grid grid-cols-4 gap-2 mb-5 mx-4">
+            <div className="text-center p-3 rounded-lg" style={{ backgroundColor: '#f9fafb', border: '1px solid #e5e5e5' }}>
+              <p className="text-[9px] uppercase font-medium" style={{ color: '#9ca3af' }}>Média/Dia</p>
+              <p className="text-sm font-bold mt-1" style={{ color: '#374151' }}>
+                {(avgDailyDiamonds / 1000000).toFixed(3)}M
+              </p>
+            </div>
+            <div className="text-center p-3 rounded-lg" style={{ backgroundColor: '#f9fafb', border: '1px solid #e5e5e5' }}>
+              <p className="text-[9px] uppercase font-medium" style={{ color: '#9ca3af' }}>Dia Atual</p>
+              <p className="text-sm font-bold mt-1" style={{ color: '#374151' }}>
+                {dayOfMonth}/{totalDaysInMonth}
+              </p>
+            </div>
+            <div className="text-center p-3 rounded-lg" style={{ backgroundColor: '#f9fafb', border: '1px solid #e5e5e5' }}>
+              <p className="text-[9px] uppercase font-medium" style={{ color: '#9ca3af' }}>Dias Restantes</p>
+              <p className="text-sm font-bold mt-1" style={{ color: '#374151' }}>
+                {daysRemaining}
+              </p>
+            </div>
+            <div className="text-center p-3 rounded-lg" style={{ backgroundColor: '#fef3c7', border: '1px solid #f59e0b' }}>
+              <p className="text-[9px] uppercase font-medium" style={{ color: '#92400e' }}>Projeção Final</p>
+              <p className="text-sm font-bold mt-1" style={{ color: '#b45309' }}>
+                {(projectedMonthDiamonds / 1000000).toFixed(2)}M
+              </p>
+            </div>
+          </div>
+
           {/* Levels Table */}
-          <div className="rounded-lg overflow-hidden mb-5" style={{
+          <div className="rounded-xl overflow-hidden mx-4 mb-5" style={{
             border: '1px solid #e5e7eb'
           }}>
             <table className="w-full" style={{ borderCollapse: 'collapse' }}>
               <thead>
-                <tr style={{ backgroundColor: '#f3f4f6' }}>
-                  <th className="text-left py-2 px-3 text-[10px] font-semibold uppercase" style={{ color: '#6b7280' }}>
+                <tr style={{ backgroundColor: '#1a1a1a' }}>
+                  <th className="text-left py-2.5 px-3 text-[10px] font-semibold uppercase" style={{ color: '#ffffff' }}>
                     Nível
                   </th>
-                  <th className="text-right py-2 px-3 text-[10px] font-semibold uppercase" style={{ color: '#6b7280' }}>
+                  <th className="text-center py-2.5 px-3 text-[10px] font-semibold uppercase" style={{ color: '#ffffff' }}>
                     Meta
                   </th>
-                  <th className="text-right py-2 px-3 text-[10px] font-semibold uppercase" style={{ color: '#6b7280' }}>
+                  <th className="text-center py-2.5 px-3 text-[10px] font-semibold uppercase" style={{ color: '#ffffff' }}>
                     Faltam
                   </th>
-                  <th className="text-center py-2 px-3 text-[10px] font-semibold uppercase" style={{ color: '#6b7280' }}>
+                  <th className="text-center py-2.5 px-3 text-[10px] font-semibold uppercase" style={{ color: '#ffffff' }}>
                     Status
                   </th>
                 </tr>
@@ -2284,41 +2370,41 @@ const ChartsDashboard: React.FC = () => {
                       borderTop: '1px solid #e5e7eb',
                       backgroundColor: isAchieved ? '#f0fdf4' : isNext ? '#fffbeb' : '#ffffff'
                     }}>
-                      <td className="py-2.5 px-3">
-                        <span className="text-sm font-semibold" style={{
+                      <td className="py-3 px-3">
+                        <span className="text-sm font-bold" style={{
                           color: isAchieved ? '#166534' : isNext ? '#b45309' : '#374151'
                         }}>
                           {target.percentage}%
                         </span>
                       </td>
-                      <td className="py-2.5 px-3 text-right">
-                        <span className="text-xs" style={{ color: '#6b7280' }}>
+                      <td className="py-3 px-3 text-center">
+                        <span className="text-xs font-medium" style={{ color: '#6b7280' }}>
                           {(target.diamondsValue / 1000000).toFixed(2)}M
                         </span>
                       </td>
-                      <td className="py-2.5 px-3 text-right">
-                        <span className="text-xs" style={{ 
+                      <td className="py-3 px-3 text-center">
+                        <span className="text-xs font-medium" style={{ 
                           color: isAchieved ? '#166534' : '#6b7280' 
                         }}>
                           {isAchieved ? '—' : `${(remaining / 1000000).toFixed(2)}M`}
                         </span>
                       </td>
-                      <td className="py-2.5 px-3 text-center">
+                      <td className="py-3 px-3 text-center">
                         {isAchieved ? (
-                          <span className="inline-block px-2 py-0.5 rounded text-[9px] font-medium" style={{
-                            backgroundColor: '#166534',
+                          <span className="inline-block px-3 py-1 rounded-full text-[10px] font-bold" style={{
+                            backgroundColor: '#22c55e',
                             color: '#ffffff'
                           }}>✓ OK</span>
                         ) : isNext ? (
-                          <span className="inline-block px-2 py-0.5 rounded text-[9px] font-medium" style={{
+                          <span className="inline-block px-3 py-1 rounded-full text-[10px] font-bold" style={{
                             backgroundColor: '#f59e0b',
                             color: '#ffffff'
                           }}>ATUAL</span>
                         ) : (
-                          <span className="inline-block px-2 py-0.5 rounded text-[9px] font-medium" style={{
-                            backgroundColor: '#e5e7eb',
-                            color: '#6b7280'
-                          }}>—</span>
+                          <span className="inline-block px-3 py-1 rounded-full text-[10px] font-medium" style={{
+                            backgroundColor: '#e5e5e5',
+                            color: '#737373'
+                          }}>PENDENTE</span>
                         )}
                       </td>
                     </tr>
@@ -2328,36 +2414,8 @@ const ChartsDashboard: React.FC = () => {
             </table>
           </div>
 
-          {/* Summary Stats */}
-          <div className="grid grid-cols-4 gap-2 mb-5">
-            <div className="text-center p-2 rounded" style={{ backgroundColor: '#f9fafb' }}>
-              <p className="text-[9px] uppercase" style={{ color: '#9ca3af' }}>Média/Dia</p>
-              <p className="text-sm font-bold" style={{ color: '#374151' }}>
-                {(avgDailyDiamonds / 1000000).toFixed(3)}M
-              </p>
-            </div>
-            <div className="text-center p-2 rounded" style={{ backgroundColor: '#f9fafb' }}>
-              <p className="text-[9px] uppercase" style={{ color: '#9ca3af' }}>Dia</p>
-              <p className="text-sm font-bold" style={{ color: '#374151' }}>
-                {dayOfMonth}/{totalDaysInMonth}
-              </p>
-            </div>
-            <div className="text-center p-2 rounded" style={{ backgroundColor: '#f9fafb' }}>
-              <p className="text-[9px] uppercase" style={{ color: '#9ca3af' }}>Restantes</p>
-              <p className="text-sm font-bold" style={{ color: '#374151' }}>
-                {daysRemaining}
-              </p>
-            </div>
-            <div className="text-center p-2 rounded" style={{ backgroundColor: '#fffbeb' }}>
-              <p className="text-[9px] uppercase" style={{ color: '#9ca3af' }}>Projeção</p>
-              <p className="text-sm font-bold" style={{ color: '#b45309' }}>
-                {(projectedMonthDiamonds / 1000000).toFixed(2)}M
-              </p>
-            </div>
-          </div>
-
           {/* Footer */}
-          <div className="text-center pt-3" style={{ borderTop: '1px solid #e5e7eb' }}>
+          <div className="text-center pt-4 mx-4" style={{ borderTop: '1px solid #e5e7eb' }}>
             <p className="text-[9px]" style={{ color: '#9ca3af' }}>
               Gerado em {format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
             </p>
