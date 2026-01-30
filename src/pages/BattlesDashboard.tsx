@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { format, getDaysInMonth, startOfMonth, addDays, eachDayOfInterval, parseISO, isSameDay } from 'date-fns';
+import { format, getDaysInMonth, startOfMonth, addDays, eachDayOfInterval, parseISO, isSameDay, endOfMonth, addMonths, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { 
   Swords, 
@@ -142,6 +142,10 @@ const BattlesDashboard = () => {
   const [showCalendarExportDialog, setShowCalendarExportDialog] = useState(false);
   const [exportStartDate, setExportStartDate] = useState<Date | undefined>(undefined);
   const [exportEndDate, setExportEndDate] = useState<Date | undefined>(undefined);
+  const [showNextMonthTab, setShowNextMonthTab] = useState(false);
+  const [nextMonthBattleData, setNextMonthBattleData] = useState<BattleData>({});
+  const [editingNextMonthCell, setEditingNextMonthCell] = useState<{ member: string; date: string } | null>(null);
+  const [editNextMonthValue, setEditNextMonthValue] = useState('');
   const [reportConfig, setReportConfig] = useState<ReportConfig>(() => {
     const now = new Date();
     return {
@@ -169,6 +173,18 @@ const BattlesDashboard = () => {
   const daysInMonth = getDaysInMonth(currentMonth);
   const monthStart = startOfMonth(currentMonth);
   const days = Array.from({ length: daysInMonth }, (_, i) => addDays(monthStart, i));
+  
+  // Next month calendar logic
+  const today = new Date();
+  const currentMonthEnd = endOfMonth(today);
+  const daysUntilEndOfMonth = differenceInDays(currentMonthEnd, today);
+  const isNextMonthAvailable = daysUntilEndOfMonth <= 5;
+  
+  const nextMonth = addMonths(startOfMonth(today), 1);
+  const nextMonthDays = Array.from(
+    { length: getDaysInMonth(nextMonth) }, 
+    (_, i) => addDays(startOfMonth(nextMonth), i)
+  );
   
   // Filter days to show based on view mode
   const displayDays = useMemo(() => {
@@ -239,10 +255,11 @@ const BattlesDashboard = () => {
         if (chartResult.error) throw chartResult.error;
 
         if (battlesResult.data?.data) {
-          const parsed = battlesResult.data.data as { battleData?: BattleData; teamStructure?: TeamStructure[]; categoryData?: BattleCategoryData };
+          const parsed = battlesResult.data.data as { battleData?: BattleData; teamStructure?: TeamStructure[]; categoryData?: BattleCategoryData; nextMonthBattleData?: BattleData };
           if (parsed.battleData) setBattleData(parsed.battleData);
           if (parsed.teamStructure) setTeamStructure(parsed.teamStructure);
           if (parsed.categoryData) setCategoryData(parsed.categoryData);
+          if (parsed.nextMonthBattleData) setNextMonthBattleData(parsed.nextMonthBattleData);
         }
 
         if (chartResult.data?.data) {
@@ -266,7 +283,7 @@ const BattlesDashboard = () => {
     try {
       const payload = {
         id: BATTLES_DATA_ID,
-        data: { battleData, teamStructure, categoryData } as unknown as import('@/integrations/supabase/types').Json,
+        data: { battleData, teamStructure, categoryData, nextMonthBattleData } as unknown as import('@/integrations/supabase/types').Json,
         updated_at: new Date().toISOString(),
       };
       const { error } = await supabase.from('dashboard_data').upsert(payload);
@@ -294,6 +311,63 @@ const BattlesDashboard = () => {
       [member]: { ...(prev[member] || {}), [dateStr]: count },
     }));
   };
+
+  // Get next month battle count for a member on a specific date
+  const getNextMonthBattleCount = (member: string, date: Date): number => {
+    const dateStr = format(date, 'yyyy-MM-dd');
+    return nextMonthBattleData[member]?.[dateStr] || 0;
+  };
+
+  // Set next month battle count
+  const setNextMonthBattleCount = (member: string, date: Date, count: number) => {
+    const dateStr = format(date, 'yyyy-MM-dd');
+    setNextMonthBattleData(prev => ({
+      ...prev,
+      [member]: { ...(prev[member] || {}), [dateStr]: count },
+    }));
+  };
+
+  // Calculate member total for next month
+  const getMemberNextMonthTotal = (member: string): number => {
+    const monthStr = format(nextMonth, 'yyyy-MM');
+    if (!nextMonthBattleData[member]) return 0;
+    return Object.entries(nextMonthBattleData[member])
+      .filter(([date]) => date.startsWith(monthStr))
+      .reduce((sum, [, count]) => sum + count, 0);
+  };
+
+  // Calculate executive total for next month
+  const getExecutiveNextMonthTotal = (members: string[]): number => {
+    return members.reduce((sum, member) => sum + getMemberNextMonthTotal(member), 0);
+  };
+
+  // Calculate grand total for next month
+  const getGrandNextMonthTotal = (): number => {
+    return teamStructure.reduce((sum, exec) => sum + getExecutiveNextMonthTotal(exec.members), 0);
+  };
+
+  // Handle next month cell editing
+  const handleNextMonthCellClick = (member: string, date: string) => {
+    setEditingNextMonthCell({ member, date });
+    const dateObj = new Date(date + 'T12:00:00');
+    setEditNextMonthValue(String(getNextMonthBattleCount(member, dateObj)));
+  };
+
+  const handleNextMonthCellBlur = () => {
+    if (editingNextMonthCell) {
+      const count = parseInt(editNextMonthValue) || 0;
+      const dateObj = new Date(editingNextMonthCell.date + 'T12:00:00');
+      setNextMonthBattleCount(editingNextMonthCell.member, dateObj, Math.max(0, count));
+    }
+    setEditingNextMonthCell(null);
+    setEditNextMonthValue('');
+  };
+
+  const handleNextMonthKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handleNextMonthCellBlur();
+    else if (e.key === 'Escape') { setEditingNextMonthCell(null); setEditNextMonthValue(''); }
+  };
+
 
   // Calculate member total for the month
   const getMemberTotal = (member: string): number => {
@@ -1373,6 +1447,181 @@ const BattlesDashboard = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Next Month Calendar - Only visible 5 days before end of month */}
+        {isNextMonthAvailable && (
+          <Card className="mt-6">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <CalendarDays className="h-5 w-5 text-primary" />
+                  Batalhas - {format(nextMonth, 'MMMM yyyy', { locale: ptBR })}
+                  <span className="text-xs font-normal text-muted-foreground bg-primary/10 px-2 py-1 rounded">
+                    Próximo Mês
+                  </span>
+                </CardTitle>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">
+                    {daysUntilEndOfMonth} dias até o fim do mês
+                  </span>
+                  <Button 
+                    variant={showNextMonthTab ? "default" : "outline"} 
+                    size="sm"
+                    onClick={() => setShowNextMonthTab(!showNextMonthTab)}
+                  >
+                    {showNextMonthTab ? <EyeOff className="h-4 w-4 mr-2" /> : <Eye className="h-4 w-4 mr-2" />}
+                    {showNextMonthTab ? 'Ocultar' : 'Expandir'}
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            
+            {showNextMonthTab && (
+              <CardContent className="pt-0">
+                {/* Summary Cards for Next Month */}
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                  <div className="bg-muted/50 rounded-lg p-3 text-center">
+                    <div className="text-xs text-muted-foreground mb-1">Total Planejado</div>
+                    <div className="text-2xl font-bold text-primary">{getGrandNextMonthTotal()}</div>
+                  </div>
+                  <div className="bg-muted/50 rounded-lg p-3 text-center">
+                    <div className="text-xs text-muted-foreground mb-1">Dias com Batalhas</div>
+                    <div className="text-2xl font-bold">
+                      {nextMonthDays.filter(day => {
+                        const dateStr = format(day, 'yyyy-MM-dd');
+                        let total = 0;
+                        teamStructure.forEach(exec => exec.members.forEach(m => { total += nextMonthBattleData[m]?.[dateStr] || 0; }));
+                        return total > 0;
+                      }).length}
+                    </div>
+                  </div>
+                  <div className="bg-muted/50 rounded-lg p-3 text-center">
+                    <div className="text-xs text-muted-foreground mb-1">Média/Dia Planejado</div>
+                    <div className="text-2xl font-bold">
+                      {(getGrandNextMonthTotal() / getDaysInMonth(nextMonth)).toFixed(1)}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Next Month Table */}
+                <div className="bg-card rounded-lg border overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-muted/50">
+                        <th className="sticky left-0 bg-muted/50 px-3 py-1 text-left font-medium min-w-[150px] z-10">TIME</th>
+                        {nextMonthDays.map(day => {
+                          const dayOfWeek = format(day, 'EEE', { locale: ptBR });
+                          const isWeekend = day.getDay() === 0 || day.getDay() === 6;
+                          return (
+                            <th 
+                              key={day.toISOString()} 
+                              className={cn(
+                                "px-1 py-1 text-center min-w-[44px] transition-colors",
+                                isWeekend && "bg-muted/80"
+                              )}
+                            >
+                              <div className="flex flex-col items-center">
+                                <span className="text-lg font-bold leading-tight">
+                                  {format(day, 'd')}
+                                </span>
+                                <span className="text-[10px] text-muted-foreground uppercase leading-tight">
+                                  {dayOfWeek.replace('.', '')}
+                                </span>
+                              </div>
+                            </th>
+                          );
+                        })}
+                        <th className="px-3 py-2 text-center font-bold bg-muted min-w-[60px]">TOTAL</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {teamStructure.map((exec) => (
+                        <React.Fragment key={`next-${exec.executive}`}>
+                          <tr className="bg-gray-900 text-white">
+                            <td colSpan={nextMonthDays.length + 2} className="px-3 py-2 font-bold text-center">
+                              {exec.executive}
+                            </td>
+                          </tr>
+                          
+                          {exec.members.map(member => (
+                            <tr key={`next-${member}`} className="hover:bg-muted/30 border-b border-border/50">
+                              <td className="sticky left-0 bg-card px-3 py-1 font-medium z-10">
+                                <span className="text-xs">{member}</span>
+                              </td>
+                              {nextMonthDays.map(day => {
+                                const dateStr = format(day, 'yyyy-MM-dd');
+                                const count = getNextMonthBattleCount(member, day);
+                                const isEditing = editingNextMonthCell?.member === member && editingNextMonthCell?.date === dateStr;
+                                
+                                return (
+                                  <td 
+                                    key={dateStr} 
+                                    className={cn(
+                                      "px-1 py-1 text-center cursor-pointer transition-colors",
+                                      count === 0 ? "bg-muted/30 text-muted-foreground" : 
+                                      count >= 3 ? "bg-emerald-500/20 text-emerald-400" :
+                                      "bg-primary/10 text-foreground"
+                                    )}
+                                    onClick={() => handleNextMonthCellClick(member, dateStr)}
+                                  >
+                                    {isEditing ? (
+                                      <Input
+                                        type="number"
+                                        value={editNextMonthValue}
+                                        onChange={(e) => setEditNextMonthValue(e.target.value)}
+                                        onBlur={handleNextMonthCellBlur}
+                                        onKeyDown={handleNextMonthKeyDown}
+                                        className="h-6 w-10 text-center p-0 text-xs"
+                                        autoFocus
+                                        min={0}
+                                      />
+                                    ) : (
+                                      <span className="text-xs font-medium">{count || '-'}</span>
+                                    )}
+                                  </td>
+                                );
+                              })}
+                              <td className="px-3 py-1 text-center font-bold bg-muted/50">
+                                {getMemberNextMonthTotal(member)}
+                              </td>
+                            </tr>
+                          ))}
+                          
+                          <tr className="bg-muted/30 border-b-2 border-border">
+                            <td className="sticky left-0 bg-muted/30 px-3 py-1 font-bold text-xs z-10">SUBTOTAL</td>
+                            {nextMonthDays.map(day => {
+                              const dateStr = format(day, 'yyyy-MM-dd');
+                              const dayTotal = exec.members.reduce((sum, m) => sum + (nextMonthBattleData[m]?.[dateStr] || 0), 0);
+                              return (
+                                <td key={dateStr} className="px-1 py-1 text-center font-bold text-xs">{dayTotal || '-'}</td>
+                              );
+                            })}
+                            <td className="px-3 py-1 text-center font-bold bg-muted">{getExecutiveNextMonthTotal(exec.members)}</td>
+                          </tr>
+                        </React.Fragment>
+                      ))}
+                      
+                      <tr className="bg-gray-900 text-white font-bold">
+                        <td className="sticky left-0 bg-gray-900 px-3 py-2 z-10">TOTAL GERAL</td>
+                        {nextMonthDays.map(day => {
+                          const dateStr = format(day, 'yyyy-MM-dd');
+                          let dayTotal = 0;
+                          teamStructure.forEach(exec => exec.members.forEach(m => { dayTotal += nextMonthBattleData[m]?.[dateStr] || 0; }));
+                          return <td key={dateStr} className="px-1 py-2 text-center text-xs">{dayTotal || '-'}</td>;
+                        })}
+                        <td className="px-3 py-2 text-center text-lg">{getGrandNextMonthTotal()}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                
+                <p className="text-xs text-muted-foreground mt-3 text-center">
+                  💡 Os dados do próximo mês são salvos automaticamente ao clicar em "Salvar".
+                </p>
+              </CardContent>
+            )}
+          </Card>
+        )}
 
         {/* Impact Analysis */}
         {impactAnalysis.hasData && (
