@@ -146,6 +146,9 @@ const BattlesDashboard = () => {
   const [nextMonthBattleData, setNextMonthBattleData] = useState<BattleData>({});
   const [editingNextMonthCell, setEditingNextMonthCell] = useState<{ member: string; date: string } | null>(null);
   const [editNextMonthValue, setEditNextMonthValue] = useState('');
+  const [showNextMonthReportDialog, setShowNextMonthReportDialog] = useState(false);
+  const [nextMonthExportStartDate, setNextMonthExportStartDate] = useState<Date | undefined>(undefined);
+  const [nextMonthExportEndDate, setNextMonthExportEndDate] = useState<Date | undefined>(undefined);
   const [reportConfig, setReportConfig] = useState<ReportConfig>(() => {
     const now = new Date();
     return {
@@ -166,6 +169,7 @@ const BattlesDashboard = () => {
   const reportRef = useRef<HTMLDivElement>(null);
   const customReportRef = useRef<HTMLDivElement>(null);
   const calendarExportRef = useRef<HTMLDivElement>(null);
+  const nextMonthCalendarExportRef = useRef<HTMLDivElement>(null);
   
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -784,6 +788,115 @@ const BattlesDashboard = () => {
     setExportEndDate(addDays(startOfMonth(currentMonth), daysInMonth - 1));
     setShowCalendarExportDialog(true);
   };
+
+  // Days for export based on selected date range for next month
+  const nextMonthExportDays = useMemo(() => {
+    if (!nextMonthExportStartDate || !nextMonthExportEndDate) return nextMonthDays;
+    return eachDayOfInterval({ start: nextMonthExportStartDate, end: nextMonthExportEndDate }).filter(day => {
+      const dayMonth = format(day, 'yyyy-MM');
+      const nextMonthStr = format(nextMonth, 'yyyy-MM');
+      return dayMonth === nextMonthStr;
+    });
+  }, [nextMonthExportStartDate, nextMonthExportEndDate, nextMonthDays, nextMonth]);
+
+  // Get next month member total for export
+  const getNextMonthMemberTotalForExport = (member: string): number => {
+    if (!nextMonthBattleData[member]) return 0;
+    return nextMonthExportDays.reduce((sum, day) => {
+      const dateStr = format(day, 'yyyy-MM-dd');
+      return sum + (nextMonthBattleData[member][dateStr] || 0);
+    }, 0);
+  };
+
+  // Get next month executive total for export
+  const getNextMonthExecutiveTotalForExport = (members: string[]): number => {
+    return members.reduce((sum, member) => sum + getNextMonthMemberTotalForExport(member), 0);
+  };
+
+  // Get next month grand total for export
+  const getNextMonthGrandTotalForExport = (): number => {
+    return teamStructure.reduce((sum, exec) => sum + getNextMonthExecutiveTotalForExport(exec.members), 0);
+  };
+
+  // Open next month report dialog
+  const openNextMonthReportDialog = () => {
+    setNextMonthExportStartDate(startOfMonth(nextMonth));
+    setNextMonthExportEndDate(addDays(startOfMonth(nextMonth), getDaysInMonth(nextMonth) - 1));
+    setShowNextMonthReportDialog(true);
+  };
+
+  // Export Next Month Calendar PDF
+  const handleExportNextMonthCalendarPDF = async () => {
+    if (!nextMonthCalendarExportRef.current) return;
+    setIsExportingPDF(true);
+    try {
+      toast({ title: 'Gerando calendário do próximo mês...', description: 'Aguarde' });
+      
+      const canvas = await html2canvas(nextMonthCalendarExportRef.current, { 
+        scale: 2, 
+        backgroundColor: '#ffffff',
+        logging: false,
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({ 
+        orientation: 'landscape', 
+        unit: 'mm', 
+        format: 'a4' 
+      });
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const ratio = Math.min((pdfWidth - 10) / imgWidth, (pdfHeight - 10) / imgHeight);
+      
+      const x = (pdfWidth - imgWidth * ratio) / 2;
+      const totalHeight = imgHeight * ratio;
+      
+      if (totalHeight <= pdfHeight - 10) {
+        pdf.addImage(imgData, 'PNG', x, 5, imgWidth * ratio, imgHeight * ratio);
+      } else {
+        const pageContentHeight = pdfHeight - 10;
+        let remainingHeight = totalHeight;
+        let sourceY = 0;
+        let page = 0;
+        
+        while (remainingHeight > 0) {
+          if (page > 0) pdf.addPage();
+          
+          const sliceHeight = Math.min(pageContentHeight, remainingHeight);
+          const sliceCanvas = document.createElement('canvas');
+          sliceCanvas.width = canvas.width;
+          sliceCanvas.height = (sliceHeight / ratio);
+          
+          const ctx = sliceCanvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(canvas, 0, sourceY / ratio, canvas.width, sliceCanvas.height, 0, 0, canvas.width, sliceCanvas.height);
+            const sliceImg = sliceCanvas.toDataURL('image/png');
+            pdf.addImage(sliceImg, 'PNG', x, 5, imgWidth * ratio, sliceHeight);
+          }
+          
+          sourceY += sliceHeight;
+          remainingHeight -= sliceHeight;
+          page++;
+        }
+      }
+      
+      let fileName = `planejamento-batalhas-${format(nextMonth, 'MMMM-yyyy', { locale: ptBR })}`;
+      if (nextMonthExportStartDate && nextMonthExportEndDate) {
+        fileName = `planejamento-batalhas-${format(nextMonthExportStartDate, 'dd-MM')}-a-${format(nextMonthExportEndDate, 'dd-MM-yyyy')}`;
+      }
+      pdf.save(`${fileName}.pdf`);
+      toast({ title: 'Planejamento exportado!' });
+      setShowNextMonthReportDialog(false);
+    } catch (error) {
+      console.error('Erro ao exportar planejamento:', error);
+      toast({ title: 'Erro', description: 'Falha ao exportar planejamento', variant: 'destructive' });
+    } finally {
+      setIsExportingPDF(false);
+    }
+  };
   const getExecutiveForMember = (memberName: string): string => {
     const exec = teamStructure.find(e => e.members.includes(memberName));
     return exec ? exec.executive.split('(')[0].trim() : '-';
@@ -1162,6 +1275,74 @@ const BattlesDashboard = () => {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+
+          {/* Next Month Report Dialog */}
+          <Dialog open={showNextMonthReportDialog} onOpenChange={setShowNextMonthReportDialog}>
+            <DialogContent className="bg-card">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <CalendarDays className="h-5 w-5 text-primary" />
+                  Relatório de Planejamento - {format(nextMonth, 'MMMM yyyy', { locale: ptBR })}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Selecione o período para gerar o relatório do planejamento de batalhas do próximo mês.
+                </p>
+                <div>
+                  <Label className="text-sm font-medium mb-2 block">Data Inicial</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-full justify-start text-left font-normal">
+                        <CalendarDays className="mr-2 h-4 w-4" />
+                        {nextMonthExportStartDate ? format(nextMonthExportStartDate, 'dd/MM/yyyy', { locale: ptBR }) : 'Selecione a data inicial'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 z-50" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={nextMonthExportStartDate}
+                        onSelect={setNextMonthExportStartDate}
+                        locale={ptBR}
+                        defaultMonth={nextMonth}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium mb-2 block">Data Final</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-full justify-start text-left font-normal">
+                        <CalendarDays className="mr-2 h-4 w-4" />
+                        {nextMonthExportEndDate ? format(nextMonthExportEndDate, 'dd/MM/yyyy', { locale: ptBR }) : 'Selecione a data final'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 z-50" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={nextMonthExportEndDate}
+                        onSelect={setNextMonthExportEndDate}
+                        locale={ptBR}
+                        defaultMonth={nextMonth}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </div>
+              <DialogFooter className="gap-2">
+                <Button variant="outline" onClick={() => setShowNextMonthReportDialog(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={handleExportNextMonthCalendarPDF} disabled={isExportingPDF || !nextMonthExportStartDate || !nextMonthExportEndDate}>
+                  {isExportingPDF ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Download className="h-4 w-4 mr-2" />}
+                  Gerar PDF
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Categories Panel */}
@@ -1464,6 +1645,14 @@ const BattlesDashboard = () => {
                   <span className="text-xs text-muted-foreground">
                     {daysUntilEndOfMonth} dias até o fim do mês
                   </span>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={openNextMonthReportDialog}
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    Relatório
+                  </Button>
                   <Button 
                     variant={showNextMonthTab ? "default" : "outline"} 
                     size="sm"
@@ -2253,6 +2442,337 @@ const BattlesDashboard = () => {
           {/* Footer */}
           <div style={{ marginTop: '16px', textAlign: 'center' }}>
             <p style={{ fontSize: '11px', color: '#9ca3af' }}>Relatório gerado pelo Sistema Curli</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Hidden Next Month Calendar Export for PDF */}
+      <div className="fixed left-[-9999px] top-0">
+        <div ref={nextMonthCalendarExportRef} style={{ backgroundColor: '#f3f4f6', padding: '24px', width: `${Math.max(800, 180 + nextMonthExportDays.length * 32)}px`, fontFamily: 'Arial, sans-serif' }}>
+          {/* Header */}
+          <div style={{ backgroundColor: '#fff', borderRadius: '12px', padding: '16px', marginBottom: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <img src={curliLogo} alt="Curli Logo" style={{ height: '28px', width: 'auto' }} />
+              <div style={{ textAlign: 'right' }}>
+                <p style={{ fontSize: '11px', color: '#9ca3af', margin: 0 }}>{format(new Date(), "EEEE", { locale: ptBR })}</p>
+                <p style={{ fontSize: '13px', color: '#374151', fontWeight: '600', margin: '2px 0' }}>{format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</p>
+                <p style={{ fontSize: '11px', color: '#9ca3af', margin: 0 }}>{format(new Date(), "HH:mm", { locale: ptBR })}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Title */}
+          <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+            <h1 style={{ fontSize: '18px', fontWeight: 'bold', color: '#374151', margin: 0 }}>PLANEJAMENTO DE BATALHAS</h1>
+            <p style={{ fontSize: '14px', color: '#6366f1', fontWeight: '600', margin: '4px 0 0 0' }}>
+              {format(nextMonth, "MMMM 'de' yyyy", { locale: ptBR })}
+            </p>
+            {nextMonthExportStartDate && nextMonthExportEndDate && (
+              <p style={{ fontSize: '12px', color: '#9ca3af', margin: '4px 0 0 0' }}>
+                {format(nextMonthExportStartDate, 'dd/MM/yyyy')} - {format(nextMonthExportEndDate, 'dd/MM/yyyy')}
+              </p>
+            )}
+          </div>
+
+          {/* Main Calendar Table */}
+          <div style={{ border: '2px solid #6366f1', borderRadius: '8px', overflow: 'hidden' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ backgroundColor: '#6366f1' }}>
+                  <th style={{ 
+                    padding: '10px 12px', 
+                    textAlign: 'left', 
+                    color: '#fff', 
+                    fontWeight: 'bold',
+                    fontSize: '12px',
+                    minWidth: '140px',
+                    borderRight: '1px solid #818cf8'
+                  }}>
+                    ASSOCIADO
+                  </th>
+                  {nextMonthExportDays.map(day => {
+                    const isWeekend = day.getDay() === 0 || day.getDay() === 6;
+                    const dayOfWeek = format(day, 'EEE', { locale: ptBR }).replace('.', '').toUpperCase();
+                    return (
+                      <th 
+                        key={day.toISOString()} 
+                        style={{ 
+                          padding: '6px 2px', 
+                          textAlign: 'center', 
+                          color: isWeekend ? '#fca5a5' : '#fff',
+                          fontWeight: 'bold',
+                          fontSize: '11px',
+                          minWidth: '30px',
+                          borderRight: '1px solid #818cf8'
+                        }}
+                      >
+                        <div style={{ fontSize: '14px', lineHeight: '1.2' }}>{format(day, 'd')}</div>
+                        <div style={{ fontSize: '9px', opacity: 0.8 }}>{dayOfWeek}</div>
+                      </th>
+                    );
+                  })}
+                  <th style={{ 
+                    padding: '10px 8px', 
+                    textAlign: 'center', 
+                    color: '#fff', 
+                    fontWeight: 'bold',
+                    fontSize: '11px',
+                    minWidth: '50px',
+                    backgroundColor: '#4f46e5'
+                  }}>
+                    TOTAL
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {teamStructure.map((exec) => (
+                  <React.Fragment key={`export-next-${exec.executive}`}>
+                    {/* Executive Header Row */}
+                    <tr style={{ backgroundColor: '#374151' }}>
+                      <td 
+                        colSpan={nextMonthExportDays.length + 2} 
+                        style={{ 
+                          padding: '8px 12px', 
+                          fontWeight: 'bold', 
+                          color: '#fff',
+                          fontSize: '11px',
+                          textAlign: 'center',
+                          letterSpacing: '0.5px'
+                        }}
+                      >
+                        {exec.executive}
+                      </td>
+                    </tr>
+                    
+                    {/* Member Rows */}
+                    {exec.members.map((member, memberIdx) => {
+                      const memberTotal = getNextMonthMemberTotalForExport(member);
+                      const isLastMember = memberIdx === exec.members.length - 1;
+                      
+                      return (
+                        <tr 
+                          key={`export-next-${member}`} 
+                          style={{ 
+                            backgroundColor: memberIdx % 2 === 0 ? '#fff' : '#f9fafb',
+                            borderBottom: isLastMember ? '2px solid #d1d5db' : '1px solid #e5e7eb'
+                          }}
+                        >
+                          <td style={{ 
+                            padding: '6px 12px', 
+                            fontWeight: '600', 
+                            color: '#1f2937',
+                            fontSize: '11px',
+                            borderRight: '1px solid #d1d5db'
+                          }}>
+                            {member}
+                          </td>
+                          {nextMonthExportDays.map(day => {
+                            const dateStr = format(day, 'yyyy-MM-dd');
+                            const count = nextMonthBattleData[member]?.[dateStr] || 0;
+                            let bgColor = '#f3f4f6';
+                            let textColor = '#9ca3af';
+                            
+                            if (count === 0) {
+                              bgColor = '#f3f4f6';
+                              textColor = '#9ca3af';
+                            } else if (count >= 3) {
+                              bgColor = '#f0fdf4';
+                              textColor = '#16a34a';
+                            } else if (count >= 1) {
+                              bgColor = '#eef2ff';
+                              textColor = '#6366f1';
+                            }
+                            
+                            return (
+                              <td 
+                                key={day.toISOString()} 
+                                style={{ 
+                                  padding: '4px 2px', 
+                                  textAlign: 'center',
+                                  fontSize: '12px',
+                                  fontWeight: count > 0 ? 'bold' : 'normal',
+                                  backgroundColor: bgColor,
+                                  color: textColor,
+                                  borderRight: '1px solid #e5e7eb'
+                                }}
+                              >
+                                {count || '-'}
+                              </td>
+                            );
+                          })}
+                          <td style={{ 
+                            padding: '6px 8px', 
+                            textAlign: 'center',
+                            fontWeight: 'bold',
+                            fontSize: '12px',
+                            color: '#4b5563',
+                            backgroundColor: '#f9fafb'
+                          }}>
+                            {memberTotal}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    
+                    {/* Executive Subtotal */}
+                    <tr style={{ backgroundColor: '#f3f4f6' }}>
+                      <td style={{ 
+                        padding: '6px 12px', 
+                        fontWeight: 'bold', 
+                        color: '#4b5563',
+                        fontSize: '10px',
+                        borderRight: '1px solid #d1d5db'
+                      }}>
+                        SUBTOTAL
+                      </td>
+                      {nextMonthExportDays.map(day => {
+                        const dateStr = format(day, 'yyyy-MM-dd');
+                        const dayTotal = exec.members.reduce((sum, m) => sum + (nextMonthBattleData[m]?.[dateStr] || 0), 0);
+                        return (
+                          <td 
+                            key={day.toISOString()} 
+                            style={{ 
+                              padding: '4px 2px', 
+                              textAlign: 'center',
+                              fontSize: '10px',
+                              fontWeight: 'bold',
+                              color: '#4b5563',
+                              borderRight: '1px solid #e5e7eb'
+                            }}
+                          >
+                            {dayTotal || '-'}
+                          </td>
+                        );
+                      })}
+                      <td style={{ 
+                        padding: '6px 8px', 
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        fontSize: '11px',
+                        color: '#1f2937',
+                        backgroundColor: '#e5e7eb'
+                      }}>
+                        {getNextMonthExecutiveTotalForExport(exec.members)}
+                      </td>
+                    </tr>
+                  </React.Fragment>
+                ))}
+                
+                {/* Grand Total Row */}
+                <tr style={{ backgroundColor: '#6366f1' }}>
+                  <td style={{ 
+                    padding: '10px 12px', 
+                    fontWeight: 'bold', 
+                    color: '#fff',
+                    fontSize: '12px'
+                  }}>
+                    TOTAL GERAL
+                  </td>
+                  {nextMonthExportDays.map(day => {
+                    const dateStr = format(day, 'yyyy-MM-dd');
+                    let dayTotal = 0;
+                    teamStructure.forEach(exec => exec.members.forEach(m => { dayTotal += nextMonthBattleData[m]?.[dateStr] || 0; }));
+                    return (
+                      <td 
+                        key={day.toISOString()} 
+                        style={{ 
+                          padding: '6px 2px', 
+                          textAlign: 'center',
+                          fontSize: '11px',
+                          fontWeight: 'bold',
+                          color: '#fff'
+                        }}
+                      >
+                        {dayTotal || '-'}
+                      </td>
+                    );
+                  })}
+                  <td style={{ 
+                    padding: '10px 8px', 
+                    textAlign: 'center',
+                    fontWeight: 'bold',
+                    fontSize: '14px',
+                    color: '#374151',
+                    backgroundColor: '#e5e7eb'
+                  }}>
+                    {getNextMonthGrandTotalForExport()}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Legend */}
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            gap: '24px', 
+            marginTop: '16px',
+            padding: '12px',
+            backgroundColor: '#f9fafb',
+            borderRadius: '8px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ width: '16px', height: '16px', borderRadius: '4px', backgroundColor: '#f3f4f6', border: '1px solid #d1d5db' }}></div>
+              <span style={{ fontSize: '11px', color: '#666' }}>Não planejado</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ width: '16px', height: '16px', borderRadius: '4px', backgroundColor: '#eef2ff', border: '1px solid #c7d2fe' }}></div>
+              <span style={{ fontSize: '11px', color: '#666' }}>1-2 batalhas</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ width: '16px', height: '16px', borderRadius: '4px', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0' }}></div>
+              <span style={{ fontSize: '11px', color: '#666' }}>3+ batalhas</span>
+            </div>
+          </div>
+
+          {/* Summary Stats */}
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(3, 1fr)', 
+            gap: '12px', 
+            marginTop: '16px'
+          }}>
+            <div style={{ 
+              textAlign: 'center', 
+              padding: '12px', 
+              backgroundColor: '#fff', 
+              borderRadius: '8px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+            }}>
+              <div style={{ fontSize: '10px', color: '#6366f1', fontWeight: '500', marginBottom: '4px' }}>TOTAL PLANEJADO</div>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#374151' }}>{getNextMonthGrandTotalForExport()}</div>
+            </div>
+            <div style={{ 
+              textAlign: 'center', 
+              padding: '12px', 
+              backgroundColor: '#fff', 
+              borderRadius: '8px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+            }}>
+              <div style={{ fontSize: '10px', color: '#22c55e', fontWeight: '500', marginBottom: '4px' }}>MÉDIA/ASSOCIADO</div>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#374151' }}>
+                {(getNextMonthGrandTotalForExport() / Math.max(1, allMembers.length)).toFixed(1)}
+              </div>
+            </div>
+            <div style={{ 
+              textAlign: 'center', 
+              padding: '12px', 
+              backgroundColor: '#fff', 
+              borderRadius: '8px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+            }}>
+              <div style={{ fontSize: '10px', color: '#f59e0b', fontWeight: '500', marginBottom: '4px' }}>MÉDIA/DIA</div>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#374151' }}>
+                {(getNextMonthGrandTotalForExport() / Math.max(1, nextMonthExportDays.length)).toFixed(1)}
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div style={{ marginTop: '16px', textAlign: 'center' }}>
+            <p style={{ fontSize: '11px', color: '#9ca3af' }}>Planejamento gerado pelo Sistema Curli</p>
           </div>
         </div>
       </div>
